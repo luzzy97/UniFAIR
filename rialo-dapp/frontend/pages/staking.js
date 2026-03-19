@@ -19,7 +19,7 @@ function StakeModal({ pool, action, onClose, onConfirm, loading }) {
   const [amount, setAmount] = useState('');
 
   const minStakeValue = parseFloat(pool.minStake.split(' ')[0]) || 0;
-  const isAmountTooLow = action === 'Stake' && amount && parseFloat(amount) < minStakeValue;
+  const isAmountTooLow = amount && parseFloat(amount) < minStakeValue;
 
   const handleConfirm = () => {
     if (!amount || parseFloat(amount) <= 0 || isAmountTooLow) return;
