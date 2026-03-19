@@ -152,7 +152,7 @@ export default function Navbar() {
           width: auto;
           transition: filter 0.3s;
         }
-        .logo-img.light { filter: brightness(0) invert(1); }
+        .logo-img.light { filter: brightness(0); }
         .logo-img.dark  { filter: brightness(0) invert(1); }
 
         /* Social icons */
