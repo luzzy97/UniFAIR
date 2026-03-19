@@ -45,6 +45,11 @@ export default function SwapPage() {
       setToast({ message: 'Enter an amount greater than 0', type: 'error' });
       return;
     }
+    const currentBalance = balances[fromToken] || 0;
+    if (parseFloat(amountIn) > currentBalance) {
+      setToast({ message: `Insufficient ${fromToken} balance`, type: 'error' });
+      return;
+    }
     setLoading(true);
     setToast({ message: 'Submitting swap…', type: 'loading' });
     try {
@@ -204,14 +209,20 @@ export default function SwapPage() {
             {/* CTA */}
             <button
               onClick={handleSwap}
-              disabled={loading}
+              disabled={loading || (isConnected && amountIn && parseFloat(amountIn) > (balances[fromToken] || 0))}
               className="w-full bg-white text-black py-5 rounded-2xl font-headline font-extrabold text-lg tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl disabled:opacity-50"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="material-symbols-outlined animate-spin text-xl">autorenew</span> Processing…
                 </span>
-              ) : isConnected ? `Swap ${fromToken} → ${toToken}` : 'Connect Wallet'}
+              ) : !isConnected ? (
+                'Connect Wallet'
+              ) : amountIn && parseFloat(amountIn) > (balances[fromToken] || 0) ? (
+                `Insufficient ${fromToken} Balance`
+              ) : (
+                `Swap ${fromToken} → ${toToken}`
+              )}
             </button>
           </div>
 

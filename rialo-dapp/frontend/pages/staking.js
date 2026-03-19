@@ -15,14 +15,15 @@ const LEGACY_POOLS = [
   { id: 'rlo-v1', name: 'RLO V1 Legacy', description: 'Original staking pool for V1 adopters. Withdrawals only.', apy: '4.2%', totalStaked: '45M RLO', tvl: '$49M', minStake: '0 RLO', type: 'Legacy' },
 ];
 
-function StakeModal({ pool, action, onClose, onConfirm, loading }) {
+function StakeModal({ pool, action, onClose, onConfirm, loading, userBalance }) {
   const [amount, setAmount] = useState('');
 
   const minStakeValue = parseFloat(pool.minStake.split(' ')[0]) || 0;
   const isAmountTooLow = amount && parseFloat(amount) < minStakeValue;
+  const isInsufficientBalance = action === 'Stake' && amount && parseFloat(amount) > userBalance;
 
   const handleConfirm = () => {
-    if (!amount || parseFloat(amount) <= 0 || isAmountTooLow) return;
+    if (!amount || parseFloat(amount) <= 0 || isAmountTooLow || isInsufficientBalance) return;
     onConfirm(amount, pool.id);
   };
 
@@ -35,14 +36,17 @@ function StakeModal({ pool, action, onClose, onConfirm, loading }) {
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
-        <p className="text-sm text-on-surface/60 mb-6">APY: <strong>{pool.apy}</strong> · Min: <strong>{pool.minStake}</strong></p>
+        <p className="text-sm text-on-surface/60 mb-6 flex justify-between">
+          <span>APY: <strong>{pool.apy}</strong> · Min: <strong>{pool.minStake}</strong></span>
+          {action === 'Stake' && <span className="text-white/40">Bal: {userBalance.toFixed(2)}</span>}
+        </p>
         <div className="mb-6">
           <input
             type="text"
             placeholder="Amount in RLO"
             value={amount}
             onChange={e => setAmount(e.target.value.replace(/[^0-9.]/g, ''))}
-            className={`w-full bg-surface-container-low border ${isAmountTooLow ? 'border-error' : 'border-outline-variant/20'} rounded-xl px-4 py-3 text-xl font-headline font-bold focus:ring-1 focus:ring-primary focus:border-primary`}
+            className={`w-full bg-surface-container-low border ${isAmountTooLow || isInsufficientBalance ? 'border-error' : 'border-outline-variant/20'} rounded-xl px-4 py-3 text-xl font-headline font-bold focus:ring-1 focus:ring-primary focus:border-primary`}
             autoFocus
           />
           {isAmountTooLow && (
@@ -50,17 +54,22 @@ function StakeModal({ pool, action, onClose, onConfirm, loading }) {
               Minimum staking amount is {pool.minStake}
             </p>
           )}
+          {isInsufficientBalance && (
+            <p className="text-error text-[10px] mt-2 font-bold uppercase tracking-wider">
+              Insufficient RIALO balance
+            </p>
+          )}
         </div>
         <button
           onClick={handleConfirm}
-          disabled={loading || !amount || parseFloat(amount) <= 0 || isAmountTooLow}
+          disabled={loading || !amount || parseFloat(amount) <= 0 || isAmountTooLow || isInsufficientBalance}
           className="w-full bg-primary text-on-primary py-4 rounded-xl font-bold text-base hover:bg-primary-container transition-all disabled:opacity-30"
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
               <span className="material-symbols-outlined animate-spin text-lg">autorenew</span> Processing…
             </span>
-          ) : `Confirm ${action}`}
+          ) : isInsufficientBalance ? `Insufficient Balance` : `Confirm ${action}`}
         </button>
       </div>
     </div>
@@ -238,6 +247,7 @@ export default function StakingPage() {
           onClose={() => setModal(null)}
           onConfirm={handleStakeAction}
           loading={loading}
+          userBalance={balances['RIALO'] || 0}
         />
       )}
 

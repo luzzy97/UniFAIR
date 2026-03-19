@@ -27,6 +27,11 @@ export default function BridgePage() {
       setToast({ message: 'Enter an amount greater than 0', type: 'error' });
       return;
     }
+    const currentBalance = balances['ETH'] || 0;
+    if (parseFloat(amount) > currentBalance) {
+      setToast({ message: 'Insufficient ETH balance', type: 'error' });
+      return;
+    }
     setLoading(true);
     setToast({ message: 'Initiating bridge…', type: 'loading' });
     try {
@@ -150,14 +155,20 @@ export default function BridgePage() {
           {/* CTA */}
           <button
             onClick={handleBridge}
-            disabled={loading}
+            disabled={loading || (isConnected && amount && parseFloat(amount) > (balances['ETH'] || 0))}
             className="w-full bg-white text-black py-5 rounded-2xl font-bold text-lg hover:bg-white/90 transition-all scale-[0.98] active:scale-95 shadow-2xl disabled:opacity-50"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="material-symbols-outlined animate-spin text-xl">autorenew</span> Bridging…
               </span>
-            ) : isConnected ? `Bridge to Rialo` : 'Connect Wallet'}
+            ) : !isConnected ? (
+              'Connect Wallet'
+            ) : amount && parseFloat(amount) > (balances['ETH'] || 0) ? (
+              'Insufficient ETH Balance'
+            ) : (
+              'Bridge to Rialo'
+            )}
           </button>
         </div>
 
