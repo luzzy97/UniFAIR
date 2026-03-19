@@ -43,6 +43,7 @@ export default function BridgePage() {
       });
       // Update balance (simulated)
       updateBalance('ETH', -parseFloat(amount));
+      updateBalance('RIALO', parseFloat(amount));
       setAmount('');
     } catch (err) {
       const msg = err.response?.data?.error || err.message || 'Bridge failed';
@@ -119,6 +120,7 @@ export default function BridgePage() {
           <div className="space-y-4 mt-6 mb-10">
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 font-label">To</span>
+              <span className="text-xs font-medium text-white/20">Balance: {balances['RIALO']?.toFixed(2) || '0.00'} RIALO</span>
             </div>
             <div className="bg-[#161616] rounded-2xl p-6 flex items-center justify-between border border-white/5">
               <div className="flex items-center gap-4">
