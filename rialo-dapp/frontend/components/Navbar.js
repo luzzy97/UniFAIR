@@ -16,22 +16,26 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="sticky top-0 w-full z-50 bg-black border-b border-white/5 shadow-2xl">
-      <div className="flex justify-between items-center px-8 py-4 max-w-[1200px] mx-auto">
+    <nav className="sticky top-0 w-full z-50 glass-nav transition-all duration-300">
+      <div className="flex justify-between items-center px-8 py-4 max-w-[1440px] mx-auto">
         <Link href="/" className="flex items-center gap-2">
-          <img src="/logo.svg" alt="Rialo Logo" className="h-11 w-auto opacity-95 transition-opacity hover:opacity-100" />
+          <img 
+            src="/logo.svg" 
+            alt="Rialo Logo" 
+            className="h-8 w-auto brightness-0" 
+          />
         </Link>
 
-        <div className="hidden md:flex gap-8 items-center font-body text-sm font-medium tracking-tight">
+        <div className="hidden md:flex bg-black rounded-full px-10 py-4 gap-10 items-center shadow-2xl">
           {links.map(({ href, label }) => {
             const active = router.pathname === href;
             return (
               <Link
                 key={href}
                 href={href}
-                className={active
-                  ? 'text-white font-bold border-b-2 border-white pb-1'
-                  : 'text-white/60 hover:text-white transition-colors'}
+                className={`text-[11px] font-bold uppercase tracking-[0.2em] transition-all hover:opacity-100 ${
+                  active ? 'text-white opacity-100' : 'text-white/40 opacity-40'
+                }`}
               >
                 {label}
               </Link>
@@ -39,22 +43,24 @@ export default function Navbar() {
           })}
         </div>
 
-        {isConnected ? (
-          <button
-            onClick={disconnect}
-            className="bg-white/10 text-white px-6 py-2.5 rounded-xl font-headline font-bold text-sm transition-all hover:bg-white/20 border border-white/10"
-          >
-            {shortAddress}
-          </button>
-        ) : (
-          <button
-            onClick={connect}
-            disabled={connecting}
-            className="bg-white text-black px-6 py-2.5 rounded-xl font-headline font-bold text-sm scale-95 active:opacity-80 transition-all hover:bg-white/90 disabled:opacity-50"
-          >
-            {connecting ? 'Connecting…' : 'Connect Wallet'}
-          </button>
-        )}
+        <div className="flex items-center gap-4">
+          {isConnected ? (
+            <button
+              onClick={disconnect}
+              className="bg-black text-white px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-widest transition-all hover:bg-black/80"
+            >
+              {shortAddress}
+            </button>
+          ) : (
+            <button
+              onClick={connect}
+              disabled={connecting}
+              className="bg-black text-white px-6 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-widest transition-all hover:bg-black/80 disabled:opacity-50"
+            >
+              {connecting ? 'Connecting…' : 'Connect'}
+            </button>
+          )}
+        </div>
       </div>
     </nav>
   );
