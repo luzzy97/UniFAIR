@@ -178,47 +178,47 @@ export default function StakingPage() {
           {displayedPools.map(pool => (
             <div
               key={pool.id}
-              className="bg-[#0c0c0c] rounded-2xl p-10 shadow-2xl flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-10 justify-between border border-white/5 hover:border-white/10 transition-colors"
+              className="bg-[#0c0c0c] rounded-2xl p-6 md:p-8 shadow-2xl flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-8 justify-between border border-white/5 hover:border-white/10 transition-colors"
             >
               {/* Pool Identity */}
-              <div className="flex items-center gap-6 flex-1 min-w-0">
-                <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/10 overflow-hidden p-4">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center flex-shrink-0 border border-white/10 overflow-hidden p-3 transition-transform group-hover:scale-105">
                   <img src="/rialo-icon.png" className="w-full h-full object-contain" alt="Rialo" />
                 </div>
                 <div>
-                  <h3 className="font-headline text-2xl font-bold text-white mb-1">{pool.name}</h3>
-                  <p className="font-body text-white/30 text-sm max-w-sm">{pool.description}</p>
+                  <h3 className="font-headline text-xl font-bold text-white mb-0.5">{pool.name}</h3>
+                  <p className="font-body text-white/30 text-xs max-w-sm line-clamp-1">{pool.description}</p>
                 </div>
               </div>
 
               {/* Stats */}
-              <div className="flex gap-12 flex-shrink-0">
+              <div className="flex gap-10 flex-shrink-0">
                 <div>
-                  <p className="font-label text-[10px] uppercase tracking-[0.2em] text-white/20 mb-2 font-bold">APY</p>
-                  <p className="font-headline text-2xl font-bold text-white">{pool.apy}</p>
+                  <p className="font-label text-[9px] uppercase tracking-[0.2em] text-white/20 mb-1 font-bold">APY</p>
+                  <p className="font-headline text-lg font-bold text-white">{pool.apy}</p>
                 </div>
                 <div>
-                  <p className="font-label text-[10px] uppercase tracking-[0.2em] text-white/20 mb-2 font-bold">Staked</p>
-                  <p className="font-headline text-2xl font-bold text-white">{pool.totalStaked}</p>
+                  <p className="font-label text-[9px] uppercase tracking-[0.2em] text-white/20 mb-1 font-bold">Staked</p>
+                  <p className="font-headline text-lg font-bold text-white">{pool.totalStaked}</p>
                 </div>
                 <div className="hidden lg:block">
-                  <p className="font-label text-[10px] uppercase tracking-[0.2em] text-white/20 mb-2 font-bold">TVL</p>
-                  <p className="font-headline text-2xl font-bold text-white">{pool.tvl}</p>
+                  <p className="font-label text-[9px] uppercase tracking-[0.2em] text-white/20 mb-1 font-bold">TVL</p>
+                  <p className="font-headline text-lg font-bold text-white">{pool.tvl}</p>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-4 flex-shrink-0 w-full md:w-auto">
+              <div className="flex gap-3 flex-shrink-0 w-full md:w-auto">
                 <button
                   onClick={() => openModal(pool, 'Stake')}
                   disabled={pool.type === 'Legacy'}
-                  className="flex-1 md:flex-none px-10 py-5 bg-white text-black rounded-2xl font-bold text-sm hover:bg-white/90 active:scale-95 transition-all shadow-2xl disabled:opacity-20 disabled:cursor-not-allowed"
+                  className="flex-1 md:flex-none px-8 py-3.5 bg-white text-black rounded-xl font-bold text-sm hover:bg-white/90 active:scale-95 transition-all shadow-2xl disabled:opacity-20 disabled:cursor-not-allowed"
                 >
                   Stake
                 </button>
                 <button
                   onClick={() => openModal(pool, 'Unstake')}
-                  className="flex-1 md:flex-none px-10 py-5 bg-transparent border border-white/10 text-white rounded-2xl font-bold text-sm hover:bg-white/5 transition-all active:scale-95"
+                  className="flex-1 md:flex-none px-8 py-3.5 bg-transparent border border-white/10 text-white rounded-xl font-bold text-sm hover:bg-white/5 transition-all active:scale-95"
                 >
                   Unstake
                 </button>
