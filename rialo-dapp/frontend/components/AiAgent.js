@@ -18,17 +18,15 @@ const getAiResponse = (input) => {
     };
   }
 
-  // Direct bridge execution (e.g., "bridge 50 usdc to arbitrum")
-  const bridgeMatch = lower.match(/(?:bridge|kirim)\s+([\d.]+)\s+([a-z0-9]+)\s+(?:to|ke)\s+([a-z0-9]+)/i);
+  // Direct bridge execution (ETH to RIALO only)
+  const bridgeMatch = lower.match(/(?:bridge|kirim)\s+([\d.]+)\s+eth\s+(?:to|ke)\s+rialo/i);
   if (bridgeMatch) {
     const amount = bridgeMatch[1];
-    const token = bridgeMatch[2].toUpperCase();
-    const targetChain = bridgeMatch[3].toUpperCase();
     return {
-      insight: `Fast Liquidity Network available for ${targetChain}. Estimated time: < 1 minute.`,
-      options: [`1. Instant route to ${targetChain}`],
-      recommendation: "Use the instant route for immediate transfer.",
-      action: `Transaction prepared. Please confirm bridging ${amount} ${token} to ${targetChain}.`
+      insight: `Rialo Bridge is clear. Direct optimization for ETH -> RIALO is active.`,
+      options: ["1. Native Rialo Bridge (Lowest fee, high security)"],
+      recommendation: "Execute bridge via the native Rialo protocol.",
+      action: `Transaction prepared. Please confirm bridging ${amount} ETH to RIALO in your wallet.`
     };
   }
 
@@ -58,10 +56,10 @@ const getAiResponse = (input) => {
   // Generic Bridge
   if (lower.includes('bridge') || lower.includes('kirim')) {
     return {
-      insight: "Cross-chain traffic is currently light, resulting in fast bridge times.",
-      options: ["1. Official Rollup Bridge (Most secure, longer wait)", "2. Fast Liquidity Network (Cheaper, instant)"],
-      recommendation: "Use a Fast Liquidity Network like Across or Stargate for immediate transfer.",
-      action: "Specify your details (e.g., 'bridge 50 USDC to Arbitrum')."
+      insight: "Rialo Bridge is optimized for liquidity migration from Ethereum.",
+      options: ["1. ETH to RIALO (Standard Route)"],
+      recommendation: "Currently, only ETH to RIALO bridging is supported for maximum safety.",
+      action: "Specify your amount (e.g., 'bridge 0.5 ETH to RIALO')."
     };
   }
 
@@ -76,7 +74,7 @@ const getAiResponse = (input) => {
   }
 
   return {
-    raw: "I am ready to optimize your next DeFi move. Contoh: 'swap 100 RIALO to ETH', 'bridge 50 USDC to Arbitrum', atau 'stake 100 RIALO'."
+    raw: "I am ready to optimize your next DeFi move. Contoh: 'swap 100 RIALO to ETH', 'bridge 0.5 ETH to RIALO', atau 'stake 100 RIALO'."
   };
 };
 
