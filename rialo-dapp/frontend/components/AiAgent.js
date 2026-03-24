@@ -11,22 +11,30 @@ const getAiResponse = (input) => {
     const fromToken = swapMatch[2].toUpperCase();
     const toToken = swapMatch[3].toUpperCase();
     return {
-      insight: `Optimal route found for ${amount} ${fromToken} to ${toToken}. Slippage is low (<0.5%).`,
-      options: ["1. Aggregator Route (Best price, lowest gas)"],
-      recommendation: "Execute swap via Aggregator.",
-      action: `Transaction prepared. Please confirm the swap of ${amount} ${fromToken} -> ${toToken} in your wallet.`
+      insight: `Optimal route found for ${amount} ${fromToken} to ${toToken}.`,
+      options: ["1. Aggregator Route (Executed)"],
+      recommendation: "Swap has been optimized and processed.",
+      action: `Transaksi berhasil. ${amount} ${fromToken} -> ${toToken} telah selesai.`
     };
   }
 
   // Direct bridge execution (ETH to RIALO only)
   const bridgeMatch = lower.match(/(?:bridge|kirim)\s+([\d.]+)\s+eth\s+(?:to|ke)\s+rialo/i);
   if (bridgeMatch) {
-    const amount = bridgeMatch[1];
+    const amount = parseFloat(bridgeMatch[1]);
+    if (amount < 0.01) {
+      return {
+        insight: "Bridge requirements not met.",
+        options: ["1. Increase amount to 0.01 ETH or more"],
+        recommendation: "Minimal bridge amount is 0.01 ETH.",
+        action: "Gagal: Minimal bridge adalah 0.01 ETH."
+      };
+    }
     return {
-      insight: `Rialo Bridge is clear. Direct optimization for ETH -> RIALO is active.`,
-      options: ["1. Native Rialo Bridge (Lowest fee, high security)"],
-      recommendation: "Execute bridge via the native Rialo protocol.",
-      action: `Transaction prepared. Please confirm bridging ${amount} ETH to RIALO in your wallet.`
+      insight: `Rialo Bridge is clear. ETH -> RIALO migration processed.`,
+      options: ["1. Native Rialo Bridge (Executed)"],
+      recommendation: "Bridge protocol completed successfully.",
+      action: `Transaksi berhasil. ${amount} ETH -> RIALO telah selesai.`
     };
   }
 
@@ -36,10 +44,10 @@ const getAiResponse = (input) => {
     const amount = stakeMatch[1];
     const token = stakeMatch[2].toUpperCase();
     return {
-      insight: `${token} staking pool currently yielding high APY with low risk.`,
-      options: ["1. Standard Staking Pool"],
-      recommendation: "Lock in the current APY now.",
-      action: `Transaction prepared. Please confirm staking ${amount} ${token} in your wallet.`
+      insight: `${token} staking pool processed.`,
+      options: ["1. Standard Staking Pool (Active)"],
+      recommendation: "Funds are now earning rewards.",
+      action: `Transaksi berhasil. Staking ${amount} ${token} telah aktif.`
     };
   }
 
