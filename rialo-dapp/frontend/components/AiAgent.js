@@ -503,6 +503,30 @@ export default function AiAgent() {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        .ai-quick-commands {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 12px;
+          overflow-x: auto;
+          padding-bottom: 4px;
+        }
+        .ai-quick-commands::-webkit-scrollbar { display: none; }
+        .ai-command-chip {
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          padding: 6px 12px;
+          border-radius: 999px;
+          font-size: 11px;
+          color: rgba(255,255,255,0.6);
+          white-space: nowrap;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .ai-command-chip:hover {
+          background: rgba(255,255,255,0.1);
+          border-color: #ffa500;
+          color: #ffa500;
+        }
       `}</style>
 
       <div className="ai-widget">
@@ -612,6 +636,11 @@ export default function AiAgent() {
           </div>
 
           <div className="ai-footer">
+            <div className="ai-quick-commands">
+              <button onClick={() => setInput("swap 10 USDC to RIALO in 1 minute")} className="ai-command-chip">Schedule Swap (1m)</button>
+              <button onClick={() => setInput("stake 100 RIALO in 5 minutes")} className="ai-command-chip">Schedule Stake (5m)</button>
+              <button onClick={() => setInput("bridge 0.05 ETH to RIALO")} className="ai-command-chip">Bridge ETH</button>
+            </div>
             <form className="ai-form" onSubmit={handleSend}>
               <input 
                 type="text" 
