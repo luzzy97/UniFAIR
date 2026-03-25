@@ -152,8 +152,13 @@ export function WalletProvider({ children }) {
           if (tokens && tokens.length >= 2) {
             const fromToken = tokens[0].toUpperCase();
             const toToken = tokens[1].toUpperCase();
-            const rate = (fromToken === 'ETH' && toToken === 'RIALO') ? 2400 : 
-                         (fromToken === 'RIALO' && toToken === 'ETH') ? 1/2400 : 1;
+            const rate = 
+              (fromToken === 'ETH' && toToken === 'RIALO') ? 2400 : 
+              (fromToken === 'RIALO' && toToken === 'ETH') ? 1/2400 :
+              (fromToken === 'ETH' && (toToken === 'USDC' || toToken === 'USDT')) ? 2400 :
+              ((fromToken === 'USDC' || fromToken === 'USDT') && toToken === 'ETH') ? 1/2400 :
+              ((fromToken === 'USDC' || fromToken === 'USDT') && toToken === 'RIALO') ? 1 :
+              (fromToken === 'RIALO' && (toToken === 'USDC' || toToken === 'USDT')) ? 1 : 1;
             updateBalance(fromToken, -amount);
             updateBalance(toToken, amount * rate);
           }
