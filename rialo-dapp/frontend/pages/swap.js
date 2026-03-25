@@ -23,10 +23,10 @@ export default function SwapPage() {
   const [showToTokenList, setShowToTokenList] = useState(false);
 
   const RATES = {
-    'ETH': { 'RIALO': 24102, 'USDC': 3200, 'USDT': 3198 },
-    'RIALO': { 'ETH': 1/24102, 'USDC': 3200/24102, 'USDT': 3198/24102 },
-    'USDC': { 'ETH': 1/3200, 'RIALO': 24102/3200, 'USDT': 1 },
-    'USDT': { 'ETH': 1/3198, 'RIALO': 24102/3198, 'USDC': 1 },
+    'ETH': { 'RIALO': 2400, 'USDC': 2400, 'USDT': 2400 },
+    'RIALO': { 'ETH': 1/2400, 'USDC': 1, 'USDT': 1 },
+    'USDC': { 'ETH': 1/2400, 'RIALO': 1, 'USDT': 1 },
+    'USDT': { 'ETH': 1/2400, 'RIALO': 1, 'USDC': 1 },
   };
 
   const getRate = (from, to) => RATES[from]?.[to] ?? 1;
