@@ -32,56 +32,36 @@ export default function DashboardPage() {
           </p>
         </header>
 
-        {/* Top Stats Bento Grid */}
+        {/* Individual Asset Balances */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          {/* Total Portfolio */}
-          <div className="lg:col-span-2 bg-[#0c0c0c] rounded-2xl p-10 flex flex-col justify-between min-h-[280px] border border-white/5 shadow-2xl relative overflow-hidden group">
-            <div className="relative z-10">
-              <span className="font-label text-[10px] text-white/30 uppercase tracking-[0.2em] font-bold mb-6 block">Total Portfolio Value</span>
-              <h2 className="font-headline text-[4rem] font-extrabold text-white leading-none tracking-tighter">
-                {isConnected ? totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
-                <span className="text-white/10 text-2xl block mt-2 font-body font-normal">RIALO</span>
-              </h2>
+          {[
+            { symbol: 'RIALO', label: 'Ecosystem Token', color: 'bg-primary', icon: 'currency_exchange' },
+            { symbol: 'ETH', label: 'Ethereum Mainnet', color: 'bg-[#627EEA]', icon: 'token' },
+            { symbol: 'USDC', label: 'USD Coin', color: 'bg-[#2775CA]', icon: 'monetization_on' },
+            { symbol: 'USDT', label: 'Tether USD', color: 'bg-[#26A17B]', icon: 'account_balance_wallet' },
+          ].map((token) => (
+            <div key={token.symbol} className="bg-[#0c0c0c] rounded-2xl p-8 flex flex-col justify-between min-h-[220px] border border-white/5 shadow-2xl relative overflow-hidden group hover:border-primary/20 transition-all">
+              <div className="relative z-10 flex justify-between items-start">
+                <div>
+                  <span className="font-label text-[10px] text-white/30 uppercase tracking-[0.2em] font-bold mb-2 block">{token.label}</span>
+                  <h2 className="font-headline text-3xl font-extrabold text-white leading-none tracking-tighter">
+                    {isConnected ? (balances[token.symbol] || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+                  </h2>
+                  <p className="text-white/20 text-xs mt-2 font-body font-normal">{token.symbol}</p>
+                </div>
+                <div className={`w-10 h-10 rounded-lg ${token.color}/20 flex items-center justify-center border border-white/5`}>
+                   <span className={`material-symbols-outlined text-sm ${token.symbol === 'RIALO' ? 'text-primary' : 'text-white/70'}`}>{token.icon}</span>
+                </div>
+              </div>
+              <div className="relative z-10 pt-6">
+                <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                  <div className={`h-full ${token.color} opacity-30`} style={{ width: '100%' }}></div>
+                </div>
+              </div>
+              {/* Subtle background decoration */}
+              <div className={`absolute top-0 right-0 w-32 h-32 ${token.color}/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:${token.color}/10 transition-colors`}></div>
             </div>
-            <div className="flex items-center gap-4 relative z-10">
-               <div className="flex -space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-primary border-2 border-[#0c0c0c] flex items-center justify-center text-[10px] font-bold">R</div>
-                  <div className="w-8 h-8 rounded-full bg-white/10 border-2 border-[#0c0c0c] flex items-center justify-center text-[10px] font-bold">E</div>
-               </div>
-               <span className="text-white/40 text-xs font-bold uppercase tracking-widest">Active globally</span>
-            </div>
-            {/* Subtle background decoration */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-primary/10 transition-colors"></div>
-          </div>
-
-          {/* Staking Summary */}
-          <div className="bg-white rounded-2xl p-10 flex flex-col justify-between min-h-[280px] text-black shadow-2xl transition-transform hover:scale-[1.02]">
-            <div>
-              <span className="font-label text-[10px] text-black/40 uppercase tracking-[0.2em] font-bold mb-6 block">Currently Staking</span>
-              <h2 className="font-headline text-4xl font-extrabold leading-none tracking-tight">
-                {isConnected ? stakedBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
-                <span className="text-black/20 text-xl block mt-2 font-body font-normal">RIALO</span>
-              </h2>
-            </div>
-            <Link href="/staking" className="w-full bg-black text-white font-headline font-bold py-4 rounded-xl hover:bg-black/90 transition-all flex items-center justify-center gap-2 group">
-              Manage Stake 
-              <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
-            </Link>
-          </div>
-
-          {/* Rewards Summary */}
-          <div className="bg-[#0c0c0c] rounded-2xl p-10 flex flex-col justify-between min-h-[280px] border border-white/5 shadow-2xl">
-            <div>
-              <span className="font-label text-[10px] text-white/30 uppercase tracking-[0.2em] font-bold mb-6 block">Accumulated Rewards</span>
-              <h2 className="font-headline text-4xl font-extrabold text-white leading-none tracking-tight">
-                {isConnected ? rewards.claimable : '0.00'}
-                <span className="text-white/10 text-xl block mt-2 font-body font-normal">RIALO</span>
-              </h2>
-            </div>
-            <Link href="/rewards" className="text-primary font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:opacity-70 transition-opacity">
-              Claim Rewards <span className="material-symbols-outlined text-sm">download</span>
-            </Link>
-          </div>
+          ))}
         </div>
 
         {/* Unified History Section */}
