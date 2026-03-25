@@ -19,7 +19,7 @@ export default function Home() {
                 Simplifying <br />DeFi Complexity <br />with AI
               </h1>
               <p className="text-white/80 max-w-lg mb-10 leading-relaxed text-lg">
-                Optimizing your on-chain operations with Rialo AI to simplify swaps, bridges, and staking.
+                Swap, bridge, and stake seamlessly powered by intelligent agents that optimize every move, automate execution, and simplify your entire DeFi experience.
               </p>
               <div className="flex flex-wrap gap-4">
                 <button
