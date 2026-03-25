@@ -45,11 +45,15 @@ export default function Footer() {
             Built on the architectural void. Powered by precision.
           </p>
           <div className="flex gap-6">
-            {['Twitter', 'Discord', 'Telegram'].map((s) => (
-              <a key={s} href="#" className="font-headline text-[10px] text-[#A1A1AA]/80 hover:text-white transition-colors">
-                {s}
-              </a>
-            ))}
+            <a href="https://x.com/RialoHQ" target="_blank" rel="noopener noreferrer" className="font-headline text-[10px] text-[#A1A1AA]/80 hover:text-white transition-colors">
+              X
+            </a>
+            <a href="https://discord.com/invite/RialoProtocol" target="_blank" rel="noopener noreferrer" className="font-headline text-[10px] text-[#A1A1AA]/80 hover:text-white transition-colors">
+              Discord
+            </a>
+            <a href="#" className="font-headline text-[10px] text-[#A1A1AA]/80 hover:text-white transition-colors">
+              Telegram
+            </a>
           </div>
         </div>
       </div>
