@@ -176,8 +176,8 @@ export default function DashboardPage() {
                   return (
                     <div key={i} className="space-y-2">
                       <div className="flex justify-between items-end">
-                        <span className="font-headline font-bold text-sm text-white">{item.label}</span>
-                        <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                        <span className="font-headline font-bold text-sm text-on-surface">{item.label}</span>
+                        <span className="text-[10px] font-bold text-on-surface/40 uppercase tracking-widest">
                           {item.value.toLocaleString('en-US', { minimumFractionDigits: 2 })} RIALO ({percentage.toFixed(1)}%)
                         </span>
                       </div>
@@ -192,16 +192,16 @@ export default function DashboardPage() {
                 })}
               </div>
 
-              <div className="mt-12 pt-8 border-t border-white/5 grid grid-cols-2 gap-8">
+              <div className="mt-12 pt-8 border-t border-on-surface/5 grid grid-cols-2 gap-8">
                 <div>
-                  <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-2">Network APY</p>
-                  <p className="font-headline text-2xl font-extrabold text-white">18.4%</p>
+                  <p className="text-[10px] font-bold text-on-surface/30 uppercase tracking-[0.2em] mb-2">Network APY</p>
+                  <p className="font-headline text-2xl font-extrabold text-on-surface">18.4%</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-2">Protocol Status</p>
+                  <p className="text-[10px] font-bold text-on-surface/30 uppercase tracking-[0.2em] mb-2">Protocol Status</p>
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.3)]"></div>
-                    <p className="font-headline text-2xl font-extrabold text-white">Optimal</p>
+                    <p className="font-headline text-2xl font-extrabold text-on-surface">Optimal</p>
                   </div>
                 </div>
               </div>
@@ -223,12 +223,12 @@ export default function DashboardPage() {
                   className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/5 hover:border-primary/30 transition-all group"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center group-hover:bg-primary group-hover:text-on-primary transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center group-hover:bg-primary group-hover:text-on-primary transition-colors border border-on-surface/5">
                       <span className="material-symbols-outlined text-sm">{action.icon}</span>
                     </div>
                     <div>
-                      <p className="font-headline font-bold text-sm text-white group-hover:text-primary transition-colors">{action.label}</p>
-                      <p className="text-[10px] text-white/40 font-body mt-1">{action.desc}</p>
+                      <p className="font-headline font-bold text-sm text-on-surface group-hover:text-primary transition-colors">{action.label}</p>
+                      <p className="text-[10px] text-on-surface/40 font-body mt-1">{action.desc}</p>
                     </div>
                   </div>
                 </Link>
