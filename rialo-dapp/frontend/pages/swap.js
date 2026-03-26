@@ -277,16 +277,16 @@ export default function SwapPage() {
                     <span className="font-label text-xs uppercase tracking-widest text-white/30 font-bold">Trigger Price</span>
                     <span className="font-label text-xs text-white/40">Current: {currentRateValue.toFixed(4)} {toToken}</span>
                   </div>
-                  <div className="flex items-center gap-2 bg-[#0c0c0c] p-3 rounded-xl border border-white/5">
-                    <span className="font-headline font-bold text-sm text-white/50">1 {fromToken} =</span>
+                  <div className="flex items-center gap-3 bg-[#0c0c0c] p-3 rounded-xl border border-white/5">
+                    <span className="font-headline font-bold text-sm text-white/50 whitespace-nowrap">1 {fromToken} =</span>
                     <input
                       type="text"
                       placeholder={currentRateValue.toFixed(4)}
                       value={targetPrice}
                       onChange={e => setTargetPrice(e.target.value.replace(/[^0-9.]/g, ''))}
-                      className="bg-transparent border-none p-0 text-xl font-headline font-extrabold w-full focus:ring-0 text-white text-right placeholder:text-white/10"
+                      className="bg-transparent border-none p-0 text-xl font-headline font-extrabold flex-1 focus:ring-0 text-white text-right placeholder:text-white/10"
                     />
-                    <span className="font-headline font-bold text-sm text-white/50">{toToken}</span>
+                    <span className="font-headline font-bold text-sm text-white/50 flex-shrink-0">{toToken}</span>
                   </div>
                 </div>
                 
