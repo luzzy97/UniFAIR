@@ -119,7 +119,7 @@ export default function AiAgent() {
 
   useEffect(() => {
     if (isOpen) scrollToBottom();
-  }, [messages, isOpen]);
+  }, [messages, scheduledTxs, isOpen]);
 
   // Timer effect for scheduled transactions
   useEffect(() => {
@@ -645,28 +645,6 @@ export default function AiAgent() {
           </div>
           
           <div className="ai-body">
-            {scheduledTxs.length > 0 && (
-              <div className="ai-scheduled-list">
-                {scheduledTxs.map(tx => (
-                  <div key={tx.id} className="ai-scheduled-item">
-                    <div className="ai-scheduled-timer">
-                      {tx.remainingSec > 60 ? `${Math.ceil(tx.remainingSec/60)}m` : `${tx.remainingSec}s`}
-                    </div>
-                    <div className="ai-scheduled-info">
-                      <div className="ai-scheduled-title">Scheduled {tx.type}</div>
-                      <div className="ai-scheduled-detail">{tx.detail}</div>
-                    </div>
-                    <button 
-                      onClick={() => setScheduledTxs(prev => prev.filter(t => t.id !== tx.id))}
-                      className="text-white/20 hover:text-red-400 transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-sm">cancel</span>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
             {messages.map((m, i) => (
               <div key={i} className={`ai-msg ${m.role}`}>
                 {m.role === 'user' ? (
@@ -707,6 +685,29 @@ export default function AiAgent() {
                 )}
               </div>
             ))}
+
+            {scheduledTxs.length > 0 && (
+              <div className="ai-scheduled-list">
+                {scheduledTxs.map(tx => (
+                  <div key={tx.id} className="ai-scheduled-item">
+                    <div className="ai-scheduled-timer">
+                      {tx.remainingSec > 60 ? `${Math.ceil(tx.remainingSec/60)}m` : `${tx.remainingSec}s`}
+                    </div>
+                    <div className="ai-scheduled-info">
+                      <div className="ai-scheduled-title">Scheduled {tx.type}</div>
+                      <div className="ai-scheduled-detail">{tx.detail}</div>
+                    </div>
+                    <button 
+                      onClick={() => setScheduledTxs(prev => prev.filter(t => t.id !== tx.id))}
+                      className="text-white/20 hover:text-red-400 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-sm">cancel</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
             <div ref={messagesEndRef} />
           </div>
 
