@@ -109,6 +109,21 @@ export default function LearnPage() {
           </div>
         </section>
 
+        {/* Contributors Section */}
+        <section className="bg-[#EAE6D7] rounded-3xl p-12 md:p-24 text-center mb-32 shadow-xl text-[#111111]">
+          <h2 className="font-headline text-[3.5rem] font-medium mb-6 tracking-tight">Contributors</h2>
+          <p className="max-w-[1000px] mx-auto text-black/70 mb-20 text-lg leading-relaxed font-body">
+            Our contributors comprise experienced builders and researchers from leading organizations across blockchain infrastructure and hyper-growth companies. Collectively, we have contributed to some of the most foundational projects in the ecosystem. Today, we are focused on designing the next-generation of decentralized networks that transcend incremental innovation.
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-x-8 gap-y-16 items-center opacity-70 font-headline font-bold text-xl tracking-tight">
+            {['Meta', 'NETFLIX', 'Google', 'Apple', 'Microsoft', 'Amazon', 'Uber', 'Robinhood', 'VMware', 'Mysten Labs', 'Pantera', 'Solana', 'Magic Eden', 'EigenLayer', 'Near', 'Linera', 'Parity', 'Diem', 'Citadel', 'Chainlink', 'MoonPay', 'Red Hat', 'Gensyn', 'zkSync'].map(brand => (
+              <div key={brand} className="flex items-center justify-center hover:opacity-100 transition-opacity cursor-default grayscale hover:grayscale-0">
+                {brand}
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Newsletter CTA */}
         <section className="bg-surface-container-lowest rounded-xl p-12 md:p-20 text-center shadow-[0px_24px_48px_rgba(0,0,0,0.04)]">
           <h2 className="font-headline text-3xl font-bold mb-4">Stay at the Frontier.</h2>
