@@ -158,9 +158,17 @@ const getAiResponse = (input) => {
 
 export default function AiAgent() {
   const { isConnected, executeAiTransaction, addTriggerOrder, globalRates, scheduledTxs, addScheduledTx, removeScheduledTx, toast, showToast } = useWallet();
-  const [messages, setMessages] = useState([
-    { role: 'ai', content: { raw: "Rialo AI is online. How can I optimize your on-chain operations today?" } }
-  ]);
+  const [messages, setMessages] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('rialo_ai_messages');
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e) { console.error(e); }
+      }
+    }
+    return [
+      { role: 'ai', content: { raw: "Rialo AI is online. How can I optimize your on-chain operations today?" } }
+    ];
+  });
   const [input, setInput] = useState('');
   const [showSchedulePanel, setShowSchedulePanel] = useState(false);
   const [schedData, setSchedData] = useState({ type: 'Swap', amount: '10', fromToken: 'USDC', toToken: 'RIALO', timeVal: '5', timeUnit: 'minutes' });
@@ -175,13 +183,7 @@ export default function AiAgent() {
     localStorage.setItem('rialo_ai_messages', JSON.stringify(messages));
   }, [messages, scheduledTxs]);
 
-  // Load messages from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('rialo_ai_messages');
-    if (saved) {
-      try { setMessages(JSON.parse(saved)); } catch (e) { console.error(e); }
-    }
-  }, []);
+
 
 
 

@@ -24,27 +24,32 @@ export function WalletProvider({ children }) {
     'USDT': 500.00
   });
   const [stakedBalance, setStakedBalance] = useState(0);
-  const [transactions, setTransactions] = useState([]);
+  const [transactions, setTransactions] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('rialo_transactions');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
   const [globalRates, setGlobalRates] = useState(INIT_RATES);
-  const [triggerOrders, setTriggerOrders] = useState([]);
-  const [scheduledTxs, setScheduledTxs] = useState([]); // { id, type, userMsg, detail, remainingSec }
+  const [triggerOrders, setTriggerOrders] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('rialo_trigger_orders');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+  const [scheduledTxs, setScheduledTxs] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('rialo_scheduled_txs');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  }); // { id, type, userMsg, detail, remainingSec }
   const [toast, setToast] = useState(null); // { message, detail, type, txHash }
 
   // Load transactions and limit orders from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('rialo_transactions');
-    if (saved) {
-      try { setTransactions(JSON.parse(saved)); } catch (e) { console.error(e); }
-    }
-    const savedOrders = localStorage.getItem('rialo_trigger_orders');
-    if (savedOrders) {
-      try { setTriggerOrders(JSON.parse(savedOrders)); } catch(e) { console.error(e); }
-    }
-    const savedScheduled = localStorage.getItem('rialo_scheduled_txs');
-    if (savedScheduled) {
-      try { setScheduledTxs(JSON.parse(savedScheduled)); } catch(e) { console.error(e); }
-    }
-  }, []);
+
 
   // Sync to localStorage
   useEffect(() => {
