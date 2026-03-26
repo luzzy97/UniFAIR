@@ -277,21 +277,18 @@ export default function SwapPage() {
                     <span className="font-label text-xs uppercase tracking-widest text-white/30 font-bold">Trigger Price</span>
                     <span className="font-label text-xs text-white/40">Current: {currentRateValue.toFixed(4)} {toToken}</span>
                   </div>
-                  <div className="bg-[#0c0c0c] p-5 rounded-2xl border border-white/5 space-y-2 transition-all focus-within:border-white/10">
-                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-[0.2em] text-white/20">
-                      <span>Execution Rate</span>
-                      <span>1 {fromToken}</span>
+                  <div className="flex items-center justify-between bg-[#0c0c0c] p-4 rounded-2xl border border-white/5 transition-all focus-within:border-white/20 overflow-hidden">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/20 mb-1">Trigger Rate</span>
+                      <span className="font-headline font-bold text-sm text-white/40 whitespace-nowrap">1 {fromToken} =</span>
                     </div>
-                    <div className="flex items-center gap-4 pt-1">
-                      <span className="text-2xl font-headline font-bold text-white/10">=</span>
-                      <input
-                        type="text"
-                        placeholder={currentRateValue.toFixed(4)}
-                        value={targetPrice}
-                        onChange={e => setTargetPrice(e.target.value.replace(/[^0-9.]/g, ''))}
-                        className="bg-transparent border-none p-0 text-3xl font-headline font-extrabold flex-1 focus:ring-0 text-white text-right placeholder:text-white/10 tracking-tighter outline-none"
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      placeholder={currentRateValue.toFixed(4)}
+                      value={targetPrice}
+                      onChange={e => setTargetPrice(e.target.value.replace(/[^0-9.]/g, ''))}
+                      className="bg-transparent border-none p-0 text-2xl md:text-3xl font-headline font-extrabold flex-1 focus:ring-0 text-white text-right placeholder:text-white/10 tracking-tight outline-none ml-4 min-w-0"
+                    />
                   </div>
                 </div>
                 
