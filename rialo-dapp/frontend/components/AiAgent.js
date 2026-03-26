@@ -785,9 +785,7 @@ export default function AiAgent() {
                 <span className="material-symbols-outlined text-[12px] align-middle mr-1">schedule</span>
                 Advanced Schedule
               </button>
-              <button onClick={() => setInput("swap 10 USDC to RIALO in 1 minute")} className="ai-command-chip">Swap 10 (1m)</button>
               <button onClick={() => setInput("swap 1 ETH to USDC at 2500")} className="ai-command-chip">Auto Buy/Sell</button>
-              <button onClick={() => setInput("stake 100 RIALO in 5 minutes")} className="ai-command-chip">Stake 100 (5m)</button>
             </div>
             <form className="ai-form" onSubmit={handleSend}>
               <input 
