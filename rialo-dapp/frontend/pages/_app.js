@@ -1,10 +1,14 @@
 import '../styles/globals.css';
 import { WalletProvider } from '../hooks/useWallet';
 import Head from 'next/head';
+import GlobalToast from '../components/GlobalToast';
+import ActiveTasks from '../components/ActiveTasks';
 
 export default function App({ Component, pageProps }) {
   return (
     <WalletProvider>
+      <GlobalToast />
+      <ActiveTasks />
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />

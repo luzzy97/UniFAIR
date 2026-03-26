@@ -157,13 +157,11 @@ const getAiResponse = (input) => {
 };
 
 export default function AiAgent() {
-  const { isConnected, executeAiTransaction, addTriggerOrder, globalRates } = useWallet();
+  const { isConnected, executeAiTransaction, addTriggerOrder, globalRates, scheduledTxs, addScheduledTx, removeScheduledTx, toast, showToast } = useWallet();
   const [messages, setMessages] = useState([
     { role: 'ai', content: { raw: "Rialo AI is online. How can I optimize your on-chain operations today?" } }
   ]);
   const [input, setInput] = useState('');
-  const [toast, setToast] = useState(null); // { message, type, txHash }
-  const [scheduledTxs, setScheduledTxs] = useState([]); // Array of { id, type, userMsg, detail, remainingSec }
   const [showSchedulePanel, setShowSchedulePanel] = useState(false);
   const [schedData, setSchedData] = useState({ type: 'Swap', amount: '10', fromToken: 'USDC', toToken: 'RIALO', timeVal: '5', timeUnit: 'minutes' });
   const messagesEndRef = useRef(null);
@@ -174,43 +172,18 @@ export default function AiAgent() {
 
   useEffect(() => {
     scrollToBottom();
+    localStorage.setItem('rialo_ai_messages', JSON.stringify(messages));
   }, [messages, scheduledTxs]);
 
-  // Timer effect for scheduled transactions
+  // Load messages from localStorage on mount
   useEffect(() => {
-    if (scheduledTxs.length === 0) return;
-
-    const interval = setInterval(() => {
-      setScheduledTxs(prev => {
-        const next = [];
-        prev.forEach(tx => {
-          if (tx.remainingSec <= 1) {
-            // EXECUTE NOW
-            const txHash = executeAiTransaction(tx.type, tx.userMsg, tx.detail);
-            setToast({
-              message: `Auto ${tx.type} completed!`,
-              detail: tx.detail,
-              txHash: txHash
-            });
-            // Don't add to next
-          } else {
-            next.push({ ...tx, remainingSec: tx.remainingSec - 1 });
-          }
-        });
-        return next;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [scheduledTxs, executeAiTransaction]);
-
-  // Clear toast after 6 seconds
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 6000);
-      return () => clearTimeout(timer);
+    const saved = localStorage.getItem('rialo_ai_messages');
+    if (saved) {
+      try { setMessages(JSON.parse(saved)); } catch (e) { console.error(e); }
     }
-  }, [toast]);
+  }, []);
+
+
 
   const handleSend = (e) => {
     e.preventDefault();
@@ -246,24 +219,28 @@ export default function AiAgent() {
             condition: condition,
             expiration: '1 Day'
           });
-          setToast({
+          showToast({
             message: `Limit Order Placed!`,
             detail: detail,
             txHash: '0x' + Math.random().toString(16).slice(2, 42)
           });
         } else if (response.delaySec > 0) {
-          // SCHEDULE IT
-          setScheduledTxs(prev => [...prev, {
-            id: Math.random().toString(16).slice(2, 8),
+          // SCHEDULE IT (global — persists on navigation)
+          addScheduledTx({
             type: type,
             userMsg: userMsg,
             detail: detail,
             remainingSec: response.delaySec
-          }]);
+          });
+          showToast({
+            message: `Scheduled ${type}!`,
+            detail: detail,
+            txHash: '0x' + Math.random().toString(16).slice(2, 42)
+          });
         } else {
           // EXECUTE IMMEDIATELY
           const txHash = executeAiTransaction(type, userMsg, detail);
-          setToast({
+          showToast({
             message: `${type} successful!`,
             detail: detail,
             txHash: txHash
@@ -296,60 +273,6 @@ export default function AiAgent() {
           max-width: 800px;
           margin: 0 auto;
           font-family: inherit;
-        }
-
-        /* ── Toast Styled to match screenshot ── */
-        .ai-toast {
-          position: fixed;
-          bottom: 24px;
-          right: 24px;
-          z-index: 10000;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          background: #000;
-          color: #fff;
-          padding: 10px 20px;
-          border-radius: 999px;
-          box-shadow: 0 12px 48px rgba(0,0,0,0.5);
-          animation: slideInToast 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-          border: 1px solid rgba(255,255,255,0.1);
-          min-width: 280px;
-        }
-        @keyframes slideInToast {
-          from { opacity: 0; transform: translateY(20px) scale(0.95); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .ai-toast-icon {
-          width: 24px;
-          height: 24px;
-          background: #fff;
-          color: #000;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-        .ai-toast-content {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-        }
-        .ai-toast-title {
-          font-weight: 700;
-          font-size: 13px;
-          letter-spacing: -0.01em;
-        }
-        .ai-toast-link {
-          font-size: 11px;
-          color: rgba(255,255,255,0.6);
-          text-decoration: underline;
-          margin-top: 2px;
-          transition: color 0.2s;
-        }
-        .ai-toast-link:hover {
-          color: #fff;
         }
 
         .ai-window {
@@ -646,22 +569,6 @@ export default function AiAgent() {
       `}</style>
 
       <div className="ai-widget">
-        {toast && (
-          <div className="ai-toast">
-            <div className="ai-toast-icon">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <path d="M20 6L9 17L4 12" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            <div className="ai-toast-content">
-              <div className="ai-toast-title">{toast.message} {toast.detail}</div>
-              <a href={`https://etherscan.io/tx/${toast.txHash}`} target="_blank" rel="noopener noreferrer" className="ai-toast-link">
-                View on Etherscan ↗
-              </a>
-            </div>
-          </div>
-        )}
-
         <div className="ai-window">
           <div className="ai-header">
             <div className="ai-title">
@@ -724,7 +631,7 @@ export default function AiAgent() {
                       <div className="ai-scheduled-detail">{tx.detail}</div>
                     </div>
                     <button 
-                      onClick={() => setScheduledTxs(prev => prev.filter(t => t.id !== tx.id))}
+                      onClick={() => removeScheduledTx(tx.id)}
                       className="text-white/20 hover:text-red-400 transition-colors"
                     >
                       <span className="material-symbols-outlined text-sm">cancel</span>

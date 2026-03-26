@@ -27,6 +27,8 @@ export function WalletProvider({ children }) {
   const [transactions, setTransactions] = useState([]);
   const [globalRates, setGlobalRates] = useState(INIT_RATES);
   const [triggerOrders, setTriggerOrders] = useState([]);
+  const [scheduledTxs, setScheduledTxs] = useState([]); // { id, type, userMsg, detail, remainingSec }
+  const [toast, setToast] = useState(null); // { message, detail, type, txHash }
 
   // Load transactions and limit orders from localStorage on mount
   useEffect(() => {
@@ -38,13 +40,18 @@ export function WalletProvider({ children }) {
     if (savedOrders) {
       try { setTriggerOrders(JSON.parse(savedOrders)); } catch(e) { console.error(e); }
     }
+    const savedScheduled = localStorage.getItem('rialo_scheduled_txs');
+    if (savedScheduled) {
+      try { setScheduledTxs(JSON.parse(savedScheduled)); } catch(e) { console.error(e); }
+    }
   }, []);
 
   // Sync to localStorage
   useEffect(() => {
     localStorage.setItem('rialo_transactions', JSON.stringify(transactions));
     localStorage.setItem('rialo_trigger_orders', JSON.stringify(triggerOrders));
-  }, [transactions, triggerOrders]);
+    localStorage.setItem('rialo_scheduled_txs', JSON.stringify(scheduledTxs));
+  }, [transactions, triggerOrders, scheduledTxs]);
 
   const addTransaction = useCallback((tx) => {
     const newTx = {
@@ -197,6 +204,56 @@ export function WalletProvider({ children }) {
     return txHash;
   }, [addTransaction, updateBalance, updateStakedBalance]);
 
+  // Global timer for scheduled AI transactions — persists across page navigations
+  useEffect(() => {
+    if (scheduledTxs.length === 0) return;
+
+    const interval = setInterval(() => {
+      setScheduledTxs(prev => {
+        const next = [];
+        prev.forEach(tx => {
+          if (tx.remainingSec <= 1) {
+            // Auto-execute when countdown reaches zero
+            const txHash = executeAiTransaction(tx.type, tx.userMsg, tx.detail);
+            setToast({
+              message: `Auto ${tx.type} completed!`,
+              detail: tx.detail,
+              txHash: txHash
+            });
+          } else {
+            next.push({ ...tx, remainingSec: tx.remainingSec - 1 });
+          }
+        });
+        return next;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [scheduledTxs, executeAiTransaction]);
+
+  const addScheduledTx = useCallback((tx) => {
+    setScheduledTxs(prev => [...prev, {
+      id: Math.random().toString(16).slice(2, 8),
+      ...tx
+    }]);
+  }, []);
+
+  const removeScheduledTx = useCallback((id) => {
+    setScheduledTxs(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const showToast = useCallback((toastData) => {
+    setToast(toastData);
+  }, []);
+
+  // Clear toast after 6 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   // Simulate global real-time price monitoring
   useEffect(() => {
     const interval = setInterval(() => {
@@ -278,7 +335,12 @@ export function WalletProvider({ children }) {
         updateStakedBalance,
         addTransaction,
         addTriggerOrder,
-        executeAiTransaction
+        executeAiTransaction,
+        scheduledTxs,
+        addScheduledTx,
+        removeScheduledTx,
+        toast,
+        showToast
       }}
     >
       {children}
