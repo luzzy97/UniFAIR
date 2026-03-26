@@ -62,7 +62,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
                 { icon: 'swap_horiz', title: 'Frictionless Swapping', desc: 'Experience a fluid and intuitive trading interface. We removed the visual clutter, allowing you to execute swaps seamlessly within a single, unified environment.' },
-                { icon: 'shield_lock', title: 'Secure Transactions', desc: 'Military-grade encryption protocols with multi-sig security as default.' },
+                { icon: 'hub', title: 'Seamless Asset Bridging', desc: 'Visualize cross-network transfers through a simplified dashboard. Our design aims to eliminate the complex steps usually associated with third-party bridges' },
                 { icon: 'database', title: 'AI Data Integration', desc: 'Native support for LLM and ML data pipelines directly on-chain.' },
                 { icon: 'speed', title: 'Real-Time Processing', desc: 'Sub-second finality for high-frequency financial applications.' },
               ].map(({ icon, title, desc }) => (
