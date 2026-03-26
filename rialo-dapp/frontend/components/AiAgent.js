@@ -521,7 +521,12 @@ export default function AiAgent() {
           border-top: 1px solid rgba(255,255,255,0.1);
           padding: 20px;
           animation: slideInUp 0.3s ease;
+          max-height: 35vh;
+          overflow-y: auto;
         }
+        .ai-sched-panel::-webkit-scrollbar { width: 4px; }
+        .ai-sched-panel::-webkit-scrollbar-track { background: transparent; }
+        .ai-sched-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
         .ai-sched-grid {
           display: grid;
           grid-template-cols: 1fr 1fr;
