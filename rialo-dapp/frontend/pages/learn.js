@@ -113,7 +113,8 @@ export default function LearnPage() {
         <section className="p-12 md:p-24 text-center mb-32 text-[#111111]">
           <h2 className="font-headline text-[3.5rem] font-medium mb-6 tracking-tight">Contributors</h2>
           <p className="max-w-[1000px] mx-auto text-on-surface/50 mb-20 text-lg leading-relaxed font-body">
-            Our contributors comprise experienced builders and researchers from leading organizations across blockchain infrastructure and hyper-growth companies. Collectively, we have contributed to some of the most foundational projects in the ecosystem. Today, we are focused on designing the next-generation of decentralized networks that transcend incremental innovation.
+            A team of experienced builders and researchers from leading blockchain and high-growth companies, working together to build next-generation decentralized networks.
+
           </p>
           <div className="mt-20 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-x-12 gap-y-16 items-center w-full max-w-[1000px] mx-auto">
             {[
