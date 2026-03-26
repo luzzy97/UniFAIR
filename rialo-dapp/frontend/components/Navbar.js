@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, Fragment } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useWallet } from '../hooks/useWallet';
-import AiAgent from './AiAgent';
 
 export default function Navbar() {
   const { isConnected, shortAddress, connecting, connect, disconnect } = useWallet();
@@ -65,6 +64,7 @@ export default function Navbar() {
     { href: '/staking', label: 'Staking' },
     { href: '/rewards', label: 'Reward' },
     { href: '/dashboard', label: 'Dashboard' },
+    { href: '/ai', label: 'Rialo AI' },
     { href: '/learn', label: 'Learn' },
   ];
 
@@ -251,7 +251,6 @@ export default function Navbar() {
                     >
                       {label}
                     </Link>
-                    {label === 'Dashboard' && <AiAgent />}
                   </Fragment>
                 );
               })}

@@ -102,7 +102,6 @@ const getAiResponse = (input) => {
 
 export default function AiAgent() {
   const { isConnected, executeAiTransaction } = useWallet();
-  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { role: 'ai', content: { raw: "Rialo AI is online. How can I optimize your on-chain operations today?" } }
   ]);
@@ -118,8 +117,8 @@ export default function AiAgent() {
   };
 
   useEffect(() => {
-    if (isOpen) scrollToBottom();
-  }, [messages, scheduledTxs, isOpen]);
+    scrollToBottom();
+  }, [messages, scheduledTxs]);
 
   // Timer effect for scheduled transactions
   useEffect(() => {
@@ -220,10 +219,9 @@ export default function AiAgent() {
     <>
       <style>{`
         .ai-widget {
-          position: relative;
-          display: inline-flex;
-          height: 100%;
-          align-items: center;
+          width: 100%;
+          max-width: 800px;
+          margin: 0 auto;
           font-family: inherit;
         }
 
@@ -281,39 +279,10 @@ export default function AiAgent() {
           color: #fff;
         }
 
-        .ai-btn-wrap {
-          display: flex;
-          align-items: center;
-        }
-        
-        .ai-btn {
-          position: relative;
-          display: flex;
-          align-items: center;
-          padding: 8px 10px 8px calc(10px + 0.16em);
-          border-radius: 9999px;
-          font-family: inherit;
-          font-size: 10.5px;
-          font-weight: 700;
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.35);
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          transition: color 0.18s, background 0.18s;
-          white-space: nowrap;
-        }
-        .ai-btn.active, .ai-btn:hover {
-          color: rgba(255,255,255,1);
-          background: rgba(255,255,255,0.07);
-        }
         .ai-window {
-          position: absolute;
-          top: calc(100% + 15px);
-          left: 50%;
-          width: 360px;
-          height: 500px;
+          width: 100%;
+          height: calc(100vh - 220px);
+          min-height: 500px;
           background: #0e0e0f;
           border: 1px solid rgba(255,255,255,0.1);
           border-radius: 16px;
@@ -321,16 +290,6 @@ export default function AiAgent() {
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          opacity: 0;
-          pointer-events: none;
-          transform: translateX(-50%) translateY(-10px);
-          transition: opacity 0.3s, transform 0.3s;
-          z-index: 1000;
-        }
-        .ai-window.open {
-          opacity: 1;
-          pointer-events: auto;
-          transform: translateX(-50%) translateY(0);
         }
         .ai-header {
           padding: 16px 20px;
@@ -625,20 +584,12 @@ export default function AiAgent() {
           </div>
         )}
 
-        <div className="ai-btn-wrap">
-          <button className={`ai-btn ${isOpen ? 'active' : ''}`} onClick={() => setIsOpen(!isOpen)} aria-label="Toggle AI Agent">
-            <span className="ai-status-dot" style={{ display: 'inline-block', width: '6px', height: '6px', marginRight: '6px', boxShadow: '0 0 8px #22c55e' }}></span> 
-            RIALO AI
-          </button>
-        </div>
-
-        <div className={`ai-window ${isOpen ? 'open' : ''}`}>
+        <div className="ai-window">
           <div className="ai-header">
             <div className="ai-title">
               <span className="ai-status-dot"></span>
-              Rialo AI
+              Rialo AI Assistant
             </div>
-            <button className="ai-close" onClick={() => setIsOpen(false)}>&times;</button>
           </div>
           
           <div className="ai-body">
