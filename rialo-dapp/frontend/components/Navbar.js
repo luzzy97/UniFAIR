@@ -59,11 +59,11 @@ export default function Navbar() {
 
   const links = [
     { href: '/', label: 'Home' },
-    { href: '/dashboard', label: 'Dashboard' },
     { href: '/swap', label: 'Swap' },
     { href: '/bridge', label: 'Bridge' },
     { href: '/staking', label: 'Staking' },
     { href: '/rewards', label: 'Reward' },
+    { href: '/dashboard', label: 'Dashboard' },
     { href: '/learn', label: 'Learn' },
   ];
 

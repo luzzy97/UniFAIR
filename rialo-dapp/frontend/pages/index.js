@@ -16,7 +16,7 @@ export default function Home() {
           <div className="max-w-[1200px] mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="z-10 text-white">
               <h1 className="font-headline text-[3.5rem] leading-[1.1] font-extrabold tracking-tight mb-6 mt-10">
-                Simplifying <br />DeFi Complexity <br />with AI
+                Simplifying DeFi Complexity with AI
               </h1>
               <p className="text-white/80 max-w-lg mb-10 leading-relaxed text-lg">
                 Swap, bridge, and stake seamlessly powered by intelligent agents that optimize every move, automate execution, and simplify your entire DeFi experience.
