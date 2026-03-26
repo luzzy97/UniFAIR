@@ -126,7 +126,7 @@ export default function LearnPage() {
                 <img 
                   src={`/contributors/${filename}`} 
                   alt="Contributor Logo" 
-                  className="max-h-[32px] w-auto h-auto object-contain mix-blend-multiply grayscale brightness-0 opacity-60 hover:opacity-100 transition-opacity"
+                  className="max-h-[32px] w-auto h-auto object-contain mix-blend-multiply grayscale contrast-[1.2] brightness-[1.1] opacity-70 hover:opacity-100"
                 />
               </div>
             ))}
