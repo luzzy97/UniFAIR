@@ -30,8 +30,14 @@ export default function Footer() {
             <div className="flex flex-col gap-4">
               <h4 className="font-headline font-bold text-white uppercase text-[10px] tracking-[0.2em]">Resources</h4>
               <nav className="flex flex-col gap-3">
-                {[['#', 'Documentation'], ['#', 'Whitepaper'], ['/learn', 'Learn'], ['#', 'GitHub']].map(([href, label]) => (
-                  <a key={label} href={href} className="font-headline text-[11px] text-[#A1A1AA] hover:text-white transition-colors duration-200">
+                {[['https://www.rialo.io/docs', 'Documentation'], ['#', 'Whitepaper'], ['/learn', 'Learn'], ['#', 'GitHub']].map(([href, label]) => (
+                  <a 
+                    key={label} 
+                    href={href} 
+                    target={href.startsWith('http') ? "_blank" : undefined}
+                    rel={href.startsWith('http') ? "noopener noreferrer" : undefined}
+                    className="font-headline text-[11px] text-[#A1A1AA] hover:text-white transition-colors duration-200"
+                  >
                     {label}
                   </a>
                 ))}
