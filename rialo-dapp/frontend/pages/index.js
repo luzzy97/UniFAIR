@@ -56,8 +56,8 @@ export default function Home() {
         <section className="bg-surface-container-low py-24">
           <div className="max-w-[1200px] mx-auto px-8">
             <div className="mb-16">
-              <span className="font-label text-xs uppercase tracking-[0.2em] text-on-surface/50 mb-2 block">Foundational Core</span>
-              <h2 className="font-headline text-[2rem] font-bold">Engineered for Excellence</h2>
+              <span className="font-label text-xs uppercase tracking-[0.2em] text-on-surface/50 mb-2 block">UNIFIED INTERFACE</span>
+              <h2 className="font-headline text-[2rem] font-bold">Engineered for a Zero-Friction Experience</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
