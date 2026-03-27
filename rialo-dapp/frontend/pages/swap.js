@@ -161,7 +161,7 @@ export default function SwapPage() {
           {/* Header */}
           <div className="mb-8 text-center">
             <h1 className="font-headline font-extrabold tracking-tighter text-primary mb-2" style={{ fontSize: '3.5rem' }}>Swap.</h1>
-            <p className="font-body text-on-surface/50">Precise liquidity for the architectural void.</p>
+            <p className="font-body text-on-surface/50">Seamless trading across the unified ecosystem</p>
           </div>
 
           {/* Swap Card */}

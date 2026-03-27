@@ -69,7 +69,7 @@ export default function BridgePage() {
         {/* Hero */}
         <div className="text-center mb-12">
           <h1 className="text-5xl font-extrabold tracking-tighter text-primary mb-4 font-headline">Bridge Assets</h1>
-          <p className="text-on-surface/60 max-w-md mx-auto">Transfer your liquidity across the void. Real-time cross-chain settlement on Rialo.</p>
+          <p className="text-on-surface/60 max-w-md mx-auto">Seamlessly move your assets across networks. A simplified bridging experience designed to remove complexity</p>
         </div>
 
         {/* Bridge Card */}
