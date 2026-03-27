@@ -8,7 +8,7 @@ import { useRouter } from 'next/router';
 export default function StakingPage() {
   const router = useRouter();
   const { isConnected, connect, balances, stakedBalance, updateBalance, updateStakedBalance, addTransaction } = useWallet();
-  const [rloAmount, setRloAmount] = useState("1000");
+  const [rloAmount, setRloAmount] = useState("");
   const [sfsFraction, setSfsFraction] = useState(25);
   
   // Interactive States
