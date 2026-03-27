@@ -84,17 +84,17 @@ export default function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-1 bg-black text-white p-12 rounded-2xl flex flex-col justify-between min-h-[400px] border border-white/5 shadow-2xl transition-transform hover:scale-[1.02]">
                 <div>
-                  <h3 className="font-headline text-2xl font-bold mb-4">High Performance</h3>
-                  <p className="opacity-70">Built on a custom Rust-based engine, Rialo outperforms traditional EVM chains by a factor of 10x while maintaining complete compatibility.</p>
+                  <h3 className="font-headline text-2xl font-bold mb-4">Intuitive Experience</h3>
+                  <p className="opacity-70">Designed to minimize cognitive load. By combining swapping, bridging, and staking into a single interface, we eliminate the need to switch between multiple tabs or fragmented dApps.</p>
                 </div>
-                <div className="text-6xl font-extrabold opacity-5 font-headline">99.9%</div>
+                <div className="text-6xl font-extrabold opacity-5 font-headline">100%</div>
               </div>
               <div className="lg:col-span-2 bg-surface-container p-12 rounded-xl flex flex-col justify-between border border-outline-variant/10 min-h-[400px]">
                 <div className="max-w-md">
-                  <h3 className="font-headline text-2xl font-bold mb-4 text-primary">Decentralized Network</h3>
-                  <p className="text-on-surface/70 mb-8">Join thousands of validator nodes worldwide. Our unique consensus algorithm ensures that no single entity holds governing power over the architectural flow.</p>
-                  <button onClick={() => router.push('/staking')} className="text-primary font-bold flex items-center gap-2 group">
-                    View Network Map <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                  <h3 className="font-headline text-2xl font-bold mb-4 text-primary">Centralized Portfolio View</h3>
+                  <p className="text-on-surface/70 mb-8">A comprehensive overview of your assets. The dashboard is designed to provide clear, real-time visualization of your balances and staking positions across the entire Rialo ecosystem</p>
+                  <button onClick={() => router.push('/dashboard')} className="text-primary font-bold flex items-center gap-2 group">
+                    Explore the Dashboard <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                   </button>
                 </div>
                 <div className="w-full h-32 bg-surface-container-highest rounded-lg overflow-hidden relative">
@@ -104,24 +104,24 @@ export default function Home() {
                   <div className="flex items-center gap-4 p-6 absolute bottom-0 left-0">
                     <div className="flex items-center gap-2 px-3 py-1 bg-surface-container-lowest rounded-full text-xs font-bold">
                       <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                      4,821 ACTIVE NODES
+                      REAL-TIME TRACKING
                     </div>
                   </div>
                 </div>
               </div>
               <div className="lg:col-span-3 bg-surface-bright border border-outline-variant/20 p-12 rounded-xl flex flex-col md:flex-row items-center justify-between gap-12">
                 <div className="flex-1">
-                  <h3 className="font-headline text-3xl font-bold mb-4">Secure &amp; Reliable</h3>
-                  <p className="text-on-surface/70 text-lg">Every transaction is validated by the Rialo Sentinel protocol, providing an impenetrable shield against malicious actors and front-running bots.</p>
+                  <h3 className="font-headline text-3xl font-bold mb-4">Designed for Confidence</h3>
+                  <p className="text-on-surface/70 text-lg">Clean design isn't just about aesthetics; it's about clarity. By providing transparent transaction previews and a frictionless flow, the interface helps prevent costly user errors.</p>
                 </div>
                 <div className="flex gap-4">
                   <div className="p-6 bg-surface-container-low rounded-xl text-center min-w-[140px]">
-                    <span className="block font-headline text-3xl font-extrabold">0%</span>
-                    <span className="text-xs uppercase font-label text-on-surface/40">Downtime</span>
+                    <span className="block font-headline text-3xl font-extrabold">0</span>
+                    <span className="text-xs uppercase font-label text-on-surface/40">COMPLEXITY</span>
                   </div>
                   <div className="p-6 bg-surface-container-low rounded-xl text-center min-w-[140px]">
-                    <span className="block font-headline text-3xl font-extrabold">100+</span>
-                    <span className="text-xs uppercase font-label text-on-surface/40">Audits</span>
+                    <span className="block font-headline text-3xl font-extrabold">1</span>
+                    <span className="text-xs uppercase font-label text-on-surface/40">UNIFIED HUB</span>
                   </div>
                 </div>
               </div>
