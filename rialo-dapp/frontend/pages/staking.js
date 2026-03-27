@@ -5,7 +5,7 @@ import Toast from '../components/Toast';
 import { useWallet } from '../hooks/useWallet';
 
 export default function StakingPage() {
-  const { isConnected, connect, stakedBalance, updateBalance, updateStakedBalance, addTransaction } = useWallet();
+  const { isConnected, connect, balances, stakedBalance, updateBalance, updateStakedBalance, addTransaction } = useWallet();
   const [rloAmount, setRloAmount] = useState("1000");
   const [sfsFraction, setSfsFraction] = useState(25);
   
@@ -39,6 +39,11 @@ export default function StakingPage() {
     if (!isConnected) { connect(); return; }
     if (numRlo <= 0) {
       setToast({ message: "Please enter a valid RLO amount", type: "error" });
+      return;
+    }
+    const currentBalance = balances['RIALO'] || 0;
+    if (numRlo > currentBalance) {
+      setToast({ message: "Insufficient RIALO balance", type: "error" });
       return;
     }
     setIsStaking(true);
@@ -154,7 +159,7 @@ export default function StakingPage() {
                         />
                       </div>
                       <button 
-                        onClick={() => setRloAmount("10000")}
+                        onClick={() => setRloAmount((balances['RIALO'] || 0).toString())}
                         className="font-headline font-bold text-[11px] text-black bg-white hover:bg-white/90 px-4 py-2 rounded-xl transition-all uppercase tracking-widest shadow-md"
                       >
                         MAX
