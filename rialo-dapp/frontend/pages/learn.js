@@ -152,7 +152,7 @@ export default function LearnPage() {
                     <div className="flex items-center gap-2 mt-1">
                       <span className="font-label text-[10px] uppercase tracking-widest text-white/30">{dev.role}</span>
                       <span className="w-1 h-1 rounded-full bg-white/10"></span>
-                      <span className="font-body text-sm text-primary/60">{dev.handle}</span>
+                      <span className="font-body text-sm text-white/60">{dev.handle}</span>
                     </div>
                   </div>
                 </div>
