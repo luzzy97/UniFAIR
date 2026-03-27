@@ -147,35 +147,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Built By Section */}
-        <section className="py-24 bg-black border-t border-white/5">
-          <div className="max-w-[1200px] mx-auto px-8">
-            <div className="mb-12">
-              <span className="font-label text-xs uppercase tracking-[0.2em] text-primary/80 mb-2 block">BUILT BY</span>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[
-                { name: 'Hakii', handle: '@frhakii', role: 'Builder', initials: 'HK', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
-                { name: 'Luzzy', handle: '@luzzyzz97', role: 'Builder', initials: 'LZ', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' }
-              ].map((dev) => (
-                <div key={dev.handle} className="bg-[#0e0e0f] border border-white/5 p-6 rounded-2xl flex items-center gap-5 transition-all hover:border-white/10 group">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-headline font-bold text-lg border ${dev.color}`}>
-                    {dev.initials}
-                  </div>
-                  <div>
-                    <h3 className="font-headline text-xl font-bold text-white group-hover:text-primary transition-colors">{dev.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="font-label text-[10px] uppercase tracking-widest text-white/30">{dev.role}</span>
-                      <span className="w-1 h-1 rounded-full bg-white/10"></span>
-                      <span className="font-body text-sm text-primary/60">{dev.handle}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* CTA Section */}
         <section className="py-32 bg-surface">
           <div className="max-w-[800px] mx-auto px-8 text-center">
