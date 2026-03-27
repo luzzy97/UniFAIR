@@ -140,10 +140,16 @@ export default function LearnPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[800px] mx-auto">
               {[
-                { name: 'Hakii', handle: '@frhakii', role: 'Builder', initials: 'HK', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', image: '/hakii.png' },
-                { name: 'Luzzy', handle: '@luzzyzz97', role: 'Builder', initials: 'LZ', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20', image: '/luzzy.jpg' }
+                { name: 'Hakii', handle: '@frhakii', role: 'Builder', initials: 'HK', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', image: '/hakii.png', link: 'https://x.com/frhakii' },
+                { name: 'Luzzy', handle: '@luzzyzz97', role: 'Builder', initials: 'LZ', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20', image: '/luzzy.jpg', link: 'https://x.com/luzzyzz97' }
               ].map((dev) => (
-                <div key={dev.handle} className="bg-[#0c0c0c] border border-white/5 p-6 rounded-2xl flex items-center gap-5 transition-all hover:border-white/10 hover:shadow-2xl hover:shadow-primary/5 group text-left">
+                <a 
+                  key={dev.handle} 
+                  href={dev.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[#0c0c0c] border border-white/5 p-6 rounded-2xl flex items-center gap-5 transition-all hover:border-white/10 hover:shadow-2xl hover:shadow-primary/5 group text-left block"
+                >
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-headline font-bold text-lg border overflow-hidden ${dev.color}`}>
                     {dev.image ? (
                       <img src={dev.image} alt={dev.name} className="w-full h-full object-cover" />
@@ -159,7 +165,7 @@ export default function LearnPage() {
                       <span className="font-body text-sm text-white/60">{dev.handle}</span>
                     </div>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           </div>
