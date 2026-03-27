@@ -123,36 +123,28 @@ const getAiResponse = (input) => {
     };
   }
 
-  if (lower.includes('speed') || lower.includes('fast') || lower.includes('tps') || lower.includes('latency') || lower.includes('cepat') || lower.includes('kecepatan')) {
-    return {
-      insight: "Rialo Consensus achieves high-throughput parallel execution.",
-      options: ["50ms block time", "Nanosecond execution latency"],
-      recommendation: "Rialo is engineered to be >10x faster than top bridges and >40x faster than top oracles.",
-      action: "You can experience it now by executing a 'swap'."
-    };
+  // Expanded Knowledge Base
+  const broadKnowledge = {
+    'build': 'You can build on Rialo using our custom Rust-based engine. We provide a resilient infrastructure designed for 10x performance compared to traditional EVM chains. Check our docs for SDK details.',
+    'dev': 'Developers are the core of our ecosystem. Rialo provides a unified hub for builders to deploy high-frequency financial applications with sub-second finality.',
+    'consensus': 'Rialo uses a high-throughput parallel execution consensus, achieving 50ms block times and nanosecond latency without compromising security.',
+    'node': 'Rialo supports thousands of validator nodes globally. Our network is designed to be permissionless and decentralized, ensuring no single entity holds governing power.',
+    'fee': 'Rialo is engineered for a zero-friction experience, which includes near-zero fees for most operations. We prioritize accessibility for all users.',
+    'security': 'The Rialo Sentinel protocol provides a multi-layered security shield, protecting every transaction against malicious actors and front-running.',
+    'roadmap': 'We are currently focused on the "Unified Hub" phase, integrating swapping, bridging, and staking into a single, intuitive experience. Ecosystem expansion is next!',
+    'hello': 'Hello! I am your Rialo AI Assistant. I can help you trade, bridge assets, or answer questions about our underlying technology. How can I assist you?',
+    'help': 'I can help with commands like "swap 10 ETH to RIALO", "bridge 0.1 ETH to RIALO", or "stake 500 RIALO". I can also answer questions about our tech!',
+  };
+
+  for (const [key, val] of Object.entries(broadKnowledge)) {
+    if (lower.includes(key)) {
+      return { raw: val };
+    }
   }
 
-  if (lower.includes('rwa') || lower.includes('real world') || lower.includes('web2') || lower.includes('integration') || lower.includes('dunia nyata')) {
-    return {
-      insight: "Rialo natively integrates Real World Finance and Data.",
-      options: ["Rialo Stream (Data)", "Rialo Edge (Web2 APIs)"],
-      recommendation: "Apps on Rialo can send encrypted messages to real people, and fetch asset pricing natively onchain.",
-      action: "Ready to explore? Try 'stake 100 RIALO'."
-    };
-  }
-
-  if (lower.includes('oracle') || lower.includes('trigger') || lower.includes('event') || lower.includes('automation') || lower.includes('otomatis')) {
-    return {
-      insight: "Rialo removes the need for traditional middleware and oracles.",
-      options: ["Rialo Execution Engine", "Rialo Stream"],
-      recommendation: "It supports native event-driven automation (like trigger orders) and reacts instantly to real-world data.",
-      action: "Set up a trigger now by saying 'swap 1 ETH to USDC at 3000'."
-    };
-  }
-
-  // Generic Fallback for off-topic or unknown queries
+  // Dynamic Fallback for off-topic or unknown queries
   return {
-    raw: "I specialize in Rialo technology and its DeFi operations. I can optimize your on-chain moves or answer questions about Rialo's real-world blockchain capabilities. Try asking 'what is rialo' or run a command like 'swap 10 USDC to RIALO'."
+    raw: `That's an interesting question about "${input}". As a specialized Rialo AI, I'm constantly evolving. While this specific query is outside my current DeFi optimization parameters, I can tell you that Rialo's "Architectural Void" is designed for exactly this kind of innovation. Is there a specific part of our ecosystem—like swapping or staking—I can help you optimize today?`
   };
 };
 
@@ -170,6 +162,7 @@ export default function AiAgent() {
     ];
   });
   const [input, setInput] = useState('');
+  const [isThinking, setIsThinking] = useState(false);
   const [showSchedulePanel, setShowSchedulePanel] = useState(false);
   const [schedData, setSchedData] = useState({ type: 'Swap', amount: '10', fromToken: 'USDC', toToken: 'RIALO', timeVal: '5', timeUnit: 'minutes' });
   const messagesEndRef = useRef(null);
@@ -194,11 +187,13 @@ export default function AiAgent() {
     const userMsg = input.trim();
     setMessages(prev => [...prev, { role: 'user', content: { raw: userMsg } }]);
     setInput('');
+    setIsThinking(true);
 
     // Simulate network delay
     setTimeout(() => {
       const response = getAiResponse(userMsg);
       setMessages(prev => [...prev, { role: 'ai', content: response }]);
+      setIsThinking(false);
       
       // If successful transaction, trigger toast or schedule
       if (response.action?.includes('successful') || response.action?.includes('active') || response.action?.includes('Scheduled') || response.action?.includes('Trigger Order Placed')) {
@@ -640,6 +635,17 @@ export default function AiAgent() {
                     </button>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {isThinking && (
+              <div className="ai-msg ai">
+                <div className="ai-raw italic opacity-50 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-white/50 rounded-full animate-bounce"></span>
+                  <span className="w-1.5 h-1.5 bg-white/50 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                  <span className="w-1.5 h-1.5 bg-white/50 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                  Rialo AI is thinking...
+                </div>
               </div>
             )}
             
