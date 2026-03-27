@@ -144,7 +144,7 @@ export default function StakingPage() {
                     <label className="font-label text-[10px] text-white/20 mb-2 font-bold uppercase tracking-widest">RLO amount</label>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4 flex-grow">
-                        <span className="material-symbols-outlined text-white/40 text-3xl">water_drop</span>
+                        <img src="/rialo-icon.png" className="w-8 h-8 object-contain mr-3" alt="RLO" />
                         <input
                           type="number"
                           value={rloAmount}
