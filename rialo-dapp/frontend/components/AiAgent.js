@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useWallet } from '../hooks/useWallet';
 
 // Mock logic matching the system prompt
-const getAiResponse = (input) => {
+const getAiResponse = (input, globalRates) => {
   const lower = input.toLowerCase();
   
   // Scheduling detection (e.g., "in 5 minutes", "dalam 2 jam")
@@ -81,6 +81,35 @@ const getAiResponse = (input) => {
       action: delaySec ? `Scheduled Stake: ${amount} ${token}` : `Transaction successful. Staking ${amount} ${token} is now active.`,
       delaySec: delaySec
     };
+  }
+
+  // Price Inquiry
+  if (lower.includes('price') || lower.includes('harga') || lower.includes('berapa') || lower.includes('how much')) {
+    const coinMatch = lower.match(/\b(eth|rialo|usdc|usdt)\b/i);
+    // Ignore if it's a swap/buy/sell command which is handled above, but technically those return early anyway.
+    if (coinMatch && !lower.includes('swap') && !lower.includes('buy') && !lower.includes('sell') && !lower.includes('stake') && !lower.includes('bridge')) {
+       const token = coinMatch[1].toUpperCase();
+       
+       let target = 'USDC';
+       const inMatch = lower.match(/\b(?:in|dalam|ke)\s+(eth|rialo|usdc|usdt)\b/i);
+       if (inMatch) {
+         target = inMatch[1].toUpperCase();
+       } else if (token === 'USDC' || token === 'USDT') {
+         target = 'ETH'; 
+       }
+
+       if (globalRates && globalRates[token] && globalRates[token][target]) {
+          const rate = globalRates[token][target];
+          const formatted = rate < 0.01 ? rate.toFixed(6) : rate.toFixed(4);
+          
+          return {
+            insight: `Real-time oracle data retrieved for ${token}/${target} market.`,
+            options: [`Current Rate: 1 ${token} ≈ ${formatted} ${target}`],
+            recommendation: `You can directly swap or set a Limit Order for ${token} here.`,
+            action: `Price Checked: 1 ${token} is ${formatted} ${target}`
+          };
+       }
+    }
   }
 
   // Generic Swap
@@ -191,7 +220,7 @@ export default function AiAgent() {
 
     // Simulate network delay
     setTimeout(() => {
-      const response = getAiResponse(userMsg);
+      const response = getAiResponse(userMsg, globalRates);
       setMessages(prev => [...prev, { role: 'ai', content: response }]);
       setIsThinking(false);
       
