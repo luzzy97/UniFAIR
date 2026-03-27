@@ -61,10 +61,10 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { icon: 'swap_horiz', title: 'Frictionless Swapping', desc: 'Experience a smooth and intuitive trading interface. Execute swaps easily in one unified environment.' },
-                { icon: 'hub', title: 'Seamless Asset Bridging', desc: 'Fast and secure transactions. Built for seamless performance.' },
-                { icon: 'database', title: 'AI Data Integration', desc: 'Native support for LLM and ML data pipelines directly on-chain.' },
-                { icon: 'speed', title: 'Real-Time Processing', desc: 'Sub-second finality for high-frequency financial applications.' },
+                { icon: 'swap_horiz', title: 'Frictionless Swapping', desc: 'Experience a fluid and intuitive trading interface. We removed the visual clutter, allowing you to execute swaps seamlessly within a single, unified environment.' },
+                { icon: 'hub', title: 'Seamless Asset Bridging', desc: 'Visualize cross-network transfers through a simplified dashboard. Our design aims to eliminate the complex steps usually associated with third-party bridges' },
+                { icon: 'database', title: 'Unified Staking Hub', desc: 'Monitor and manage your entire portfolio from one intuitive command center. Say goodbye to fragmented Web3 experiences and confusing protocol navigation.' },
+                { icon: 'speed', title: 'Frictionless User Journey', desc: 'Interact with advanced DeFi concepts confidently. The interface is purposefully designed with a clean, modern aesthetic to make complex financial activities accessible to everyone.' },
               ].map(({ icon, title, desc }) => (
                 <div key={title} className="bg-surface-container-lowest p-8 rounded-xl transition-all duration-300 hover:shadow-lg group">
                   <div className="w-12 h-12 rounded-lg bg-surface-container-low flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-on-primary transition-colors">
