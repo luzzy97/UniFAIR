@@ -15,7 +15,7 @@ const LEGACY_POOLS = [
   { id: 'rlo-v1', name: 'RLO V1 Legacy', description: 'Original staking pool for V1 adopters. Withdrawals only.', apy: '4.2%', totalStaked: '45M RLO', tvl: '$49M', minStake: '0 RLO', type: 'Legacy' },
 ];
 
-function StakeModal({ pool, action, onClose, onConfirm, loading, userBalance }) {
+function StakeModal({ pool, action, onClose, onConfirm, loading, userBalance, sfsFraction, setSfsFraction }) {
   const [amount, setAmount] = useState('');
 
   const minStakeValue = parseFloat(pool.minStake.split(' ')[0]) || 0;
@@ -60,6 +60,38 @@ function StakeModal({ pool, action, onClose, onConfirm, loading, userBalance }) 
             </p>
           )}
         </div>
+
+        {action === 'Stake' && (
+          <div className="mb-8 p-5 bg-black/5 rounded-2xl border border-black/5 backdrop-blur-sm">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-black/40 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">alt_route</span>
+                SfS Routing Fraction (ϕ)
+              </span>
+              <span className="text-sm font-bold text-black bg-black/5 px-2 py-0.5 rounded">
+                {sfsFraction}%
+              </span>
+            </div>
+            
+            <input 
+              type="range" 
+              min="0" 
+              max="100" 
+              value={sfsFraction} 
+              onChange={(e) => setSfsFraction(Number(e.target.value))}
+              className="w-full h-1.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-black focus:outline-none"
+            />
+            
+            <div className="flex justify-between text-[9px] text-black/30 mt-3 font-bold uppercase tracking-tighter">
+              <span>All to Wallet</span>
+              <span>All to Gas Credits</span>
+            </div>
+            
+            <p className="mt-4 text-[10px] text-black/40 leading-relaxed font-medium">
+              Routing <span className="text-black font-bold">{sfsFraction}%</span> of yield to <span className="underline decoration-black/20">ServicePaymaster</span> to automate gas costs for all your future transactions.
+            </p>
+          </div>
+        )}
         <button
           onClick={handleConfirm}
           disabled={loading || !amount || parseFloat(amount) <= 0 || isAmountTooLow || isInsufficientBalance}
@@ -83,6 +115,17 @@ export default function StakingPage() {
   const [modal, setModal] = useState(null); // { pool, action: 'Stake'|'Unstake' }
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // SfS States
+  const [sfsFraction, setSfsFraction] = useState(25);
+  const [sponsoredPaths, setSponsoredPaths] = useState([
+    { address: "0x71C...9A4", amount: 5.00 }
+  ]);
+  const [sponsorAddress, setSponsorAddress] = useState("");
+  const [sponsorAmount, setSponsorAmount] = useState("");
+  const [isAddingPath, setIsAddingPath] = useState(false);
+
+  const availableServiceCredits = (stakedBalance * 0.18 * (sfsFraction / 100)) - sponsoredPaths.reduce((sum, p) => sum + p.amount, 0);
 
   // Load pool data
   useEffect(() => {
@@ -132,6 +175,18 @@ export default function StakingPage() {
     }
   }, [isConnected, address, connect, modal]);
 
+  const handleAddSponsor = () => {
+    if (!sponsorAddress || !sponsorAmount) return;
+    setIsAddingPath(true);
+    setTimeout(() => {
+      setSponsoredPaths(prev => [...prev, { address: sponsorAddress, amount: parseFloat(sponsorAmount) }]);
+      setSponsorAddress("");
+      setSponsorAmount("");
+      setIsAddingPath(false);
+      setToast({ message: "Sponsorship path added successfully!", type: 'success' });
+    }, 1000);
+  };
+
   const openModal = (pool, action) => {
     if (!isConnected) { connect(); return; }
     setModal({ pool, action });
@@ -160,15 +215,43 @@ export default function StakingPage() {
               <p className="font-headline text-3xl lg:text-4xl font-extrabold tracking-tighter text-black">
                 {isConnected ? `${stakedBalance.toFixed(2)} RLO` : '0.00 RLO'}
               </p>
-              <button
-                onClick={connect}
-                className="text-[10px] font-bold uppercase tracking-widest underline underline-offset-4 hover:opacity-60 transition-opacity text-black/40 text-left"
-              >
-                {isConnected ? 'View Details' : 'Connect Wallet to View'}
-              </button>
+              <div className="flex items-center gap-3">
+                 <button
+                  onClick={connect}
+                  className="text-[10px] font-bold uppercase tracking-widest underline underline-offset-4 hover:opacity-60 transition-opacity text-black/40 text-left"
+                >
+                  {isConnected ? 'View Details' : 'Connect Wallet'}
+                </button>
+                {isConnected && (
+                  <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/5 px-2 py-0.5 rounded flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[10px]">activity</span> SfS Active
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
+
+        {/* SfS Quick Insights */}
+        {isConnected && (
+          <div className="bg-[#0c0c0c] rounded-2xl p-6 mb-12 flex flex-col md:flex-row items-center justify-between border border-white/5 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <div className="flex items-center gap-4 mb-4 md:mb-0">
+               <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center border border-white/10 shrink-0">
+                  <span className="material-symbols-outlined text-2xl text-black">alt_route</span>
+               </div>
+               <div>
+                  <h4 className="text-white font-bold text-sm tracking-tight mb-0.5 text-left">Available Service Credits</h4>
+                  <p className="text-white/40 text-[10px] uppercase font-bold tracking-widest text-left">Real-time Gas Autopay Reserve</p>
+               </div>
+             </div>
+             <div className="flex items-baseline gap-2">
+               <span className="text-3xl font-extrabold text-white tracking-tighter">
+                 {Math.max(0, availableServiceCredits).toFixed(2)}
+               </span>
+               <span className="text-white/20 text-xs font-bold uppercase tracking-widest">Credits</span>
+             </div>
+          </div>
+        )}
 
         {/* Pool Filter Tabs */}
         <div className="flex justify-between items-center mb-12">
@@ -243,6 +326,114 @@ export default function StakingPage() {
             </div>
           ))}
         </div>
+
+        {/* SfS Router: Sponsorship Section (New) */}
+        <div className="mt-24 pt-12 border-t border-white/5">
+           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
+             <div className="max-w-xl">
+               <h2 className="font-headline text-4xl font-extrabold tracking-tight text-white mb-4 flex items-center gap-4">
+                 <span className="material-symbols-outlined text-4xl text-white">alt_route</span>
+                 SfS Router: Sponsorship
+               </h2>
+               <p className="text-white/40 text-lg leading-relaxed font-medium">
+                 Direct your generated Service Credits to external addresses. Automate gas sponsorship for your secondary wallets, contracts, or community members.
+               </p>
+             </div>
+             <div className="bg-[#0c0c0c] border border-white/10 p-2 rounded-2xl flex items-center gap-4 pr-6 shadow-2xl">
+                <div className="bg-white p-3 rounded-xl shadow-inner">
+                   <span className="material-symbols-outlined text-2xl text-black">info</span>
+                </div>
+                <div>
+                   <p className="text-white/20 text-[9px] uppercase font-bold tracking-[0.2em]">Current Allocation</p>
+                   <p className="text-white font-bold">{sponsoredPaths.reduce((sum, p) => sum + p.amount, 0).toFixed(2)} / { (stakedBalance * 0.18 * (sfsFraction / 100)).toFixed(2) }</p>
+                </div>
+             </div>
+           </div>
+
+           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+             {/* Left: Configuration Form */}
+             <div className="lg:col-span-5 bg-[#0c0c0c] rounded-3xl p-8 border border-white/5 shadow-2xl relative overflow-hidden group">
+               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+               <h3 className="text-white font-bold text-xl mb-8 flex items-center gap-3">
+                 <span className="material-symbols-outlined text-xl">add</span> Create Path
+               </h3>
+               
+               <div className="space-y-6">
+                 <div>
+                   <label className="block text-[10px] uppercase font-bold tracking-[0.2em] text-white/30 mb-3 ml-1">Destination Address</label>
+                   <input 
+                    type="text" 
+                    value={sponsorAddress}
+                    onChange={(e) => setSponsorAddress(e.target.value)}
+                    placeholder="0x... or ENS"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder-white/20 focus:ring-1 focus:ring-white/30 outline-none transition-all font-mono"
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-[10px] uppercase font-bold tracking-[0.2em] text-white/30 mb-3 ml-1">Credits to Allocate</label>
+                   <div className="relative">
+                      <input 
+                        type="number" 
+                        value={sponsorAmount}
+                        onChange={(e) => setSponsorAmount(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder-white/20 focus:ring-1 focus:ring-white/30 outline-none transition-all font-bold text-xl"
+                      />
+                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-white/20 font-bold uppercase tracking-widest text-[10px]">Credits/yr</span>
+                   </div>
+                 </div>
+                 <button 
+                  onClick={handleAddSponsor}
+                  disabled={!isConnected || isAddingPath}
+                  className="w-full bg-white text-black py-5 rounded-2xl font-bold text-base hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl disabled:opacity-20 flex items-center justify-center gap-3"
+                 >
+                   {isAddingPath ? <span className="material-symbols-outlined animate-spin">autorenew</span> : <span className="material-symbols-outlined">add_circle</span>}
+                   {isAddingPath ? "Configuring Path..." : "Add to Router Path"}
+                 </button>
+               </div>
+             </div>
+
+             {/* Right: Active Paths */}
+             <div className="lg:col-span-7 flex flex-col">
+                <div className="flex items-center justify-between mb-8 px-2">
+                   <h3 className="text-white font-bold text-xl flex items-center gap-3">
+                     <span className="material-symbols-outlined text-xl text-emerald-500">activity</span> Active Sponsored Paths
+                   </h3>
+                   <span className="text-white/20 text-[10px] font-bold uppercase tracking-widest">{sponsoredPaths.length} Active</span>
+                </div>
+                
+                <div className="flex flex-col gap-4">
+                  {sponsoredPaths.map((path, idx) => (
+                    <div key={idx} className="bg-[#0c0c0c] border border-white/5 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-white/10 transition-colors group">
+                       <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/5">
+                             <span className="material-symbols-outlined text-xl text-white/40">alt_route</span>
+                          </div>
+                          <div>
+                             <p className="text-white font-mono font-bold tracking-tight">{path.address}</p>
+                             <p className="text-white/20 text-[9px] uppercase font-bold tracking-widest">Router Path ID: #STK-{idx+1024}</p>
+                          </div>
+                       </div>
+                       <div className="flex items-center gap-6 w-full sm:w-auto self-stretch sm:self-auto justify-between">
+                          <div className="text-right">
+                             <p className="text-white font-bold text-lg leading-none">{path.amount.toFixed(2)}</p>
+                             <p className="text-white/20 text-[9px] uppercase font-bold tracking-widest mt-1">Credits/yr</p>
+                          </div>
+                          <button className="text-white/20 hover:text-white/60 transition-colors p-2">
+                             <span className="material-symbols-outlined text-xl">settings</span>
+                          </button>
+                       </div>
+                    </div>
+                  ))}
+                  {sponsoredPaths.length === 0 && (
+                    <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
+                       <p className="text-white/20 font-bold uppercase tracking-widest text-[11px]">No active sponsorship paths found</p>
+                    </div>
+                  )}
+                </div>
+             </div>
+           </div>
+        </div>
       </main>
 
       <Footer />
@@ -256,6 +447,8 @@ export default function StakingPage() {
           onConfirm={handleStakeAction}
           loading={loading}
           userBalance={balances['RIALO'] || 0}
+          sfsFraction={sfsFraction}
+          setSfsFraction={setSfsFraction}
         />
       )}
 
