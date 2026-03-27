@@ -3,8 +3,10 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Toast from '../components/Toast';
 import { useWallet } from '../hooks/useWallet';
+import { useRouter } from 'next/router';
 
 export default function StakingPage() {
+  const router = useRouter();
   const { isConnected, connect, balances, stakedBalance, updateBalance, updateStakedBalance, addTransaction } = useWallet();
   const [rloAmount, setRloAmount] = useState("1000");
   const [sfsFraction, setSfsFraction] = useState(25);
@@ -325,10 +327,13 @@ export default function StakingPage() {
                 <span className="material-symbols-outlined text-primary text-4xl">analytics</span>
                 Protocol Metrics
              </h2>
-             <a href="#" className="flex items-center gap-2 font-headline font-bold text-[10px] text-primary/60 uppercase tracking-widest hover:text-primary transition-colors group">
+             <button 
+               onClick={() => router.push('/dashboard')}
+               className="flex items-center gap-2 font-headline font-bold text-[10px] text-primary/60 uppercase tracking-widest hover:text-primary transition-colors group"
+             >
                View Explorer
                <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
-             </a>
+             </button>
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
