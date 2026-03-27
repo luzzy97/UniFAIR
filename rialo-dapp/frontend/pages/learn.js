@@ -140,18 +140,18 @@ export default function LearnPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[800px] mx-auto">
               {[
-                { name: 'Hakii', handle: '@frhakii', role: 'Builder', initials: 'HK', color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
-                { name: 'Luzzy', handle: '@luzzyzz97', role: 'Builder', initials: 'LZ', color: 'bg-purple-500/10 text-purple-600 border-purple-500/20' }
+                { name: 'Hakii', handle: '@frhakii', role: 'Builder', initials: 'HK', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+                { name: 'Luzzy', handle: '@luzzyzz97', role: 'Builder', initials: 'LZ', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' }
               ].map((dev) => (
-                <div key={dev.handle} className="bg-white border border-black/5 p-6 rounded-2xl flex items-center gap-5 transition-all hover:border-black/10 hover:shadow-lg group">
+                <div key={dev.handle} className="bg-[#0c0c0c] border border-white/5 p-6 rounded-2xl flex items-center gap-5 transition-all hover:border-white/10 hover:shadow-2xl hover:shadow-primary/5 group text-left">
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-headline font-bold text-lg border ${dev.color}`}>
                     {dev.initials}
                   </div>
-                  <div className="text-left">
-                    <h3 className="font-headline text-xl font-bold text-[#111111] group-hover:text-primary transition-colors">{dev.name}</h3>
+                  <div>
+                    <h3 className="font-headline text-xl font-bold text-white group-hover:text-primary transition-colors">{dev.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="font-label text-[10px] uppercase tracking-widest text-black/30">{dev.role}</span>
-                      <span className="w-1 h-1 rounded-full bg-black/5"></span>
+                      <span className="font-label text-[10px] uppercase tracking-widest text-white/30">{dev.role}</span>
+                      <span className="w-1 h-1 rounded-full bg-white/10"></span>
                       <span className="font-body text-sm text-primary/60">{dev.handle}</span>
                     </div>
                   </div>
