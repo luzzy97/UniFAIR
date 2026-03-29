@@ -16,12 +16,13 @@ const CHAINS = [
 export default function BridgePage() {
   const { isConnected, address, connect, balances: walletBalances, addTransaction, globalRates } = useWallet();
   const { balance: rloBal, bridgeOut, loading: bridgeLoading } = useRLO();
-  const ethPrice = globalRates['ETH']?.['USDC'] || 3500;
-  const receiveAmount = amount ? (parseFloat(amount) * ethPrice / 3).toFixed(2) : '0.00';
   const [fromChain, setFromChain] = useState('1');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+
+  const ethPrice = globalRates['ETH']?.['USDC'] || 3500;
+  const receiveAmount = amount ? (parseFloat(amount) * ethPrice / 3).toFixed(2) : '0.00';
 
   const balances = { ...walletBalances, RIALO: parseFloat(rloBal || '0') };
 
