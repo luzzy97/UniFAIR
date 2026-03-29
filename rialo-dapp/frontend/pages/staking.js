@@ -29,6 +29,14 @@ export default function StakingPage() {
   // Toast (Using standard project Toast)
   const [toast, setToast] = useState(null);
 
+  // Staking input state
+  const [rloAmount, setRloAmount] = useState('');
+  const [sfsFraction, setSfsFraction] = useState(50);
+  const [sponsoredPaths, setSponsoredPaths] = useState([]);
+  const [sponsorAddress, setSponsorAddress] = useState('');
+  const [sponsorAmount, setSponsorAmount] = useState('');
+  const [isAddingPath, setIsAddingPath] = useState(false);
+
   const numRlo = parseFloat(rloAmount) || 0;
   const networkApy = 0.184; // 18.4% as per metrics
   const totalYield = (isConnected ? (stakedBalance + numRlo) : numRlo) * networkApy;
