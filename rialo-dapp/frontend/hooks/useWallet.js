@@ -201,7 +201,19 @@ export function WalletProvider({ children }) {
       if (accounts.length === 0) disconnect();
       else setAddress(accounts[0]);
     };
-    const onChain = (id) => setChainId(parseInt(id, 16));
+    const onChain = (id) => {
+      const newChainId = parseInt(id, 16);
+      setChainId(newChainId);
+      // Re-initialize provider to avoid NETWORK_ERROR after chain switch
+      if (window.ethereum) {
+        const newProvider = new ethers.BrowserProvider(window.ethereum);
+        setProvider(newProvider);
+        setError(null);
+        if (newChainId !== SEPOLIA_CHAIN_ID) {
+          setError('Please switch to Sepolia Network');
+        }
+      }
+    };
     window.ethereum.on('accountsChanged', onAccounts);
     window.ethereum.on('chainChanged', onChain);
     return () => {

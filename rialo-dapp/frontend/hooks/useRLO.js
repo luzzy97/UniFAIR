@@ -29,13 +29,18 @@ export function useRLO() {
     if (!isConnected) return;
     setLoading(true);
     try {
-      const signer = await provider.getSigner();
+      // Re-create signer from latest provider to avoid stale provider after chain switch
+      const freshProvider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await freshProvider.getSigner();
       const contract = getContract('RLO', signer);
       const tx = await contract.claimFaucet();
       await tx.wait();
       await fetchBalance();
       return tx.hash;
     } catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message?.includes('network changed')) {
+        throw new Error('Network changed. Please wait a moment and try again.');
+      }
       console.error('Faucet claim error:', error);
       throw error;
     } finally {
