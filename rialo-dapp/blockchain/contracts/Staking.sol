@@ -13,17 +13,32 @@ contract Staking is Ownable, ReentrancyGuard {
         uint256 amount;
         uint256 lastUpdate;
         uint256 rewardsAccumulated;
+        uint256 sfsFraction; // Basis points (e.g. 5000 = 50%)
+    }
+
+    struct SponsorshipPath {
+        address destination;
+        uint256 amount;
     }
 
     mapping(address => Stake) public stakes;
+    mapping(address => SponsorshipPath[]) public userSponsorshipPaths;
     uint256 public totalStaked;
+    address public servicePaymaster;
 
     event Staked(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
-    event RewardClaimed(address indexed user, uint256 amount);
+    event RewardClaimed(address indexed user, uint256 amount, uint256 sfsAmount);
+    event SfsFractionUpdated(address indexed user, uint256 newFraction);
+    event SponsorshipPathAdded(address indexed user, address indexed destination, uint256 amount);
 
     constructor(address _stakingToken) Ownable(msg.sender) {
         stakingToken = IERC20(_stakingToken);
+        servicePaymaster = msg.sender; // Default to owner
+    }
+
+    function setServicePaymaster(address _paymaster) external onlyOwner {
+        servicePaymaster = _paymaster;
     }
 
     function calculateRewards(address user) public view returns (uint256) {
@@ -31,9 +46,29 @@ contract Staking is Ownable, ReentrancyGuard {
         if (userStake.amount == 0) return userStake.rewardsAccumulated;
 
         uint256 timeElapsed = block.timestamp - userStake.lastUpdate;
-        // rewards = amount * rate * time / (365 days * 1000)
         uint256 pending = (userStake.amount * rewardRate * timeElapsed) / (365 days * 1000);
         return userStake.rewardsAccumulated + pending;
+    }
+
+    function setSfsFraction(uint256 fraction) external {
+        require(fraction <= 10000, "Invalid fraction");
+        stakes[msg.sender].rewardsAccumulated = calculateRewards(msg.sender);
+        stakes[msg.sender].lastUpdate = block.timestamp;
+        stakes[msg.sender].sfsFraction = fraction;
+        emit SfsFractionUpdated(msg.sender, fraction);
+    }
+
+    function addSponsorshipPath(address destination, uint256 amount) external {
+        userSponsorshipPaths[msg.sender].push(SponsorshipPath(destination, amount));
+        emit SponsorshipPathAdded(msg.sender, destination, amount);
+    }
+
+    function clearSponsorshipPaths() external {
+        delete userSponsorshipPaths[msg.sender];
+    }
+
+    function getSponsorshipPaths(address user) external view returns (SponsorshipPath[] memory) {
+        return userSponsorshipPaths[user];
     }
 
     uint256 public minStake = 10 * 1e18; // 10 RLO minimum
@@ -71,10 +106,16 @@ contract Staking is Ownable, ReentrancyGuard {
         stakes[msg.sender].rewardsAccumulated = 0;
         stakes[msg.sender].lastUpdate = block.timestamp;
 
-        // Note: For simplicity, the staking contract must have enough RLO to payout rewards.
-        // Or RLO token could allow this contract to mint.
-        stakingToken.transfer(msg.sender, reward);
+        uint256 sfsAmount = (reward * stakes[msg.sender].sfsFraction) / 10000;
+        uint256 walletAmount = reward - sfsAmount;
 
-        emit RewardClaimed(msg.sender, reward);
+        if (sfsAmount > 0) {
+            stakingToken.transfer(servicePaymaster, sfsAmount);
+        }
+        if (walletAmount > 0) {
+            stakingToken.transfer(msg.sender, walletAmount);
+        }
+
+        emit RewardClaimed(msg.sender, walletAmount, sfsAmount);
     }
 }

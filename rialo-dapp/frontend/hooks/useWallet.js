@@ -312,7 +312,7 @@ export function WalletProvider({ children }) {
         isWrongNetwork: chainId !== null && chainId !== SEPOLIA_CHAIN_ID,
         shortAddress: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : null,
         isConnected: !!address,
-        balances, transactions, globalRates, triggerOrders, updateBalance,
+        balances, transactions, globalRates, triggerOrders, updateBalance, fetchEthBalance,
         addTransaction, addTriggerOrder, executeAiTransaction,
         scheduledTxs, addScheduledTx, removeScheduledTx, removeTriggerOrder,
         toast, showToast

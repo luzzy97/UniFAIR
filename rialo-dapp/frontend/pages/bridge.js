@@ -14,8 +14,8 @@ const CHAINS = [
 ];
 
 export default function BridgePage() {
-  const { isConnected, address, connect, balances: walletBalances, addTransaction, globalRates } = useWallet();
-  const { balance: rloBal, bridgeOut, loading: bridgeLoading } = useRLO();
+  const { isConnected, address, provider, connect, balances: walletBalances, addTransaction, globalRates, fetchEthBalance } = useWallet();
+  const { balance: rloBal, bridgeOut, loading: bridgeLoading, fetchBalance: fetchRloBalance } = useRLO();
   const [fromChain, setFromChain] = useState('1');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,12 +59,13 @@ export default function BridgePage() {
         source: 'Direct'
       });
       
-      setAmount('');
+      // Update balances from chain
+      if (address && provider) {
+        fetchEthBalance(address, provider);
+        fetchRloBalance();
+      }
       
-      // Simulate arrival on the other side after 3 seconds for UI feedback
-      setTimeout(() => {
-        setToast({ message: `Success! ${amount} RLO has arrived on Rialo Network.`, type: 'success' });
-      }, 5000);
+      setAmount('');
 
     } catch (err) {
       setToast({ message: err.reason || err.message || 'Bridge failed', type: 'error' });

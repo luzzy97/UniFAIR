@@ -15,8 +15,8 @@ const TOKENS = [
 ];
 
 export default function SwapPage() {
-  const { isConnected, address, provider, connect, balances: walletBalances, updateBalance, addTransaction, globalRates, addTriggerOrder } = useWallet();
-  const { balance: rloBal, claimFaucet, loading: faucetLoading, transfer } = useRLO();
+  const { isConnected, address, provider, connect, balances: walletBalances, updateBalance, addTransaction, globalRates, addTriggerOrder, fetchEthBalance } = useWallet();
+  const { balance: rloBal, claimFaucet, loading: faucetLoading, transfer, fetchBalance: fetchRloBalance } = useRLO();
   const [fromToken, setFromToken] = useState('ETH');
   const [toToken, setToToken] = useState('RIALO');
   const [amountIn, setAmountIn] = useState('');
@@ -131,17 +131,18 @@ export default function SwapPage() {
 
       setToast({ message: `Blockchain operation successful!`, type: 'success', txHash: hash });
       
-      // Update balances
-      updateBalance(fromToken, -parseFloat(amountIn));
-      const rate = getRate(fromToken, toToken);
-      updateBalance(toToken, parseFloat(amountIn) * rate);
+      // Update balances from chain
+      if (address && provider) {
+        fetchEthBalance(address, provider);
+        fetchRloBalance();
+      }
       
       // Add to history
       addTransaction({
         type: 'Swap',
         amount: `${amountIn} ${fromToken} → ${estimatedOut} ${toToken}`,
         details: `${fromToken} to ${toToken}`,
-        txHash: res.txHash,
+        txHash: hash,
         source: 'Direct'
       });
       

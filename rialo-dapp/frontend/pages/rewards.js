@@ -13,8 +13,8 @@ const INITIAL_HISTORY = [
 ];
 
 export default function RewardsPage() {
-  const { isConnected, address, connect, updateBalance, transactions, addTransaction } = useWallet();
-  const { pendingRewards: pendingRewStr, claimRewards, loading: stakingLoading, stakedBalance: stakedBalStr } = useStaking();
+  const { isConnected, address, provider, connect, updateBalance, transactions, addTransaction, fetchEthBalance } = useWallet();
+  const { pendingRewards: pendingRewStr, claimRewards, loading: stakingLoading, stakedBalance: stakedBalStr, fetchStakingData: fetchRloBalance } = useStaking();
   const [rewards, setRewards] = useState({ totalEarned: '0.00', claimable: '0.00', apy: 18.40 });
   const [loading, setLoading] = useState(false);
   const [claiming, setClaiming] = useState(false);
@@ -56,14 +56,11 @@ export default function RewardsPage() {
       const hash = await claimRewards();
       setToast({ message: `Rewards claimed successfully!`, type: 'success', txHash: hash });
       
-      // Update unified history
-      addTransaction({
-        type: 'Claim',
-        amount: `+${claimAmount.toFixed(4)} RIALO`,
-        details: 'Ecosystem Reward',
-        txHash: hash,
-        source: 'Direct'
-      });
+      // Update balances from chain
+      if (address && provider) {
+        fetchEthBalance(address, provider);
+        fetchRloBalance();
+      }
 
     } catch (err) {
       setToast({ message: err.reason || err.message || 'Claim failed', type: 'error' });

@@ -15,10 +15,14 @@ export default function StakingPage() {
     stakedBalance: stakedBalStr, 
     pendingRewards: pendingRewStr, 
     totalStaked: totalProtStakedStr, 
+    sfsFraction: contractSfsFraction,
+    sponsorshipPaths: activePaths,
     loading: stakingLoading, 
     stake: stakeAction, 
     withdraw: withdrawAction, 
-    claimRewards: claimAction 
+    claimRewards: claimAction,
+    updateSfsFraction,
+    addSponsorshipPath
   } = useStaking();
 
   const balances = { ...walletBalances, RIALO: parseFloat(rloBal || '0') };
@@ -31,20 +35,24 @@ export default function StakingPage() {
 
   // Staking input state
   const [rloAmount, setRloAmount] = useState('');
-  const [sfsFraction, setSfsFraction] = useState(50);
-  const [sponsoredPaths, setSponsoredPaths] = useState([]);
+  const [localSfsFraction, setLocalSfsFraction] = useState(50);
   const [sponsorAddress, setSponsorAddress] = useState('');
   const [sponsorAmount, setSponsorAmount] = useState('');
+  const [isUpdatingFraction, setIsUpdatingFraction] = useState(false);
   const [isAddingPath, setIsAddingPath] = useState(false);
+
+  useEffect(() => {
+    setLocalSfsFraction(contractSfsFraction);
+  }, [contractSfsFraction]);
 
   const numRlo = parseFloat(rloAmount) || 0;
   const networkApy = 0.184; // 18.4% as per metrics
   const totalYield = (isConnected ? (stakedBalance + numRlo) : numRlo) * networkApy;
   
-  const rawYieldToServiceCredits = (isConnected ? stakedBalance : 0) * networkApy * (sfsFraction / 100);
+  const rawYieldToServiceCredits = (isConnected ? stakedBalance : 0) * networkApy * (localSfsFraction / 100);
   const yieldToWallet = (isConnected ? stakedBalance : 0) * networkApy - rawYieldToServiceCredits;
 
-  const totalAllocated = sponsoredPaths.reduce((sum, path) => sum + path.amount, 0);
+  const totalAllocated = activePaths.reduce((sum, path) => sum + path.amount, 0);
   const availableServiceCredits = Math.max(0, rawYieldToServiceCredits - totalAllocated);
 
   const handleStake = async () => {
@@ -71,6 +79,11 @@ export default function StakingPage() {
         txHash: hash,
         source: 'Direct'
       });
+      // Refresh balances from chain after confirmation
+      if (address && provider) {
+        fetchEthBalance(address, provider);
+        fetchRloBalance();
+      }
     } catch (e) {
       setToast({ message: e.reason || e.message || "Staking failed", type: "error" });
     }
@@ -93,6 +106,11 @@ export default function StakingPage() {
         txHash: hash,
         source: 'Direct'
       });
+      // Refresh balances from chain after confirmation
+      if (address && provider) {
+        fetchEthBalance(address, provider);
+        fetchRloBalance();
+      }
     } catch (e) {
       setToast({ message: e.reason || e.message || "Unstaking failed", type: "error" });
     }
@@ -115,12 +133,36 @@ export default function StakingPage() {
         txHash: hash,
         source: 'Direct'
       });
+      // Refresh balances from chain after confirmation
+      if (address && provider) {
+        fetchEthBalance(address, provider);
+        fetchRloBalance();
+      }
     } catch (e) {
       setToast({ message: e.reason || e.message || "Claim failed", type: "error" });
     }
   };
 
-  const handleAddSponsor = () => {
+  const handleUpdateFraction = async () => {
+    if (!isConnected) { connect(); return; }
+    setIsUpdatingFraction(true);
+    setToast({ message: "Syncing SfS Fraction with blockchain...", type: "loading" });
+    try {
+      const hash = await updateSfsFraction(localSfsFraction);
+      setToast({ message: "SfS Fraction updated successfully!", type: "success", txHash: hash });
+      // Refresh balances from chain after confirmation
+      if (address && provider) {
+        fetchEthBalance(address, provider);
+        fetchRloBalance();
+      }
+    } catch (e) {
+      setToast({ message: e.reason || e.message || "Update failed", type: "error" });
+    } finally {
+      setIsUpdatingFraction(false);
+    }
+  };
+
+  const handleCreatePath = async () => {
     if (!isConnected) { connect(); return; }
     if (!sponsorAddress) {
       setToast({ message: "Please enter a valid address", type: "error" });
@@ -131,19 +173,19 @@ export default function StakingPage() {
       setToast({ message: "Please enter a valid amount", type: "error" });
       return;
     }
-    if (amountVal > availableServiceCredits) {
-      setToast({ message: "Amount exceeds available Service Credits", type: "error" });
-      return;
-    }
 
     setIsAddingPath(true);
-    setTimeout(() => {
-      setSponsoredPaths(prev => [...prev, { address: sponsorAddress, amount: amountVal }]);
+    setToast({ message: "Creating sponsorship path on-chain...", type: "loading" });
+    try {
+      const hash = await addSponsorshipPath(sponsorAddress, amountVal);
+      setToast({ message: "Sponsorship path added successfully!", type: "success", txHash: hash });
       setSponsorAddress("");
       setSponsorAmount("");
+    } catch (e) {
+      setToast({ message: e.reason || e.message || "Failed to create path", type: "error" });
+    } finally {
       setIsAddingPath(false);
-      setToast({ message: "Sponsorship path added successfully!", type: "success" });
-    }, 1000);
+    }
   };
 
   return (
@@ -227,9 +269,20 @@ export default function StakingPage() {
                     <span className="font-label text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">
                       SfS Routing Fraction (ϕ)
                     </span>
-                    <span className="font-headline font-bold text-white bg-white/10 px-3 py-1 rounded-lg text-sm">
-                      {sfsFraction}%
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="font-headline font-bold text-white bg-white/10 px-3 py-1 rounded-lg text-sm">
+                        {localSfsFraction}%
+                      </span>
+                      {localSfsFraction !== contractSfsFraction && (
+                        <button 
+                          onClick={handleUpdateFraction}
+                          disabled={isUpdatingFraction}
+                          className="text-[10px] font-bold text-primary hover:text-primary/70 uppercase tracking-widest border border-primary/20 px-2 py-1 rounded-md transition-all"
+                        >
+                          {isUpdatingFraction ? 'Syncing...' : 'Sync'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                   
                   <p className="font-body text-xs text-white/40 mb-6 leading-relaxed">
@@ -240,8 +293,8 @@ export default function StakingPage() {
                     type="range" 
                     min="0" 
                     max="100" 
-                    value={sfsFraction} 
-                    onChange={(e) => setSfsFraction(Number(e.target.value))}
+                    value={localSfsFraction} 
+                    onChange={(e) => setLocalSfsFraction(Number(e.target.value))}
                     className="w-full h-1 bg-[#0c0c0c] rounded-lg appearance-none cursor-pointer accent-white focus:outline-none"
                   />
                   <div className="flex justify-between text-[9px] text-white/20 mt-3 font-bold uppercase tracking-widest font-label">
@@ -344,7 +397,7 @@ export default function StakingPage() {
                         className="flex-grow bg-[#161616] border border-white/5 rounded-2xl px-6 py-4 text-white font-headline font-bold placeholder:text-white/10 focus:outline-none focus:border-white/20 transition-all"
                       />
                       <button 
-                        onClick={handleAddSponsor}
+                        onClick={handleCreatePath}
                         disabled={isAddingPath}
                         className={`sm:min-w-[160px] bg-white text-black py-4 px-6 rounded-2xl font-headline font-extrabold text-sm tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all shadow-xl disabled:opacity-50 flex items-center justify-center gap-2`}
                       >
@@ -364,10 +417,10 @@ export default function StakingPage() {
                 <div className="flex-grow pt-4">
                   <span className="font-label text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 mb-6 block">Active Router Paths</span>
                   <div className="flex flex-col gap-3 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
-                    {sponsoredPaths.length === 0 ? (
+                    {activePaths.length === 0 ? (
                       <div className="py-12 text-center text-white/20 text-sm font-medium italic border-2 border-dashed border-white/5 rounded-2xl">No sponsorship paths active.</div>
                     ) : (
-                      sponsoredPaths.map((path, index) => (
+                      activePaths.map((path, index) => (
                         <div key={index} className="px-5 py-4 bg-[#161616] rounded-2xl flex items-center justify-between hover:bg-[#1c1c1c] transition-colors border border-white/5 group">
                           <div className="flex items-center gap-4 overflow-hidden">
                             <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center shrink-0">
@@ -375,12 +428,12 @@ export default function StakingPage() {
                             </div>
                             <div className="overflow-hidden">
                               <span className="font-mono text-white text-xs block mb-0.5 truncate">{path.address}</span>
-                              <span className="font-label text-[9px] font-bold uppercase tracking-widest text-white/10">Path ID #SfS-{index+100}</span>
+                              <span className="font-label text-[9px] font-bold uppercase tracking-widest text-white/10">Active Contract Path</span>
                             </div>
                           </div>
                           <div className="text-right shrink-0">
                             <span className="font-headline font-extrabold text-white block leading-none">{path.amount.toFixed(2)}</span>
-                            <span className="font-label text-[9px] font-bold uppercase tracking-widest text-white/10 mt-1 block">Credits/yr</span>
+                            <span className="font-label text-[9px] font-bold uppercase tracking-widest text-white/10 mt-1 block">RLO Allocated</span>
                           </div>
                         </div>
                       ))
