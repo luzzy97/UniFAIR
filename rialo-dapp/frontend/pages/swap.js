@@ -441,7 +441,7 @@ export default function SwapPage() {
               <p className="font-label text-xs uppercase text-on-surface/40 mb-1">Network Status</p>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                <span className="font-headline font-bold text-sm">Mainnet Node Active</span>
+                <span className="font-headline font-bold text-sm">Testnet Node Active</span>
               </div>
             </div>
             <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/10">
