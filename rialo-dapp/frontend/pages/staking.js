@@ -288,9 +288,20 @@ export default function StakingPage() {
                   <span className="font-label text-[10px] font-bold uppercase tracking-widest text-white/40">
                     SfS Routing Fraction (<span className="text-[#ffaa00]">ϕ</span>)
                   </span>
-                  <span className="font-headline font-bold text-[#ffaa00] text-sm bg-[#ffaa00]/10 px-2 py-0.5 rounded border border-[#ffaa00]/20">
-                    {localSfsFraction}%
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-headline font-bold text-[#ffaa00] text-sm bg-[#ffaa00]/10 px-2 py-0.5 rounded border border-[#ffaa00]/20">
+                      {localSfsFraction}%
+                    </span>
+                    {localSfsFraction !== contractSfsFraction && (
+                      <button 
+                        onClick={handleUpdateFraction}
+                        disabled={isUpdatingFraction}
+                        className="text-[9px] font-bold text-[#ffaa00] hover:text-[#ffaa00]/70 uppercase tracking-widest border border-[#ffaa00]/30 px-2 py-1 rounded transition-all"
+                      >
+                        {isUpdatingFraction ? 'Syncing...' : 'Sync'}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <p className="font-body text-[11px] text-white/40 mb-5 leading-relaxed">
                   Route a percentage of your yield to the <span className="text-white border-b border-white/20 border-dashed">ServicePaymaster</span> for gas costs.
@@ -301,8 +312,6 @@ export default function StakingPage() {
                   max="100" 
                   value={localSfsFraction} 
                   onChange={(e) => setLocalSfsFraction(Number(e.target.value))}
-                  onMouseUp={handleUpdateFraction}
-                  onTouchEnd={handleUpdateFraction}
                   className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffaa00] focus:outline-none"
                 />
                 <div className="flex justify-between text-[9px] text-white/30 mt-3 font-bold uppercase tracking-widest font-label">
