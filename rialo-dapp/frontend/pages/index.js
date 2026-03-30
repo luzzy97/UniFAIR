@@ -24,13 +24,13 @@ export default function Home() {
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={() => router.push('/swap')}
-                  className="bg-emerald-500 text-on-primary px-8 py-4 rounded-full font-bold hover:bg-emerald-400 transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                  className="bg-white text-black px-8 py-4 rounded-full font-bold hover:bg-white/90 transition-all flex items-center gap-2"
                 >
                   Get Started <span className="material-symbols-outlined text-sm">arrow_forward</span>
                 </button>
                 <button
                   onClick={() => router.push('/learn')}
-                  className="border-2 border-emerald-500/20 text-emerald-500 px-8 py-4 rounded-full font-bold hover:bg-emerald-500/10 transition-all"
+                  className="border-2 border-white/20 text-white px-8 py-4 rounded-full font-bold hover:bg-white/10 transition-all"
                 >
                   Learn More
                 </button>
@@ -38,7 +38,7 @@ export default function Home() {
             </div>
             <div className="relative flex items-center justify-center pt-10">
               <div className="absolute inset-0 bg-white/5 rounded-full blur-3xl"></div>
-              <div className="relative w-full aspect-square max-w-[500px] bg-[#121212] rounded-[3rem] shadow-2xl p-6 flex items-center justify-center overflow-hidden border-8 border-white/5 group hover:scale-[1.02] transition-transform duration-500">
+              <div className="relative w-full aspect-square max-w-[500px] bg-[#e6e2d1] rounded-[3rem] shadow-2xl p-6 flex items-center justify-center overflow-hidden border-8 border-white/10 group hover:scale-[1.02] transition-transform duration-500">
                 <video 
                   src="/hero-animation.mp4" 
                   autoPlay 
@@ -155,7 +155,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <button
                 onClick={isConnected ? () => router.push('/dashboard') : connect}
-                className="bg-emerald-500 text-on-primary px-12 py-5 rounded-2xl font-bold hover:bg-emerald-400 transition-all shadow-[0_0_30px_rgba(16,185,129,0.2)] active:scale-95"
+                className="bg-black text-white px-12 py-5 rounded-2xl font-bold hover:bg-black/90 transition-all shadow-2xl active:scale-95"
               >
                 {isConnected ? 'Launch Dashboard' : 'Connect Wallet'}
               </button>

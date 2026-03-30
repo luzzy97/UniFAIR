@@ -33,8 +33,8 @@ export default function DashboardPage() {
 
   // Portfolio data for chart
   const portfolioData = [
-    { label: 'Wallet Balance', value: availableRialo, color: 'bg-emerald-500' },
-    { label: 'Network Liquidity', value: totalValue * 0.1, color: 'bg-white/20' },
+    { label: 'Staked', value: stakedBalance, color: 'bg-primary' },
+    { label: 'Wallet', value: availableRialo, color: 'bg-white/20' },
   ];
 
   return (
@@ -42,28 +42,25 @@ export default function DashboardPage() {
       <Navbar />
       <main className="max-w-[1200px] mx-auto px-8 py-16">
         {/* Header */}
-        <header className="mb-20">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 mb-6">
-            <span className="material-symbols-outlined text-[10px]">shield_person</span>
-            <span className="font-headline font-bold text-[9px] uppercase tracking-[0.2em]">Personal Command Center</span>
-          </div>
-          <h1 className="font-headline text-[4.5rem] font-black leading-[0.9] tracking-tighter mb-8 bg-gradient-to-br from-white via-white to-emerald-500/40 bg-clip-text text-transparent">
-            Architectural<br/>Dashboard
+        <header className="mb-16">
+          <h1 className="font-headline text-[3.5rem] font-extrabold text-primary leading-none tracking-tight mb-4">
+            Architectural Dashboard
           </h1>
-          <p className="font-body text-white/40 max-w-xl text-lg leading-relaxed">
+          <p className="font-body text-on-surface/70 max-w-2xl">
             A comprehensive overview of your position within the Rialo ecosystem. Monitor your assets, yield, and network participation from a single interface.
           </p>
         </header>
 
         {/* Individual Asset Balances */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-16">
           {[
-            { symbol: 'RIALO', label: 'Ecosystem Token', color: 'bg-emerald-500', icon: 'currency_exchange' },
-            { symbol: 'ETH', label: 'Ethereum Testnet', color: 'bg-emerald-500', icon: 'token' },
-            { symbol: 'USDC', label: 'USD Coin', color: 'bg-emerald-500', icon: 'monetization_on' },
-            { symbol: 'USDT', label: 'Tether USD', color: 'bg-emerald-500', icon: 'account_balance_wallet' },
+            { symbol: 'RIALO', label: 'Ecosystem Token', color: 'bg-primary', icon: 'currency_exchange' },
+            { symbol: 'STAKED', label: 'Staked Assets', color: 'bg-emerald-500', icon: 'lock' },
+            { symbol: 'ETH', label: 'Ethereum Testnet', color: 'bg-[#627EEA]', icon: 'token' },
+            { symbol: 'USDC', label: 'USD Coin', color: 'bg-[#2775CA]', icon: 'monetization_on' },
+            { symbol: 'USDT', label: 'Tether USD', color: 'bg-[#26A17B]', icon: 'account_balance_wallet' },
           ].map((token) => (
-            <div key={token.symbol} className="bg-[#121212] rounded-[24px] p-8 flex flex-col justify-between min-h-[220px] border border-white/5 shadow-2xl relative overflow-hidden group hover:border-emerald-500/50 hover:bg-[#161616] transition-all duration-300 active:scale-[0.98] cursor-pointer">
+            <div key={token.symbol} className="bg-[#1c1c1c] rounded-2x p-6 flex flex-col justify-between min-h-[180px] border border-white/10 shadow-2xl relative overflow-hidden group hover:border-primary/20 transition-all">
               <div className="relative z-10 flex justify-between items-start">
                 <div>
                   <span className="font-label text-[9px] text-white/30 uppercase tracking-[0.2em] font-bold mb-2 block">{token.label}</span>
@@ -101,7 +98,7 @@ export default function DashboardPage() {
           <section className="mb-16">
             <div className="flex justify-between items-center mb-8">
               <div>
-                <h3 className="font-headline font-bold text-emerald-500 text-xl">Active Trigger Orders</h3>
+                <h3 className="font-headline font-bold text-primary text-xl">Active Trigger Orders</h3>
                 <p className="text-[10px] text-white/30 uppercase tracking-widest mt-1">{triggerOrders.filter(o => o.status === 'Pending').length} orders awaiting execution</p>
               </div>
             </div>
@@ -185,7 +182,7 @@ export default function DashboardPage() {
         <section className="mb-16">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h3 className="font-headline font-bold text-emerald-500 text-xl">Transaction History</h3>
+              <h3 className="font-headline font-bold text-primary text-xl">Transaction History</h3>
               <p className="text-[10px] text-white/30 uppercase tracking-widest mt-1">{transactions.length} total operations recorded</p>
             </div>
           </div>
@@ -206,12 +203,12 @@ export default function DashboardPage() {
                 <div>
                   {transactions.slice(0, 10).map((tx, i) => {
                     const typeConfig = {
-                      'Swap':    { icon: 'swap_horiz',       bg: 'bg-emerald-500/10', text: 'text-emerald-400', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/20' },
-                      'Bridge':  { icon: 'merge_type',        bg: 'bg-emerald-500/10', text: 'text-emerald-400', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/20' },
+                      'Swap':    { icon: 'swap_horiz',       bg: 'bg-violet-500/10',  text: 'text-violet-400',  badge: 'bg-violet-500/20 text-violet-300 border-violet-500/20' },
+                      'Bridge':  { icon: 'merge_type',        bg: 'bg-blue-500/10',    text: 'text-blue-400',    badge: 'bg-blue-500/20 text-blue-300 border-blue-500/20' },
                       'Stake':   { icon: 'lock',              bg: 'bg-emerald-500/10', text: 'text-emerald-400', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/20' },
-                      'Unstake': { icon: 'lock_open',         bg: 'bg-white/5',        text: 'text-white/40',    badge: 'bg-white/10 text-white/40 border-white/10' },
-                      'Faucet':  { icon: 'water_drop',        bg: 'bg-emerald-500/10', text: 'text-emerald-400', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/20' },
-                      'Claim':   { icon: 'redeem',            bg: 'bg-emerald-500/10', text: 'text-emerald-400', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/20' },
+                      'Unstake': { icon: 'lock_open',         bg: 'bg-orange-500/10',  text: 'text-orange-400',  badge: 'bg-orange-500/20 text-orange-300 border-orange-500/20' },
+                      'Faucet':  { icon: 'water_drop',        bg: 'bg-cyan-500/10',    text: 'text-cyan-400',    badge: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/20' },
+                      'Claim':   { icon: 'redeem',            bg: 'bg-yellow-500/10',  text: 'text-yellow-400',  badge: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/20' },
                     };
                     const cfg = typeConfig[tx.type] || { icon: 'receipt_long', bg: 'bg-white/5', text: 'text-white/40', badge: 'bg-white/10 text-white/40 border-white/10' };
                     const shortHash = tx.txHash && !tx.txHash.startsWith('simulated_')
@@ -321,26 +318,23 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           {/* Portfolio Composition */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-[#121212] rounded-[32px] p-10 border border-white/5 shadow-2xl relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full -mr-32 -mt-32 blur-[100px] group-hover:bg-emerald-500/10 transition-all duration-700"></div>
-              <h3 className="font-headline font-bold text-emerald-500 text-xl mb-12 flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm">pie_chart</span> Asset Composition
-              </h3>
+            <div className="bg-surface-container-low rounded-xl p-8 border border-outline-variant/10">
+              <h3 className="font-headline font-bold text-primary text-lg mb-10">Asset Composition</h3>
               
-              <div className="space-y-10">
+              <div className="space-y-8">
                 {portfolioData.map((item, i) => {
                   const percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
                   return (
-                    <div key={i} className="space-y-3">
+                    <div key={i} className="space-y-2">
                       <div className="flex justify-between items-end">
-                        <span className="font-headline font-bold text-base text-white">{item.label}</span>
-                        <span className="text-[11px] font-bold text-white/30 uppercase tracking-[0.2em]">
+                        <span className="font-headline font-bold text-sm text-on-surface">{item.label}</span>
+                        <span className="text-[10px] font-bold text-on-surface/40 uppercase tracking-widest">
                           {item.value.toLocaleString('en-US', { minimumFractionDigits: 2 })} RIALO ({percentage.toFixed(1)}%)
                         </span>
                       </div>
-                      <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden p-[3px]">
+                      <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                         <div 
-                          className={`h-full ${item.color} rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(16,185,129,0.3)]`}
+                          className={`h-full ${item.color} transition-all duration-1000 ease-out`}
                           style={{ width: `${isConnected ? percentage : 0}%` }}
                         ></div>
                       </div>
@@ -349,19 +343,16 @@ export default function DashboardPage() {
                 })}
               </div>
 
-              <div className="mt-16 pt-10 border-t border-white/5 grid grid-cols-2 gap-12">
+              <div className="mt-12 pt-8 border-t border-on-surface/5 grid grid-cols-2 gap-8">
                 <div>
-                  <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.25em] mb-3">Network APY</p>
-                  <p className="font-headline text-4xl font-black text-white tracking-tighter">18.4%</p>
-                  <div className="w-full h-1 bg-emerald-500/20 rounded-full mt-4 overflow-hidden">
-                    <div className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" style={{ width: '85%' }}></div>
-                  </div>
+                  <p className="text-[10px] font-bold text-on-surface/30 uppercase tracking-[0.2em] mb-2">Network APY</p>
+                  <p className="font-headline text-2xl font-extrabold text-on-surface">18.4%</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.25em] mb-3">Protocol Status</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.8)]"></div>
-                    <p className="font-headline text-4xl font-black text-white tracking-tighter uppercase">Optimal</p>
+                  <p className="text-[10px] font-bold text-on-surface/30 uppercase tracking-[0.2em] mb-2">Protocol Status</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.3)]"></div>
+                    <p className="font-headline text-2xl font-extrabold text-on-surface">Optimal</p>
                   </div>
                 </div>
               </div>
@@ -370,7 +361,7 @@ export default function DashboardPage() {
 
           {/* Quick Actions & Tips */}
           <div className="space-y-6">
-            <h3 className="font-headline font-bold text-emerald-500 text-lg">Quick Actions</h3>
+            <h3 className="font-headline font-bold text-primary text-lg">Quick Actions</h3>
             <div className="grid grid-cols-1 gap-4">
               {[
                 { label: 'Swap Assets', icon: 'swap_horiz', href: '/swap', desc: 'Exchange RIALO for other assets' },
@@ -380,19 +371,16 @@ export default function DashboardPage() {
                 <Link 
                   key={i} 
                   href={action.href}
-                  className="bg-[#121212] p-8 rounded-3xl border border-white/5 hover:border-emerald-500/30 hover:bg-[#161616] transition-all duration-300 group active:scale-[0.98] shadow-2xl"
+                  className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/5 hover:border-primary/30 transition-all group"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-5">
-                      <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-black transition-all duration-300 border border-white/5">
-                        <span className="material-symbols-outlined text-lg">{action.icon}</span>
-                      </div>
-                      <div>
-                        <p className="font-headline font-bold text-base text-white group-hover:text-emerald-500 transition-colors">{action.label}</p>
-                        <p className="text-[11px] text-white/30 font-body mt-1">{action.desc}</p>
-                      </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center group-hover:bg-primary group-hover:text-on-primary transition-colors border border-on-surface/5">
+                      <span className="material-symbols-outlined text-sm">{action.icon}</span>
                     </div>
-                    <span className="material-symbols-outlined text-white/10 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all duration-300">arrow_forward</span>
+                    <div>
+                      <p className="font-headline font-bold text-sm text-on-surface group-hover:text-primary transition-colors">{action.label}</p>
+                      <p className="text-[10px] text-on-surface/40 font-body mt-1">{action.desc}</p>
+                    </div>
                   </div>
                 </Link>
               ))}

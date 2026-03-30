@@ -207,69 +207,78 @@ export default function SwapPage() {
   );
 
   return (
-    <div className="bg-[#0c0c0c] font-body text-white antialiased min-h-screen selection:bg-emerald-500/30">
+    <div className="bg-surface font-body text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container">
       <Navbar />
-      
-      <main className="max-w-[1200px] mx-auto px-8 py-20 relative">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-[120px] -z-10"></div>
-        <div className="absolute top-1/2 right-1/4 w-64 h-64 bg-emerald-500/5 rounded-full blur-[100px] -z-10"></div>
-
-        {/* Header */}
-        <header className="mb-20">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 mb-6">
-            <span className="material-symbols-outlined text-[10px]">swap_horizontal_circle</span>
-            <span className="font-headline font-bold text-[9px] uppercase tracking-[0.2em]">Native Liquidity Hub</span>
+      <main className="min-h-[calc(100vh-250px)] flex items-center justify-center px-4 py-20">
+        <div className="w-full max-w-[480px]">
+          {/* Header */}
+          <div className="mb-8 text-center">
+            <h1 className="font-headline font-extrabold tracking-tighter text-primary mb-2" style={{ fontSize: '3.5rem' }}>Swap.</h1>
+            <p className="font-body text-on-surface/50 mb-6">Seamless trading across the unified ecosystem</p>
+            
+            {isConnected && (
+              <button 
+                onClick={async () => {
+                  try {
+                    setToast({ message: 'Requesting RLO from faucet...', type: 'loading' });
+                    const hash = await claimFaucet();
+                    setToast({ message: '100 RLO claimed successfully!', type: 'success', txHash: hash });
+                    addTransaction({
+                      type: 'Faucet',
+                      amount: '100 RIALO',
+                      details: 'Claim RLO Faucet',
+                      txHash: hash,
+                      source: 'Faucet'
+                    });
+                    fetchRloBalance();
+                  } catch (e) {
+                    setToast({ message: e.reason || e.message || 'Faucet claim failed', type: 'error' });
+                  }
+                }}
+                disabled={faucetLoading}
+                className="inline-flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-primary/20 transition-all"
+              >
+                <span className="material-symbols-outlined text-sm">water_drop</span>
+                {faucetLoading ? 'Claiming...' : 'Claim 100 RLO Faucet'}
+              </button>
+            )}
           </div>
-          <h1 className="font-headline text-[4.5rem] font-black leading-[0.9] tracking-tighter mb-8 bg-gradient-to-br from-white via-white to-emerald-500/40 bg-clip-text text-transparent">
-            Frictionless<br/>Asset Exchange
-          </h1>
-          <p className="font-body text-white/40 max-w-xl text-lg leading-relaxed">
-            Execute high-precision swaps and limit orders within the Rialo ecosystem. Our architectural engine ensures optimal routing and minimal slippage.
-          </p>
-        </header>
 
-        <div className="flex flex-col lg:flex-row items-start gap-16 relative z-10">
-          
-          {/* Swap Widget */}
-          <div className="w-full lg:w-[480px] flex-shrink-0 animate-in fade-in slide-in-from-left-4 duration-1000">
-            <div className="bg-[#121212] rounded-[32px] p-8 border border-white/10 shadow-[0_32px_64px_rgba(0,0,0,0.5)] relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
-              
-              <div className="flex justify-between items-center mb-8 relative z-10 px-2">
-                <div className="bg-white/5 p-1 rounded-2xl flex gap-1">
-                  {['swap', 'limit'].map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => setOrderType(type)}
-                      className={`px-6 py-2.5 rounded-xl font-headline font-bold text-[10px] uppercase tracking-widest transition-all duration-300 ${orderType === type ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'text-white/30 hover:text-white/60'}`}
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
+          {/* Swap Card */}
+          <div className="bg-[#0c0c0c] rounded-2xl shadow-2xl p-8 relative overflow-hidden border border-white/5">
+            {/* Top Actions */}
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex gap-1 bg-[#161616] p-1 rounded-full border border-white/5">
+                <button 
+                  onClick={() => setOrderType('swap')}
+                  className={`font-headline font-bold text-sm tracking-tight transition-all px-4 py-1.5 rounded-full ${orderType === 'swap' ? 'bg-white text-black shadow-md' : 'text-white/40 hover:text-white'}`}
+                >Swap</button>
+                <button 
+                  onClick={() => setOrderType('limit')}
+                  className={`font-headline font-bold text-sm tracking-tight transition-all px-4 py-1.5 rounded-full ${orderType === 'limit' ? 'bg-white text-black shadow-md' : 'text-white/40 hover:text-white'}`}
+                >Limit</button>
+              </div>
+              <div className="relative">
                 <button 
                   onClick={() => setShowSettings(!showSettings)}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${showSettings ? 'bg-emerald-500/20 text-emerald-500 border-emerald-500/20' : 'bg-white/5 text-white/30 hover:text-white border-white/5'} border`}
+                  className={`transition-colors flex items-center justify-center w-8 h-8 rounded-full ${showSettings ? 'bg-white/10 text-white' : 'text-on-surface/40 hover:text-white hover:bg-white/5'}`}
                 >
-                  <span className="material-symbols-outlined text-[20px]">tune</span>
+                  <span className="material-symbols-outlined text-[20px]">settings</span>
                 </button>
-              </div>
-
-              {showSettings && (
-                <div className="mb-8 p-6 bg-white/[0.03] rounded-2xl border border-white/5 animate-in fade-in zoom-in-95 duration-200">
-                  <h3 className="font-headline font-bold text-xs uppercase tracking-widest text-white/40 mb-4">Transaction Settings</h3>
-                  <div className="space-y-6">
+                {showSettings && (
+                  <div className="absolute right-0 top-full mt-2 w-72 bg-[#161616] border border-white/10 rounded-2xl shadow-2xl p-5 z-50">
+                    <h3 className="font-headline font-bold text-sm text-white mb-4">Transaction Settings</h3>
                     <div>
-                      <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-3 block">Slippage Tolerance</label>
+                      <label className="font-label text-xs uppercase tracking-widest text-white/30 font-bold mb-3 block">Slippage Tolerance</label>
                       <div className="flex gap-2">
                         {['Auto', '0.1', '0.5', '1.0'].map(val => (
                           <button
                             key={val}
                             onClick={() => setSlippage(val === 'Auto' ? 'Auto' : val)}
-                            className={`flex-1 py-2 rounded-xl text-[10px] font-bold transition-all border ${
+                            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border ${
                               (val === 'Auto' && slippage === 'Auto') || val === slippage 
-                                ? 'bg-emerald-500 text-black border-emerald-500' 
-                                : 'bg-[#0c0c0c] text-white/40 border-white/5 hover:border-white/10'
+                                ? 'bg-white text-black border-white' 
+                                : 'bg-[#0c0c0c] text-white/60 hover:text-white border-white/5'
                             }`}
                           >
                             {val === 'Auto' ? 'Auto' : `${val}%`}
@@ -277,116 +286,123 @@ export default function SwapPage() {
                         ))}
                       </div>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-3 block">AI Agent Secret Key</label>
+                    <div className="mt-6 pt-6 border-t border-white/5">
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="font-label text-xs uppercase tracking-widest text-white/30 font-bold">AI Wallet Secret</label>
+                        <span className="material-symbols-outlined text-primary text-xs">auto_fix</span>
+                      </div>
+                      <p className="text-[10px] text-white/20 mb-3 leading-relaxed">Enter a private key for automated AI execution. This key will be used to sign transactions without manual approval.</p>
                       <input 
                         type="password" 
                         placeholder="0x..."
                         value={aiPrivateKey || ''}
                         onChange={(e) => setAiPrivateKey(e.target.value)}
-                        className="w-full bg-[#0c0c0c] border border-white/5 rounded-xl px-4 py-3 text-xs font-mono text-white placeholder:text-white/10 focus:border-emerald-500/50 outline-none transition-all"
+                        className="w-full bg-[#0c0c0c] border border-white/5 rounded-xl px-4 py-3 text-xs font-mono text-white placeholder:text-white/5 focus:border-primary/50 outline-none transition-all"
                       />
                     </div>
                   </div>
-                </div>
-              )}
-
-              <div className="space-y-2 relative">
-                {/* Input — You Pay */}
-                <div className="bg-[#161616] rounded-3xl p-8 border border-white/5 transition-all group-hover:border-white/10 focus-within:border-emerald-500/30">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="font-headline font-bold text-[10px] uppercase tracking-widest text-white/20">You Pay</span>
-                    <span className="text-[10px] text-white/40 font-medium">Balance: {balances[fromToken]?.toLocaleString(undefined, {maximumFractionDigits: 2}) || '0.00'}</span>
-                  </div>
-                  <div className="flex justify-between items-center gap-4">
-                    <input
-                      type="text"
-                      placeholder="0.00"
-                      value={amountIn}
-                      onChange={e => setAmountIn(e.target.value.replace(/[^0-9.]/g, ''))}
-                      className="bg-transparent border-none p-0 text-4xl font-headline font-black w-full focus:ring-0 text-white placeholder:text-white/5 outline-none"
-                    />
-                    <TokenSelector
-                      value={fromToken}
-                      onChange={setFromToken}
-                      show={showFromTokenList}
-                      setShow={setShowFromTokenList}
-                      excludeToken={toToken}
-                    />
-                  </div>
-                </div>
-
-                {/* Swap Divider */}
-                <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                  <button
-                    onClick={handleSwapTokens}
-                    className="w-12 h-12 bg-[#121212] rounded-2xl border border-white/10 flex items-center justify-center text-white hover:text-emerald-500 hover:border-emerald-500/50 transition-all duration-300 shadow-2xl active:scale-90"
-                  >
-                    <span className="material-symbols-outlined">swap_vert</span>
-                  </button>
-                </div>
-
-                {/* Output — You Receive */}
-                <div className="bg-[#161616] rounded-3xl p-8 border border-white/5 transition-all group-hover:border-white/10">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="font-headline font-bold text-[10px] uppercase tracking-widest text-white/20">You Receive</span>
-                    <span className="text-[10px] text-white/40 font-medium">Balance: {balances[toToken]?.toLocaleString(undefined, {maximumFractionDigits: 2}) || '0.00'}</span>
-                  </div>
-                  <div className="flex justify-between items-center gap-4">
-                    <input
-                      type="text"
-                      placeholder="0.00"
-                      value={estimatedOut}
-                      readOnly
-                      className="bg-transparent border-none p-0 text-4xl font-headline font-black w-full focus:ring-0 text-white placeholder:text-white/5 cursor-default outline-none"
-                    />
-                    <TokenSelector
-                      value={toToken}
-                      onChange={setToToken}
-                      show={showToTokenList}
-                      setShow={setShowToTokenList}
-                      excludeToken={fromToken}
-                    />
-                  </div>
-                </div>
+                )}
               </div>
+            </div>
 
-              {/* Limit Order Condition */}
-              {orderType === 'limit' && (
-                <div className="mt-4 p-8 bg-emerald-500/5 rounded-3xl border border-emerald-500/10 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="flex justify-between items-end">
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-emerald-500/60 uppercase tracking-widest">Trigger Price</p>
-                      <p className="text-[10px] text-white/30">Current: {currentRateValue.toFixed(4)} {toToken}</p>
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                       <span className="text-[10px] text-white/20">1 {fromToken} =</span>
-                       <input
-                        type="text"
-                        placeholder={currentRateValue.toFixed(4)}
-                        value={targetPrice}
-                        onChange={e => setTargetPrice(e.target.value.replace(/[^0-9.]/g, ''))}
-                        className="bg-transparent border-none p-0 text-2xl font-headline font-black text-white focus:ring-0 text-right w-32 outline-none"
-                      />
-                      <span className="text-xs font-bold text-white/50">{toToken}</span>
-                    </div>
+            {/* Input — You Pay */}
+            <div className="bg-[#161616] rounded-2xl p-6 mb-2 transition-all border border-white/5 focus-within:border-white/20">
+              <div className="flex justify-between items-center mb-4">
+                <span className="font-label text-xs uppercase tracking-widest text-white/30 font-bold">You pay</span>
+                <span className="font-label text-xs text-white/40">Balance: {balances[fromToken]?.toFixed(2) || '0.00'} {fromToken}</span>
+              </div>
+              <div className="flex justify-between items-center gap-4">
+                <input
+                  type="text"
+                  placeholder="0"
+                  value={amountIn}
+                  onChange={e => setAmountIn(e.target.value.replace(/[^0-9.]/g, ''))}
+                  className="bg-transparent border-none p-0 text-4xl font-headline font-extrabold w-full focus:ring-0 text-white placeholder:text-white/10"
+                />
+                <TokenSelector
+                  value={fromToken}
+                  onChange={setFromToken}
+                  show={showFromTokenList}
+                  setShow={setShowFromTokenList}
+                  excludeToken={toToken}
+                />
+              </div>
+            </div>
+
+            {/* Swap Divider */}
+            <div className="flex justify-center -my-6 relative z-10">
+              <button
+                onClick={handleSwapTokens}
+                className="bg-[#0c0c0c] p-3 rounded-2xl shadow-xl border border-white/10 hover:scale-110 transition-transform"
+              >
+                <span className="material-symbols-outlined text-white">arrow_downward</span>
+              </button>
+            </div>
+
+            {/* Output — You Receive */}
+            <div className={`bg-[#161616] rounded-2xl p-6 transition-all border border-white/5 focus-within:border-white/20 ${orderType === 'limit' ? 'mb-2' : 'mb-8'}`}>
+              <div className="flex justify-between items-center mb-4">
+                <span className="font-label text-xs uppercase tracking-widest text-white/30 font-bold">You receive</span>
+                <span className="font-label text-xs text-white/40">Balance: {balances[toToken]?.toFixed(2) || '0.00'} {toToken}</span>
+              </div>
+              <div className="flex justify-between items-center gap-4">
+                <input
+                  type="text"
+                  placeholder="0"
+                  value={estimatedOut}
+                  readOnly
+                  className="bg-transparent border-none p-0 text-4xl font-headline font-extrabold w-full focus:ring-0 text-white placeholder:text-white/10 cursor-default"
+                />
+                <TokenSelector
+                  value={toToken}
+                  onChange={setToToken}
+                  show={showToTokenList}
+                  setShow={setShowToTokenList}
+                  excludeToken={fromToken}
+                />
+              </div>
+            </div>
+
+            {/* Limit Order Condition block */}
+            {orderType === 'limit' && (
+              <div className="bg-[#161616] rounded-2xl p-6 mb-8 transition-all border border-white/5 space-y-4">
+                <div>
+                  <div className="flex justify-between flex-wrap gap-2 mb-2">
+                    <span className="font-label text-xs uppercase tracking-widest text-white/30 font-bold">Trigger Price</span>
+                    <span className="font-label text-xs text-white/40">Current: {currentRateValue.toFixed(4)} {toToken}</span>
                   </div>
-                  
+                  <div className="flex items-center justify-between bg-[#0c0c0c] p-4 rounded-2xl border border-white/5 transition-all focus-within:border-white/20 overflow-hidden">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/20 mb-1">Trigger Rate</span>
+                      <span className="font-headline font-bold text-sm text-white/40 whitespace-nowrap">1 {fromToken} =</span>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder={currentRateValue.toFixed(4)}
+                      value={targetPrice}
+                      onChange={e => setTargetPrice(e.target.value.replace(/[^0-9.]/g, ''))}
+                      className="bg-transparent border-none p-0 text-2xl md:text-3xl font-headline font-extrabold flex-1 focus:ring-0 text-white text-right placeholder:text-white/10 tracking-tight outline-none ml-4 min-w-0"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <span className="font-label text-xs uppercase tracking-widest text-white/30 font-bold mb-2 block">Expiration</span>
                   <div className="relative">
                     <button
                       onClick={() => setShowExpirationList(!showExpirationList)}
-                      className="w-full flex items-center justify-between bg-black/40 px-5 py-3 rounded-xl border border-white/5 text-sm font-bold text-white/60 hover:text-white transition-all"
+                      className="w-full flex items-center justify-between bg-[#0c0c0c] p-3 rounded-xl border border-white/5 hover:border-white/10 transition-colors"
                     >
-                      <span className="uppercase tracking-widest text-[10px]">Expires in: {expiration}</span>
+                      <span className="font-headline font-bold text-sm">{expiration}</span>
                       <span className="material-symbols-outlined text-sm">expand_more</span>
                     </button>
                     {showExpirationList && (
-                      <div className="absolute left-0 right-0 bottom-full mb-2 bg-[#121212] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-30">
+                      <div className="absolute left-0 top-full mt-2 w-full bg-surface-container-lowest rounded-xl shadow-xl border border-outline-variant/10 z-20">
                         {['1 Hour', '1 Day', '1 Week', '30 Days'].map(opt => (
                           <button
                             key={opt}
                             onClick={() => { setExpiration(opt); setShowExpirationList(false); }}
-                            className="w-full px-5 py-3 text-left text-xs font-bold text-white/40 hover:text-white hover:bg-white/5 transition-all border-b border-white/5 last:border-0"
+                            className="w-full text-left px-4 py-3 hover:bg-surface-container-low font-headline font-bold text-sm transition-colors first:rounded-t-xl last:rounded-b-xl"
                           >
                             {opt}
                           </button>
@@ -395,132 +411,68 @@ export default function SwapPage() {
                     )}
                   </div>
                 </div>
-              )}
-
-              <div className="mt-8 space-y-3 px-2">
-                <div className="flex justify-between text-[11px] font-medium">
-                  <span className="text-white/30">Rate</span>
-                  <span className="text-white/60">{displayRate}</span>
-                </div>
-                <div className="flex justify-between text-[11px] font-medium">
-                  <span className="text-white/30">Network Fee</span>
-                  <span className="text-emerald-500/60 flex items-center gap-1.5">
-                    Free (Paid by SfS) <span className="material-symbols-outlined text-[10px]">bolt</span>
-                  </span>
-                </div>
-              </div>
-
-              <button
-                onClick={handleAction}
-                disabled={loading || (isConnected && amountIn && parseFloat(amountIn) > (balances[fromToken] || 0))}
-                className="w-full mt-8 bg-emerald-500 text-black py-5 rounded-2xl font-headline font-black text-lg tracking-tight hover:bg-emerald-400 active:scale-[0.98] transition-all shadow-[0_20px_40px_rgba(16,185,129,0.2)] disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]"></div>
-                {loading ? (
-                  <span className="flex items-center justify-center gap-3">
-                    <span className="material-symbols-outlined animate-spin">autorenew</span> Processing...
-                  </span>
-                ) : !isConnected ? (
-                  'Connect Wallet'
-                ) : amountIn && parseFloat(amountIn) > (balances[fromToken] || 0) ? (
-                  `Insufficient ${fromToken} Balance`
-                ) : orderType === 'limit' ? (
-                  'Set Architectural Order'
-                ) : (
-                  `Execute Swap`
-                )}
-              </button>
-            </div>
-
-            {isConnected && (
-              <div className="mt-6 flex justify-center">
-                 <button 
-                  onClick={async () => {
-                    try {
-                      setToast({ message: 'Requesting RLO from faucet...', type: 'loading' });
-                      const hash = await claimFaucet();
-                      setToast({ message: '100 RLO claimed successfully!', type: 'success', txHash: hash });
-                      addTransaction({
-                        type: 'Faucet',
-                        amount: '100 RIALO',
-                        details: 'Claim RLO Faucet',
-                        txHash: hash,
-                        source: 'Faucet'
-                      });
-                      fetchRloBalance();
-                    } catch (e) {
-                      setToast({ message: e.reason || e.message || 'Faucet claim failed', type: 'error' });
-                    }
-                  }}
-                  disabled={faucetLoading}
-                  className="flex items-center gap-2 text-white/30 hover:text-emerald-500 transition-colors text-[10px] font-bold uppercase tracking-widest"
-                >
-                  <span className="material-symbols-outlined text-sm">water_drop</span>
-                  {faucetLoading ? 'Requesting...' : 'Request 100 RIALO Faucet'}
-                </button>
               </div>
             )}
+
+            {/* Details */}
+            <div className="space-y-4 mb-8 px-2">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-white/30 font-body">Exchange Rate</span>
+                <span className="font-headline font-bold text-white/80">{displayRate}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-white/30 font-body">Price Impact</span>
+                <span className="font-headline font-bold text-white/80">&lt; 0.01%</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-white/30 font-body">Max Slippage</span>
+                <span className="font-headline font-bold text-white/80">{slippage === 'Auto' ? '0.5%' : `${slippage}%`}</span>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <button
+              onClick={handleAction}
+              disabled={loading || (isConnected && amountIn && parseFloat(amountIn) > (balances[fromToken] || 0))}
+              className="w-full bg-white text-black py-5 rounded-2xl font-headline font-extrabold text-lg tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl disabled:opacity-50"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined animate-spin text-xl">autorenew</span> Processing…
+                </span>
+              ) : !isConnected ? (
+                'Connect Wallet'
+              ) : amountIn && parseFloat(amountIn) > (balances[fromToken] || 0) ? (
+                `Insufficient ${fromToken} Balance`
+              ) : orderType === 'limit' ? (
+                `Place Limit Order`
+              ) : (
+                `Swap ${fromToken} → ${toToken}`
+              )}
+            </button>
           </div>
 
-          {/* Context Panel */}
-          <div className="flex-1 w-full space-y-8 animate-in fade-in slide-in-from-right-4 duration-1000">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-8">
-              <div className="bg-[#121212] rounded-[32px] p-10 border border-white/5 shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-                <h3 className="font-headline font-bold text-emerald-500 text-lg mb-8 flex items-center gap-3">
-                  <span className="material-symbols-outlined text-sm">insights</span> Market Overview
-                </h3>
-                <div className="space-y-6">
-                  <div className="pb-6 border-b border-white/5">
-                    <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mb-2">Liquidity Status</p>
-                    <div className="flex items-center justify-between">
-                      <span className="font-headline font-bold text-xl text-white">Optimal</span>
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5].map(i => <div key={i} className="w-1.5 h-3 bg-emerald-500 rounded-full"></div>)}
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mb-2">Architectural Fee</p>
-                    <p className="font-headline font-bold text-xl text-emerald-500 flex items-center gap-2">
-                       0.00% <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest">(GASLESS)</span>
-                    </p>
-                  </div>
-                </div>
+          {/* Contextual Info */}
+          <div className="mt-8 grid grid-cols-2 gap-4">
+            <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/10">
+              <p className="font-label text-xs uppercase text-on-surface/40 mb-1">Network Status</p>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                <span className="font-headline font-bold text-sm">Testnet Node Active</span>
               </div>
-
-              <div className="bg-[#121212] rounded-[32px] p-10 border border-white/5 shadow-2xl">
-                <h3 className="font-headline font-bold text-white text-lg mb-8 flex items-center gap-3">
-                  <span className="material-symbols-outlined text-emerald-500">security</span> Transaction Security
-                </h3>
-                <div className="space-y-6">
-                   {[
-                     { label: 'MEV Protection', desc: 'Advanced routing prevents front-running and sandwich attacks.' },
-                     { label: 'Architectural Guard', desc: 'Transactions are verified against the Rialo consensus engine.' },
-                   ].map((item, i) => (
-                     <div key={i} className="flex gap-4">
-                       <div className="mt-1 w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] flex-shrink-0"></div>
-                       <div>
-                         <p className="text-xs font-bold text-white mb-1">{item.label}</p>
-                         <p className="text-[11px] text-white/30 leading-relaxed">{item.desc}</p>
-                       </div>
-                     </div>
-                   ))}
-                </div>
+            </div>
+            <div className="bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/10">
+              <p className="font-label text-xs uppercase text-on-surface/40 mb-1">Gas Estimation</p>
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm text-on-surface/40">local_gas_station</span>
+                <span className="font-headline font-bold text-sm">$4.12 USD</span>
               </div>
             </div>
           </div>
         </div>
       </main>
-
       <Footer />
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
-
-      <style jsx>{`
-        @keyframes shimmer {
-          100% { transform: translateX(100%); }
-        }
-      `}</style>
     </div>
   );
 }
