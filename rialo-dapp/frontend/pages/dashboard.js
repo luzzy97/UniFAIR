@@ -214,14 +214,20 @@ export default function DashboardPage() {
                           <p className="font-headline font-black text-on-surface text-lg leading-none">
                             {tx.amount}
                           </p>
-                          <a 
-                            href={`https://sepolia.etherscan.io/tx/${tx.txHash}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-[10px] font-bold text-primary/60 hover:text-primary transition-colors flex items-center gap-1 uppercase tracking-tighter"
-                          >
-                            TXN Receipt <span className="material-symbols-outlined text-[14px]">open_in_new</span>
-                          </a>
+                          {tx.txHash?.startsWith('simulated_') ? (
+                            <div className="text-[10px] font-bold text-gray-400 flex items-center gap-1 uppercase tracking-tighter cursor-help" title="Simulation Mode: AI Private Key not configured in Settings">
+                              SIMULATED TXN <span className="material-symbols-outlined text-[14px]">info</span>
+                            </div>
+                          ) : (
+                            <a 
+                              href={`https://sepolia.etherscan.io/tx/${tx.txHash}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-[10px] font-bold text-primary/60 hover:text-primary transition-colors flex items-center gap-1 uppercase tracking-tighter"
+                            >
+                              TXN Receipt <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                            </a>
+                          )}
                         </div>
                       </div>
                     </div>

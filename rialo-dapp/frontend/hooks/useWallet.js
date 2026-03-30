@@ -251,7 +251,7 @@ export function WalletProvider({ children }) {
       } else if (isAuto) {
         // For automated triggers, if no AI wallet is provided, we simulate the transaction 
         // silently to provide a seamless demo experience without blocking the UI with popups
-        const fakeHash = '0x' + Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+        const fakeHash = 'simulated_0x' + Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('');
         addTransaction({ type: txType, amount: actionDetail, details: 'AI Auto Execution (Simulated)', txHash: fakeHash, source: 'AI Agent' });
         return fakeHash;
       } else {

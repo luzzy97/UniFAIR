@@ -77,10 +77,15 @@ export default function GlobalToast() {
         </div>
         <div className="toast-content">
           <div className="toast-title">{toast.message} {toast.detail}</div>
-          {toast.txHash && (
+          {toast.txHash && !toast.txHash.startsWith('simulated_') && (
             <a href={`https://sepolia.etherscan.io/tx/${toast.txHash}`} target="_blank" rel="noopener noreferrer" className="toast-link">
               View on Etherscan ↗
             </a>
+          )}
+          {toast.txHash && toast.txHash.startsWith('simulated_') && (
+            <span className="toast-link" style={{ textDecoration: 'none', cursor: 'help', color: '#ffaa00' }} title="Configure AI Wallet for on-chain execution">
+              Simulated Execution (Offline)
+            </span>
           )}
         </div>
       </div>

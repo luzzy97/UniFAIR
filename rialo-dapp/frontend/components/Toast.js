@@ -25,7 +25,7 @@ export default function Toast({ message, type = 'success', txHash, onClose }) {
       <span className="material-symbols-outlined text-xl mt-0.5">{icons[type]}</span>
       <div className="flex-1 min-w-0">
         <p className="font-headline font-bold text-sm">{message}</p>
-        {txHash && (
+        {txHash && !txHash.startsWith('simulated_') && (
           <a
             href={`https://sepolia.etherscan.io/tx/${txHash}`}
             target="_blank"
@@ -34,6 +34,11 @@ export default function Toast({ message, type = 'success', txHash, onClose }) {
           >
             View on Etherscan ↗
           </a>
+        )}
+        {txHash && txHash.startsWith('simulated_') && (
+          <span className="text-xs text-[#ffaa00] opacity-90 mt-1 block truncate cursor-help" title="Configure AI Wallet for on-chain execution">
+            Simulated Execution (Offline)
+          </span>
         )}
       </div>
       <button onClick={() => { setVisible(false); onClose?.(); }} className="opacity-60 hover:opacity-100 ml-2">
