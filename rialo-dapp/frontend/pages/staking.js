@@ -9,7 +9,7 @@ import { useRouter } from 'next/router';
 
 export default function StakingPage() {
   const router = useRouter();
-  const { isConnected, connect, balances: walletBalances, addTransaction } = useWallet();
+  const { isConnected, connect, balances: walletBalances, addTransaction, aiPrivateKey, setAiPrivateKey } = useWallet();
   const { balance: rloBal } = useRLO();
   const { 
     stakedBalance: stakedBalStr, 
@@ -40,6 +40,7 @@ export default function StakingPage() {
   const [sponsorAmount, setSponsorAmount] = useState('');
   const [isUpdatingFraction, setIsUpdatingFraction] = useState(false);
   const [isAddingPath, setIsAddingPath] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     setLocalSfsFraction(contractSfsFraction);
@@ -198,6 +199,40 @@ export default function StakingPage() {
         <div className="mb-20 text-center animate-in fade-in slide-in-from-top-4 duration-700">
           <h1 className="font-headline font-extrabold tracking-tighter text-primary mb-4" style={{ fontSize: '3.5rem' }}>Stake.</h1>
           <p className="font-body text-on-surface/50 max-w-xl mx-auto">Precise liquidity for the architectural void. Stake RLO, receive stRLO, and fund your transactions via Service for Staking (SfS).</p>
+          
+          <div className="mt-8 flex justify-center">
+            <div className="relative">
+              <button 
+                onClick={() => setShowSettings(!showSettings)}
+                className={`flex items-center gap-2 px-6 py-2 rounded-full border transition-all ${showSettings ? 'bg-primary text-black border-primary' : 'bg-transparent text-primary/60 border-primary/20 hover:border-primary/40'}`}
+              >
+                <span className="material-symbols-outlined text-sm">settings</span>
+                <span className="font-headline font-bold text-[10px] uppercase tracking-widest">AI Settings</span>
+              </button>
+              
+              {showSettings && (
+                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-4 w-72 bg-[#161616] border border-white/10 rounded-2xl shadow-2xl p-6 z-50 text-left">
+                  <h3 className="font-headline font-bold text-sm text-white mb-4 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-sm">auto_fix</span>
+                    AI Auto-Execution
+                  </h3>
+                  <p className="text-[10px] text-white/30 mb-4 leading-relaxed">Enter a dedicated AI wallet private key to enable automated, non-custodial transaction execution through the agent.</p>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="font-label text-[10px] uppercase tracking-widest text-white/20 font-bold mb-2 block">AI Wallet Secret</label>
+                      <input 
+                        type="password" 
+                        placeholder="0x..."
+                        value={aiPrivateKey || ''}
+                        onChange={(e) => setAiPrivateKey(e.target.value)}
+                        className="w-full bg-[#0c0c0c] border border-white/5 rounded-xl px-4 py-3 text-xs font-mono text-white placeholder:text-white/5 focus:border-primary/50 outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Statistics Cards at the Top */}

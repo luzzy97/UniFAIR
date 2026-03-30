@@ -715,6 +715,75 @@
       {
         "inputs": [
           {
+            "internalType": "uint256",
+            "name": "fraction",
+            "type": "uint256"
+          }
+        ],
+        "name": "setSfsFraction",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "destination",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
+        "name": "addSponsorshipPath",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "clearSponsorshipPaths",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          }
+        ],
+        "name": "getSponsorshipPaths",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "destination",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct Staking.SponsorshipPath[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "address",
             "name": "",
             "type": "address"
@@ -735,6 +804,11 @@
           {
             "internalType": "uint256",
             "name": "rewardsAccumulated",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "sfsFraction",
             "type": "uint256"
           }
         ],

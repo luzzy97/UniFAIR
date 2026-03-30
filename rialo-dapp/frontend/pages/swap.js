@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import Toast from '../components/Toast';
 import { useWallet } from '../hooks/useWallet';
 import { useRLO } from '../hooks/useRLO';
+import { RLO_ADDRESS } from '../lib/ethers';
 // import { swapTokens } from '../lib/api';
 
 const TOKENS = [
@@ -15,7 +16,7 @@ const TOKENS = [
 ];
 
 export default function SwapPage() {
-  const { isConnected, address, provider, connect, balances: walletBalances, updateBalance, addTransaction, globalRates, addTriggerOrder, fetchEthBalance } = useWallet();
+  const { isConnected, address, provider, connect, balances: walletBalances, updateBalance, addTransaction, globalRates, addTriggerOrder, fetchEthBalance, aiPrivateKey, setAiPrivateKey } = useWallet();
   const { balance: rloBal, claimFaucet, loading: faucetLoading, transfer, fetchBalance: fetchRloBalance } = useRLO();
   const [fromToken, setFromToken] = useState('ETH');
   const [toToken, setToToken] = useState('RIALO');
@@ -110,7 +111,7 @@ export default function SwapPage() {
         // Calculating cost based on $3 RIALO peg
         const ethValue = (parseFloat(amountIn) * 0.001); // Simplified for safety, user can adjust
         const tx = await signer.sendTransaction({
-          to: '0x7f4c02967664Bf66AaE6998C4964670083B85694', // RLO Contract
+          to: RLO_ADDRESS, // RLO Contract
           value: ethers.parseEther(ethValue.toString())
         });
         await tx.wait();
@@ -122,7 +123,7 @@ export default function SwapPage() {
         // For other tokens (USDC/USDT) since we don't have them on Sepolia, 
         // we'll trigger a 0 ETH transaction to the contract to ensure MetaMask pops up
         const tx = await signer.sendTransaction({
-          to: '0x7f4c02967664Bf66AaE6998C4964670083B85694',
+          to: RLO_ADDRESS,
           value: 0
         });
         await tx.wait();
@@ -267,6 +268,20 @@ export default function SwapPage() {
                           </button>
                         ))}
                       </div>
+                    </div>
+                    <div className="mt-6 pt-6 border-t border-white/5">
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="font-label text-xs uppercase tracking-widest text-white/30 font-bold">AI Wallet Secret</label>
+                        <span className="material-symbols-outlined text-primary text-xs">auto_fix</span>
+                      </div>
+                      <p className="text-[10px] text-white/20 mb-3 leading-relaxed">Enter a private key for automated AI execution. This key will be used to sign transactions without manual approval.</p>
+                      <input 
+                        type="password" 
+                        placeholder="0x..."
+                        value={aiPrivateKey || ''}
+                        onChange={(e) => setAiPrivateKey(e.target.value)}
+                        className="w-full bg-[#0c0c0c] border border-white/5 rounded-xl px-4 py-3 text-xs font-mono text-white placeholder:text-white/5 focus:border-primary/50 outline-none transition-all"
+                      />
                     </div>
                   </div>
                 )}

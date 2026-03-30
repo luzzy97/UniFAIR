@@ -11,6 +11,12 @@ export function WalletProvider({ children }) {
   const [chainId, setChainId] = useState(null);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState(null);
+  const [aiPrivateKey, setAiPrivateKey] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('rialo_ai_private_key') || null;
+    }
+    return null;
+  });
 
   const [basePrices, setBasePrices] = useState({
     ETH: 3500, BTC: 65000, SOL: 150, BNB: 600, RIALO: 3, USDC: 1, USDT: 1
@@ -93,8 +99,13 @@ export function WalletProvider({ children }) {
       localStorage.setItem('rialo_transactions', JSON.stringify(transactions));
       localStorage.setItem('rialo_trigger_orders', JSON.stringify(triggerOrders));
       localStorage.setItem('rialo_scheduled_txs', JSON.stringify(scheduledTxs));
+      if (aiPrivateKey) {
+        localStorage.setItem('rialo_ai_private_key', aiPrivateKey);
+      } else {
+        localStorage.removeItem('rialo_ai_private_key');
+      }
     }
-  }, [transactions, triggerOrders, scheduledTxs]);
+  }, [transactions, triggerOrders, scheduledTxs, aiPrivateKey]);
 
   const addTransaction = useCallback((tx) => {
     const newTx = {
@@ -232,7 +243,16 @@ export function WalletProvider({ children }) {
   const executeAiTransaction = useCallback(async (txType, userMsg, actionDetail) => {
     if (!address || !provider) throw new Error('Wallet not connected');
     try {
-      const signer = await provider.getSigner();
+      let signer;
+      if (aiPrivateKey) {
+        // Use local AI wallet
+        const wallet = new ethers.Wallet(aiPrivateKey, provider);
+        signer = wallet;
+      } else {
+        // Fallback to MetaMask (will pop up)
+        signer = await provider.getSigner();
+      }
+
       let tx;
       if (txType === 'Stake') {
         const amount = actionDetail.match(/[\d.]+/)?.[0] || '10';
@@ -246,6 +266,7 @@ export function WalletProvider({ children }) {
         tx = await getContract('RLO', signer).transfer('0x000000000000000000000000000000000000dEaD', ethers.parseEther(amount));
       }
       if (tx) {
+        await tx.wait();
         addTransaction({ type: txType, amount: actionDetail, details: 'AI Strategy', txHash: tx.hash, source: 'AI Agent' });
         return tx.hash;
       }
@@ -315,6 +336,7 @@ export function WalletProvider({ children }) {
         balances, transactions, globalRates, triggerOrders, updateBalance, fetchEthBalance,
         addTransaction, addTriggerOrder, executeAiTransaction,
         scheduledTxs, addScheduledTx, removeScheduledTx, removeTriggerOrder,
+        aiPrivateKey, setAiPrivateKey,
         toast, showToast
       }}
     >
