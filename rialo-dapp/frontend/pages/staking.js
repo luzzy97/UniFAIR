@@ -200,7 +200,7 @@ export default function StakingPage() {
           <div>
             <button 
               onClick={() => setShowSettings(!showSettings)}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-full border transition-all ${showSettings ? 'bg-[#ffaa00] text-black border-[#ffaa00]' : 'bg-[#121212] text-white/60 border-white/10 hover:border-white/20'}`}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-full border transition-all ${showSettings ? 'bg-[#ffaa00] text-black border-[#ffaa00]' : 'bg-[#121212] text-white/80 border-black/10 hover:border-black/20 shadow-sm'}`}
             >
               <span className="material-symbols-outlined text-sm">settings</span>
               <span className="font-headline font-bold text-[10px] uppercase tracking-widest">AI Agent Settings</span>
@@ -234,8 +234,8 @@ export default function StakingPage() {
           {/* LEFT COLUMN: Stake RLO */}
           <div className="flex flex-col animate-in fade-in slide-in-from-left-4 duration-700">
             <div className="text-center mb-8">
-              <h1 className="font-headline font-extrabold text-white text-3xl tracking-tighter mb-2">Stake RLO</h1>
-              <p className="font-body text-white/50 text-sm max-w-sm mx-auto">Stake RLO, receive sRLO, and fund your transactions via SfS.</p>
+              <h1 className="font-headline font-extrabold text-black text-3xl tracking-tighter mb-2">Stake RLO</h1>
+              <p className="font-body text-black/60 text-sm max-w-sm mx-auto">Stake RLO, receive sRLO, and fund your transactions via SfS.</p>
             </div>
 
             <div className="bg-[#121212] rounded-[24px] p-8 border border-[#ffaa00]/10 shadow-2xl relative flex-grow">
@@ -335,11 +335,11 @@ export default function StakingPage() {
           {/* RIGHT COLUMN: SfS Router */}
           <div className="flex flex-col animate-in fade-in slide-in-from-right-4 duration-700">
             <div className="text-center mb-8">
-              <h1 className="font-headline font-extrabold text-white text-3xl tracking-tighter mb-2 flex items-center justify-center gap-2">
+              <h1 className="font-headline font-extrabold text-black text-3xl tracking-tighter mb-2 flex items-center justify-center gap-2">
                 <span className="material-symbols-outlined text-[#ffaa00] text-3xl">route</span>
                 SfS Router: Sponsorship
               </h1>
-              <p className="font-body text-white/50 text-sm max-w-sm mx-auto">Manage your Service Credits and sponsor external addresses.</p>
+              <p className="font-body text-black/60 text-sm max-w-sm mx-auto">Manage your Service Credits and sponsor external addresses.</p>
             </div>
 
             <div className="bg-[#121212] rounded-[24px] p-8 border border-[#ffaa00]/10 shadow-2xl relative flex-grow">
@@ -451,7 +451,7 @@ export default function StakingPage() {
         {/* Protocol Metrics Layout Bar */}
         <div className="w-full mt-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="flex justify-between items-end mb-4 px-2">
-            <h3 className="font-headline font-bold text-sm text-white">Rialo Protocol Statistics</h3>
+            <h3 className="font-headline font-bold text-sm text-black">Rialo Protocol Statistics</h3>
             <button onClick={() => router.push('/dashboard')} className="font-body text-xs text-[#1e90ff] hover:underline hover:text-[#1e90ff]/80 transition-colors">View on Explorer</button>
           </div>
           <div className="bg-[#121212] rounded-[16px] border border-white/5 p-6 md:p-8 flex flex-col md:flex-row justify-between items-center shadow-2xl">
