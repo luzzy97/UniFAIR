@@ -200,16 +200,16 @@ export default function StakingPage() {
           <div>
             <button 
               onClick={() => setShowSettings(!showSettings)}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-full border transition-all ${showSettings ? 'bg-[#ffaa00] text-black border-[#ffaa00]' : 'bg-[#121212] text-white/80 border-black/10 hover:border-black/20 shadow-sm'}`}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-full border transition-all ${showSettings ? 'bg-white text-black border-white' : 'bg-[#121212] text-white/80 border-black/10 hover:border-black/20 shadow-sm'}`}
             >
               <span className="material-symbols-outlined text-sm">settings</span>
               <span className="font-headline font-bold text-[10px] uppercase tracking-widest">AI Agent Settings</span>
             </button>
             
             {showSettings && (
-              <div className="absolute right-0 top-full mt-2 w-72 bg-[#121212] border border-[#ffaa00]/20 rounded-2xl shadow-2xl p-6 z-50 text-left">
+              <div className="absolute right-0 top-full mt-2 w-72 bg-[#121212] border border-white/20 rounded-2xl shadow-2xl p-6 z-50 text-left">
                 <h3 className="font-headline font-bold text-sm text-white mb-3 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#ffaa00] text-sm">auto_fix</span>
+                  <span className="material-symbols-outlined text-white text-sm">auto_fix</span>
                   AI Auto-Execution
                 </h3>
                 <p className="font-body text-[10px] text-white/40 mb-4 leading-relaxed">Enter a dedicated AI wallet private key to enable automated, non-custodial transaction execution through the agent.</p>
@@ -220,7 +220,7 @@ export default function StakingPage() {
                     placeholder="0x..."
                     value={aiPrivateKey || ''}
                     onChange={(e) => setAiPrivateKey(e.target.value)}
-                    className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-xs font-mono text-white placeholder:text-white/10 focus:border-[#ffaa00]/50 outline-none transition-all"
+                    className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-xs font-mono text-white placeholder:text-white/10 focus:border-white/50 outline-none transition-all"
                   />
                 </div>
               </div>
@@ -238,21 +238,21 @@ export default function StakingPage() {
               <p className="font-body text-black/60 text-sm max-w-sm mx-auto">Stake RLO, receive sRLO, and fund your transactions via SfS.</p>
             </div>
 
-            <div className="bg-[#121212] rounded-[24px] p-8 border border-[#ffaa00]/10 shadow-2xl relative flex-grow">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#ffaa00] to-transparent opacity-20 border-t border-[#ffaa00]/30 rounded-t-[24px]"></div>
+            <div className="bg-[#121212] rounded-[24px] p-8 border border-white/5 shadow-2xl relative flex-grow">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-20 border-t border-white/10 rounded-t-[24px]"></div>
               
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-3">
                   <label className="font-label text-[10px] uppercase tracking-widest text-white/40 font-bold">RLO AMOUNT</label>
                   <button 
                     onClick={() => setRloAmount((balances['RIALO'] || 0).toString())}
-                    className="font-headline font-bold text-[10px] text-[#ffaa00] bg-[#ffaa00]/10 hover:bg-[#ffaa00]/20 px-3 py-1 rounded-md transition-all uppercase tracking-widest border border-[#ffaa00]/20"
+                    className="font-headline font-bold text-[10px] text-black bg-white hover:bg-white/90 px-3 py-1 rounded-md transition-all uppercase tracking-widest"
                   >
                     MAX
                   </button>
                 </div>
                 <div className="bg-[#0a0a0a] rounded-xl flex items-center px-4 py-3 border border-white/5 focus-within:border-white/20 transition-colors">
-                  <span className="material-symbols-outlined text-[#ffaa00] mr-4 text-2xl">local_fire_department</span>
+                  <span className="material-symbols-outlined text-white mr-4 text-2xl">local_fire_department</span>
                   <input
                     type="number"
                     value={rloAmount}
@@ -267,7 +267,7 @@ export default function StakingPage() {
                   <button 
                     onClick={handleStake}
                     disabled={stakingLoading}
-                    className={`flex-1 bg-[#1e90ff] text-white py-4 rounded-xl font-headline font-bold text-lg hover:bg-[#1e90ff]/90 active:scale-[0.98] transition-all shadow-lg disabled:opacity-50 flex justify-center items-center gap-3`}
+                    className={`flex-1 bg-white text-black py-4 rounded-xl font-headline font-bold text-lg hover:bg-white/90 active:scale-[0.98] transition-all shadow-lg disabled:opacity-50 flex justify-center items-center gap-3`}
                   >
                     {stakingLoading ? 'Processing...' : 'Simulate Staking'}
                   </button>
@@ -286,17 +286,17 @@ export default function StakingPage() {
               <div className="bg-[#161616] rounded-xl p-6 border border-white/5 mb-6">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-label text-[10px] font-bold uppercase tracking-widest text-white/40">
-                    SfS Routing Fraction (<span className="text-[#ffaa00]">ϕ</span>)
+                    SfS Routing Fraction (<span className="text-white">ϕ</span>)
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="font-headline font-bold text-[#ffaa00] text-sm bg-[#ffaa00]/10 px-2 py-0.5 rounded border border-[#ffaa00]/20">
+                    <span className="font-headline font-bold text-black text-sm bg-white/90 px-2 py-0.5 rounded border border-white/10">
                       {localSfsFraction}%
                     </span>
                     {localSfsFraction !== contractSfsFraction && (
                       <button 
                         onClick={handleUpdateFraction}
                         disabled={isUpdatingFraction}
-                        className="text-[9px] font-bold text-[#ffaa00] hover:text-[#ffaa00]/70 uppercase tracking-widest border border-[#ffaa00]/30 px-2 py-1 rounded transition-all"
+                        className="text-[9px] font-bold text-white/70 hover:text-white uppercase tracking-widest border border-white/30 px-2 py-1 rounded transition-all"
                       >
                         {isUpdatingFraction ? 'Syncing...' : 'Sync'}
                       </button>
@@ -312,7 +312,7 @@ export default function StakingPage() {
                   max="100" 
                   value={localSfsFraction} 
                   onChange={(e) => setLocalSfsFraction(Number(e.target.value))}
-                  className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffaa00] focus:outline-none"
+                  className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white focus:outline-none"
                 />
                 <div className="flex justify-between text-[9px] text-white/30 mt-3 font-bold uppercase tracking-widest font-label">
                   <span>0% All Native</span>
@@ -335,7 +335,7 @@ export default function StakingPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-white/40 font-medium flex items-center gap-1.5">Total Yield Router <span className="material-symbols-outlined text-[12px] opacity-60">info</span></span>
-                  <span className="font-headline font-bold text-[#ffaa00]">{rawYieldToServiceCredits.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span className="text-[10px] text-[#ffaa00]/50 font-medium">Credits/yr</span></span>
+                  <span className="font-headline font-bold text-white">{rawYieldToServiceCredits.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span className="text-[10px] text-white/50 font-medium">Credits/yr</span></span>
                 </div>
               </div>
             </div>
@@ -345,29 +345,29 @@ export default function StakingPage() {
           <div className="flex flex-col animate-in fade-in slide-in-from-right-4 duration-700">
             <div className="text-center mb-8">
               <h1 className="font-headline font-extrabold text-black text-3xl tracking-tighter mb-2 flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-[#ffaa00] text-3xl">route</span>
+                <span className="material-symbols-outlined text-black text-3xl">route</span>
                 SfS Router: Sponsorship
               </h1>
               <p className="font-body text-black/60 text-sm max-w-sm mx-auto">Manage your Service Credits and sponsor external addresses.</p>
             </div>
 
-            <div className="bg-[#121212] rounded-[24px] p-8 border border-[#ffaa00]/10 shadow-2xl relative flex-grow">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#ffaa00] to-transparent opacity-20 border-t border-[#ffaa00]/30 rounded-t-[24px]"></div>
+            <div className="bg-[#121212] rounded-[24px] p-8 border border-white/5 shadow-2xl relative flex-grow">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-20 border-t border-white/10 rounded-t-[24px]"></div>
 
               <div className="bg-[#0a0a0a] rounded-2xl p-6 border border-white/5 mb-8 flex justify-between items-center relative overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#ffaa00]/5 to-transparent opacity-50"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-50"></div>
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="material-symbols-outlined text-[12px] text-white/40">info</span>
                     <label className="font-label text-[10px] uppercase tracking-widest text-white/40 font-bold block">AVAILABLE SERVICE CREDITS</label>
                   </div>
-                  <div className="font-headline font-extrabold text-3xl text-[#ffaa00] tracking-tighter flex items-end gap-2">
+                  <div className="font-headline font-extrabold text-3xl text-white tracking-tighter flex items-end gap-2">
                     {availableServiceCredits.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                    <span className="font-label text-[10px] font-bold uppercase tracking-widest text-[#ffaa00]/50 mb-1.5">Credits/yr</span>
+                    <span className="font-label text-[10px] font-bold uppercase tracking-widest text-white/50 mb-1.5">Credits/yr</span>
                   </div>
                 </div>
-                <div className="relative z-10 w-12 h-12 rounded-full border border-[#ffaa00]/20 flex items-center justify-center bg-[#ffaa00]/10 shadow-[0_0_15px_rgba(255,170,0,0.1)]">
-                  <span className="material-symbols-outlined text-[#ffaa00] text-2xl">water_drop</span>
+                <div className="relative z-10 w-12 h-12 rounded-full border border-white/10 flex items-center justify-center bg-white/5 shadow-[0_0_15px_rgba(255,255,255,0.05)]">
+                  <span className="material-symbols-outlined text-white text-2xl">water_drop</span>
                 </div>
               </div>
 
@@ -395,13 +395,13 @@ export default function StakingPage() {
                     <button 
                       onClick={handleCreatePath}
                       disabled={isAddingPath}
-                      className="flex-1 bg-[#d97706] hover:bg-[#d97706]/90 text-white border border-[#d97706]/20 rounded-xl px-4 py-3 font-headline font-bold text-sm transition-all flex justify-center items-center gap-2 active:scale-[0.98] disabled:opacity-50"
+                      className="flex-1 bg-white hover:bg-white/90 text-black rounded-xl px-4 py-3 font-headline font-bold text-sm transition-all flex justify-center items-center gap-2 active:scale-[0.98] disabled:opacity-50 shadow-md"
                     >
                       {isAddingPath ? (
                         <span className="material-symbols-outlined animate-spin text-sm">autorenew</span>
                       ) : (
                         <>
-                          <span className="text-white font-extrabold text-lg mr-1 leading-none">+</span> Add to Router Path
+                          <span className="text-black font-extrabold text-lg mr-1 leading-none">+</span> Add to Router Path
                         </>
                       )}
                     </button>
@@ -410,7 +410,7 @@ export default function StakingPage() {
               </div>
 
               <div className="flex-grow">
-                <label className="font-headline font-bold text-xs text-emerald-400 mb-4 px-1 flex items-center gap-2 tracking-widest uppercase">
+                <label className="font-headline font-bold text-xs text-white/50 mb-4 px-1 flex items-center gap-2 tracking-widest uppercase">
                   <span className="material-symbols-outlined text-[14px]">moving</span> ACTIVE SPONSORED PATHS
                 </label>
                 <div className="bg-[#0a0a0a] rounded-xl border border-white/5 overflow-hidden">
@@ -427,7 +427,7 @@ export default function StakingPage() {
                           </div>
                           <span className="font-mono text-[11px] text-white/70">{path.address.slice(0,6)}...{path.address.slice(-4)}</span>
                         </div>
-                        <span className="font-headline text-[11px] font-bold text-[#ffaa00]/90 bg-[#ffaa00]/10 border border-[#ffaa00]/10 px-2 py-1 rounded">
+                        <span className="font-headline text-[11px] font-bold text-black bg-white/90 px-2 py-1 rounded">
                           {path.amount.toFixed(2)} Credits/yr
                         </span>
                       </div>
@@ -446,7 +446,7 @@ export default function StakingPage() {
                   <button 
                     onClick={handleClaim}
                     disabled={stakingLoading}
-                    className="text-xs font-bold text-[#1e90ff] hover:text-white border border-[#1e90ff]/30 px-4 py-2 rounded-lg transition-all"
+                    className="text-xs font-bold text-white/70 hover:text-white border border-white/30 hover:border-white/50 px-4 py-2 rounded-lg transition-all"
                   >
                     Claim
                   </button>
@@ -461,7 +461,7 @@ export default function StakingPage() {
         <div className="w-full mt-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="flex justify-between items-end mb-4 px-2">
             <h3 className="font-headline font-bold text-sm text-black">Rialo Protocol Statistics</h3>
-            <button onClick={() => router.push('/dashboard')} className="font-body text-xs text-[#1e90ff] hover:underline hover:text-[#1e90ff]/80 transition-colors">View on Explorer</button>
+            <button onClick={() => router.push('/dashboard')} className="font-body text-xs text-black/40 hover:underline hover:text-black/80 transition-colors">View on Explorer</button>
           </div>
           <div className="bg-[#121212] rounded-[16px] border border-white/5 p-6 md:p-8 flex flex-col md:flex-row justify-between items-center shadow-2xl">
             <div className="flex-1 w-full md:border-r border-white/5 md:px-6 px-0 py-4 md:py-0 first:pl-2 last:pr-2 last:border-0 border-b md:border-b-0">
