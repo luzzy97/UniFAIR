@@ -161,100 +161,131 @@ export default function DashboardPage() {
         {/* Unified History Section */}
         <section className="mb-16">
           <div className="flex justify-between items-center mb-8">
-            <h3 className="font-headline font-bold text-primary text-lg">Unified Transaction History</h3>
-            <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{transactions.length} Total Operations</span>
+            <div>
+              <h3 className="font-headline font-bold text-primary text-xl">Transaction History</h3>
+              <p className="text-[10px] text-white/30 uppercase tracking-widest mt-1">{transactions.length} total operations recorded</p>
+            </div>
           </div>
-          
-          <div className="bg-surface-container-low rounded-xl border border-outline-variant/10 overflow-hidden">
+
+          <div className="bg-[#0c0c0c] rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
+            {/* Table Header */}
+            {isConnected && transactions.length > 0 && (
+              <div className="grid grid-cols-[40px_1fr_auto_auto] gap-4 px-6 py-3 border-b border-white/5">
+                <div />
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/20">Transaction</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/20 text-right">Amount</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/20 text-right">Receipt</span>
+              </div>
+            )}
+
             {isConnected ? (
               transactions.length > 0 ? (
-                <div className="divide-y divide-white/5">
-                  {transactions.slice(0, 5).map((tx, i) => (
-                    <div key={tx.id} className="p-6 hover:bg-white/[0.02] transition-colors border-b border-white/5 last:border-0">
-                      <div className="grid grid-cols-[48px_1fr_auto] items-center gap-6">
-                        {/* Left: Icon Block */}
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                          tx.type === 'Swap' ? 'bg-primary/10 text-primary' :
-                          tx.type === 'Bridge' ? 'bg-blue-500/10 text-blue-400' :
-                          tx.type === 'Stake' ? 'bg-green-500/10 text-green-400' :
-                          'bg-purple-500/10 text-purple-400'
-                        } border border-white/5 shadow-sm`}>
-                          <span className="material-symbols-outlined text-xl">
-                            {tx.type === 'Swap' ? 'swap_horiz' :
-                             tx.type === 'Bridge' ? 'account_balance' :
-                             tx.type === 'Stake' ? 'lock' :
-                             'download'}
-                          </span>
+                <div>
+                  {transactions.slice().reverse().slice(0, 10).map((tx, i) => {
+                    const typeConfig = {
+                      'Swap':    { icon: 'swap_horiz',       bg: 'bg-violet-500/10',  text: 'text-violet-400',  badge: 'bg-violet-500/20 text-violet-300 border-violet-500/20' },
+                      'Bridge':  { icon: 'merge_type',        bg: 'bg-blue-500/10',    text: 'text-blue-400',    badge: 'bg-blue-500/20 text-blue-300 border-blue-500/20' },
+                      'Stake':   { icon: 'lock',              bg: 'bg-emerald-500/10', text: 'text-emerald-400', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/20' },
+                      'Unstake': { icon: 'lock_open',         bg: 'bg-orange-500/10',  text: 'text-orange-400',  badge: 'bg-orange-500/20 text-orange-300 border-orange-500/20' },
+                      'Faucet':  { icon: 'water_drop',        bg: 'bg-cyan-500/10',    text: 'text-cyan-400',    badge: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/20' },
+                      'Claim':   { icon: 'redeem',            bg: 'bg-yellow-500/10',  text: 'text-yellow-400',  badge: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/20' },
+                    };
+                    const cfg = typeConfig[tx.type] || { icon: 'receipt_long', bg: 'bg-white/5', text: 'text-white/40', badge: 'bg-white/10 text-white/40 border-white/10' };
+                    const shortHash = tx.txHash && !tx.txHash.startsWith('simulated_')
+                      ? `${tx.txHash.slice(0, 6)}...${tx.txHash.slice(-4)}`
+                      : null;
+                    const dateStr = new Date(tx.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    const timeStr = new Date(tx.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+                    return (
+                      <div key={tx.id || i} className="grid grid-cols-[40px_1fr_auto_auto] gap-4 items-center px-6 py-4 hover:bg-white/[0.025] transition-colors border-b border-white/[0.04] last:border-0 group">
+                        {/* Icon */}
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${cfg.bg} border border-white/5`}>
+                          <span className={`material-symbols-outlined text-[18px] ${cfg.text}`}>{cfg.icon}</span>
                         </div>
 
-                        {/* Middle: Type & Context */}
-                        <div className="flex flex-col gap-1 min-w-0">
-                          <div className="flex items-center gap-3">
-                            <p className="font-headline font-bold text-sm text-on-surface truncate">
-                              {tx.type} Execution
-                            </p>
+                        {/* Info */}
+                        <div className="min-w-0 flex flex-col gap-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${cfg.badge}`}>
+                              {tx.type}
+                            </span>
                             {tx.source === 'AI Agent' && (
-                              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/20 rounded border border-primary/30">
-                                <span className="material-symbols-outlined text-[10px] text-primary">smart_toy</span>
-                                <span className="text-[9px] font-bold text-primary uppercase tracking-widest">AI Agent</span>
-                              </div>
+                              <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border bg-primary/10 text-primary border-primary/20 flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[10px]">smart_toy</span> AI
+                              </span>
+                            )}
+                            <span className="font-headline font-bold text-sm text-white/90 truncate">{tx.details || `${tx.type} Transaction`}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] text-white/25 font-body">
+                            <span>{dateStr}</span>
+                            <span className="w-0.5 h-0.5 rounded-full bg-white/20"></span>
+                            <span>{timeStr}</span>
+                            {shortHash && (
+                              <>
+                                <span className="w-0.5 h-0.5 rounded-full bg-white/20"></span>
+                                <span className="font-mono">{shortHash}</span>
+                              </>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-on-surface/40 font-body uppercase tracking-wider">
-                              {new Date(tx.timestamp).toLocaleString('en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                            <span className="w-1 h-1 rounded-full bg-white/10"></span>
-                            <span className="text-[10px] text-on-surface/30 font-body italic truncate">{tx.details}</span>
-                          </div>
                         </div>
 
-                        {/* Right: Financial Impact & Action */}
-                        <div className="flex flex-col items-end gap-1">
-                          <p className="font-headline font-black text-on-surface text-lg leading-none">
-                            {tx.amount}
-                          </p>
+                        {/* Amount */}
+                        <div className="text-right">
+                          <p className="font-headline font-black text-white text-base leading-none whitespace-nowrap">{tx.amount}</p>
+                        </div>
+
+                        {/* Receipt */}
+                        <div className="text-right">
                           {tx.txHash?.startsWith('simulated_') ? (
-                            <div className="text-[10px] font-bold text-gray-400 flex items-center gap-1 uppercase tracking-tighter cursor-help" title="Simulation Mode: AI Private Key not configured in Settings">
-                              SIMULATED TXN <span className="material-symbols-outlined text-[14px]">info</span>
-                            </div>
+                            <span className="text-[10px] font-bold text-white/20 uppercase tracking-tight">Sim</span>
                           ) : (
-                            <a 
-                              href={`https://sepolia.etherscan.io/tx/${tx.txHash}`} 
-                              target="_blank" 
+                            <a
+                              href={`https://sepolia.etherscan.io/tx/${tx.txHash}`}
+                              target="_blank"
                               rel="noopener noreferrer"
-                              className="text-[10px] font-bold text-primary/60 hover:text-primary transition-colors flex items-center gap-1 uppercase tracking-tighter"
+                              className={`text-[10px] font-bold ${cfg.text} opacity-60 hover:opacity-100 transition-opacity flex items-center gap-0.5 justify-end uppercase tracking-tight`}
                             >
-                              TXN Receipt <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                              View <span className="material-symbols-outlined text-[12px]">open_in_new</span>
                             </a>
                           )}
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
 
-                  {transactions.length > 5 && (
-                    <div className="p-4 bg-white/[0.01] flex justify-center border-t border-white/5">
-                      <button className="text-[10px] font-bold text-on-surface/40 hover:text-primary uppercase tracking-[0.2em] transition-colors flex items-center gap-2">
-                        View Full History ({transactions.length - 5} more)
-                        <span className="material-symbols-outlined text-xs">keyboard_arrow_down</span>
+                  {transactions.length > 10 && (
+                    <div className="px-6 py-4 border-t border-white/5 flex justify-center">
+                      <button className="text-[10px] font-bold text-white/30 hover:text-primary uppercase tracking-[0.2em] transition-colors flex items-center gap-2">
+                        Show {transactions.length - 10} more
+                        <span className="material-symbols-outlined text-xs">expand_more</span>
                       </button>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="p-20 text-center">
-                  <span className="material-symbols-outlined text-white/10 text-6xl mb-4">history</span>
-                  <p className="text-white/30 font-body">No transactions recorded yet.</p>
+                <div className="py-24 text-center flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5">
+                    <span className="material-symbols-outlined text-white/10 text-4xl">receipt_long</span>
+                  </div>
+                  <div>
+                    <p className="font-headline font-bold text-white/20 text-sm">No transactions yet</p>
+                    <p className="text-[11px] text-white/15 font-body mt-1">Your on-chain activity will appear here</p>
+                  </div>
                 </div>
               )
             ) : (
-              <div className="p-20 text-center">
-                <span className="material-symbols-outlined text-white/10 text-6xl mb-4">account_balance_wallet</span>
-                <p className="text-white/30 font-body mb-6">Connect your wallet to view transaction history.</p>
-                <button 
+              <div className="py-24 text-center flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5">
+                  <span className="material-symbols-outlined text-white/10 text-4xl">account_balance_wallet</span>
+                </div>
+                <div>
+                  <p className="font-headline font-bold text-white/20 text-sm">Wallet not connected</p>
+                  <p className="text-[11px] text-white/15 font-body mt-1">Connect to view your transaction history</p>
+                </div>
+                <button
                   onClick={connect}
-                  className="bg-white text-black px-8 py-3 rounded-xl font-bold hover:bg-white/90 transition-all"
+                  className="mt-2 bg-white text-black px-8 py-3 rounded-xl font-bold text-sm hover:bg-white/90 transition-all shadow-2xl"
                 >
                   Connect Wallet
                 </button>
