@@ -201,16 +201,35 @@ export default function StakingPage() {
 
       <main className="max-w-7xl mx-auto px-4 py-16 relative">
         
-        {/* Top Header Row for AI Settings */}
-        <div className="flex justify-end mb-8 relative z-50 animate-in fade-in">
-          <div>
-            <button 
-              onClick={() => setShowSettings(!showSettings)}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-full border transition-all ${showSettings ? 'bg-emerald-500 text-on-primary border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-[#121212] text-white/80 border-white/10 hover:border-emerald-500/30 shadow-sm'}`}
-            >
-              <span className="material-symbols-outlined text-sm">settings</span>
-              <span className="font-headline font-bold text-[10px] uppercase tracking-widest">AI Agent Settings</span>
-            </button>
+        {/* Hero Section */}
+        <header className="mb-20">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <span className="material-symbols-outlined text-[10px]">account_balance</span>
+            <span className="font-headline font-bold text-[9px] uppercase tracking-[0.2em]">SfS Yield Allocation</span>
+          </div>
+          <h1 className="font-headline text-[4.5rem] font-black leading-[0.9] tracking-tighter mb-8 bg-gradient-to-br from-white via-white to-emerald-500/40 bg-clip-text text-transparent animate-in fade-in slide-in-from-bottom-6 duration-1000">
+            Stake For<br/>Service (SfS)
+          </h1>
+          <p className="font-body text-white/40 max-w-xl text-lg leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000">
+            Allocate your RIALO yield directly to cover infrastructure costs. Our unique SfS model allows you to generate Service Credits to automate and secure your on-chain operations.
+          </p>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          {/* Dashboard Left Column: Calculator */}
+          <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-4 duration-1000">
+            <div className="bg-[#121212] rounded-[32px] p-10 border border-white/5 shadow-2xl relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-500">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full -mr-32 -mt-32 blur-[100px] group-hover:bg-emerald-500/10 transition-all duration-700"></div>
+              <div className="flex justify-between items-center mb-10">
+                <h3 className="font-headline font-bold text-white text-xl">Allocation Console</h3>
+                <button 
+                  onClick={() => setShowSettings(!showSettings)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${showSettings ? 'bg-emerald-500 text-on-primary border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-white/5 text-white/40 border-white/5 hover:border-emerald-500/30 hover:text-white'}`}
+                >
+                  <span className="material-symbols-outlined text-sm">settings</span>
+                  <span className="font-headline font-bold text-[9px] uppercase tracking-widest">Settings</span>
+                </button>
+              </div>
             
             {showSettings && (
               <div className="absolute right-0 top-full mt-2 w-72 bg-[#121212] border border-white/20 rounded-2xl shadow-2xl p-6 z-50 text-left">
@@ -231,23 +250,8 @@ export default function StakingPage() {
                 </div>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Main Grid: 2 Columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch mb-16">
-          
-          {/* LEFT COLUMN: Stake RLO */}
-          <div className="flex flex-col animate-in fade-in slide-in-from-left-4 duration-700">
-            <div className="text-center mb-8">
-              <h1 className="font-headline font-extrabold text-white text-3xl tracking-tighter mb-2">Stake RLO</h1>
-              <p className="font-body text-white/60 text-sm max-w-sm mx-auto">Stake RLO, receive sRLO, and fund your transactions via SfS.</p>
-            </div>
-
-            <div className="bg-[#1c1c1c] rounded-[24px] p-8 border border-white/10 shadow-2xl relative flex-grow">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-20 border-t border-white/10 rounded-t-[24px]"></div>
-              
-              <div className="mb-6">
+            
+            <div className="mb-6">
                 <div className="flex justify-between items-center mb-3">
                   <label className="font-label text-[10px] uppercase tracking-widest text-white/40 font-bold">RLO AMOUNT</label>
                   <button 
@@ -266,16 +270,6 @@ export default function StakingPage() {
                     className="bg-transparent font-headline font-extrabold text-3xl text-white outline-none w-full placeholder:text-white/10"
                     placeholder="0"
                   />
-                </div>
-                <div className="mt-4 flex flex-col gap-1 px-1">
-                  <div className="flex justify-between">
-                    <span className="text-[10px] text-white/30 font-bold uppercase tracking-wider">On-Chain Stake:</span>
-                    <span className="text-[10px] text-white font-bold">{stakedBalance.toFixed(2)} RRIALO</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[10px] text-white/30 font-bold uppercase tracking-wider">Synced Phi (Fraction):</span>
-                    <span className="text-[10px] text-white font-bold">{contractSfsFraction}%</span>
-                  </div>
                 </div>
               </div>
 
@@ -319,9 +313,6 @@ export default function StakingPage() {
                     )}
                   </div>
                 </div>
-                <p className="font-body text-[11px] text-white/40 mb-5 leading-relaxed">
-                  Route a percentage of your yield to the <span className="text-white border-b border-white/20 border-dashed">ServicePaymaster</span> for gas costs.
-                </p>
                 <input 
                   type="range" 
                   min="0" 
@@ -330,75 +321,75 @@ export default function StakingPage() {
                   onChange={(e) => setLocalSfsFraction(Number(e.target.value))}
                   className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500 focus:outline-none"
                 />
-                <div className="flex justify-between text-[9px] text-white/30 mt-3 font-bold uppercase tracking-widest font-label">
-                  <span>0% All Native</span>
-                  <span>100% All Gas</span>
-                </div>
-              </div>
-
-              <div className="space-y-4 px-1 mx-2 pt-2 text-[12px] font-body">
-                <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                  <span className="text-white/40 font-medium">You will receive</span>
-                  <span className="font-headline font-bold text-white">{numRlo.toLocaleString()} sRLO</span>
-                </div>
-                <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                  <span className="text-white/40 font-medium">Network APY</span>
-                  <span className="font-headline font-bold text-emerald-400">18.4%</span>
-                </div>
-                <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                  <span className="text-white/40 font-medium flex items-center gap-1.5">Yield to Wallet <span className="material-symbols-outlined text-[12px] opacity-60">info</span></span>
-                  <span className="font-headline font-bold text-white">{simulatedYieldToWallet.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span className="text-[10px] text-white/30 font-medium">RLO/yr</span></span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-white/40 font-medium flex items-center gap-1.5">Total Yield Router <span className="material-symbols-outlined text-[12px] opacity-60">info</span></span>
-                  <span className="font-headline font-bold text-white">{simulatedRawYieldToServiceCredits.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span className="text-[10px] text-white/50 font-medium">Credits/yr</span></span>
-                </div>
               </div>
             </div>
           </div>
 
           {/* RIGHT COLUMN: SfS Router */}
-          <div className="flex flex-col animate-in fade-in slide-in-from-right-4 duration-700">
-            <div className="text-center mb-8">
-              <h1 className="font-headline font-extrabold text-white text-3xl tracking-tighter mb-2 flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-white text-3xl">route</span>
-                SfS Router: Sponsorship
-              </h1>
-              <p className="font-body text-white/60 text-sm max-w-sm mx-auto">Manage your Service Credits and sponsor external addresses.</p>
-            </div>
-
-            <div className="bg-[#1c1c1c] rounded-[24px] p-8 border border-white/10 shadow-2xl relative flex-grow">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-20 border-t border-white/10 rounded-t-[24px]"></div>
-
-              <div className="bg-white/5 rounded-2xl p-6 border border-white/5 mb-8 flex justify-between items-center relative overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-50"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="material-symbols-outlined text-[12px] text-white/40">info</span>
-                    <label className="font-label text-[10px] uppercase tracking-widest text-white/40 font-bold block">AVAILABLE SERVICE CREDITS</label>
-                  </div>
-                  <div className="font-headline font-extrabold text-3xl text-white tracking-tighter flex items-end gap-2">
-                    {availableServiceCredits.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                    <span className="font-label text-[10px] font-bold uppercase tracking-widest text-white/50 mb-1.5">Credits/yr</span>
+          <div className="lg:col-span-8 flex flex-col gap-10 animate-in fade-in slide-in-from-right-4 duration-1000">
+            {/* Simulation Preview Card */}
+            <div className="bg-[#121212] rounded-[32px] p-10 border border-white/10 shadow-3xl relative overflow-hidden group">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.05),transparent)] pointer-events-none"></div>
+              
+              <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div>
+                  <h3 className="font-headline font-bold text-white text-xl mb-10 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-emerald-500">analytics</span> Yield Allocation Projection
+                  </h3>
+                  <div className="space-y-8">
+                    <div className="p-6 bg-white/[0.03] rounded-2xl border border-white/5">
+                      <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.25em] mb-3">Total sRLO Position</p>
+                      <p className="font-headline text-4xl font-black text-white tracking-tighter">
+                        {simulatedTotal.toLocaleString()} <span className="text-emerald-500/80">RLO</span>
+                      </p>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-white/40">SfS Credits Allocation ({localSfsFraction}%)</span>
+                        <span className="font-headline font-bold text-emerald-400">-{simulatedRawYieldToServiceCredits.toFixed(2)} Credits</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-white/40">Liquid RIALO Yield ({100 - localSfsFraction}%)</span>
+                        <span className="font-headline font-bold text-white">{simulatedYieldToWallet.toFixed(2)} RLO/yr</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="relative z-10 w-12 h-12 rounded-full border border-white/10 flex items-center justify-center bg-white/5 shadow-[0_0_15px_rgba(255,255,255,0.05)]">
-                  <span className="material-symbols-outlined text-white text-2xl">water_drop</span>
+
+                <div className="flex flex-col justify-end">
+                  <div className="bg-emerald-500/5 rounded-3xl p-10 border border-emerald-500/10 flex flex-col items-center justify-center text-center group-hover:bg-emerald-500/10 transition-all duration-500">
+                    <div className="w-16 h-16 rounded-2xl bg-emerald-500 flex items-center justify-center text-black mb-6 shadow-[0_0_30px_rgba(16,185,129,0.5)]">
+                      <span className="material-symbols-outlined text-2xl font-black">savings</span>
+                    </div>
+                    <p className="text-[10px] font-bold text-emerald-500/60 uppercase tracking-[0.25em] mb-2 font-headline">Total Estimated Yield</p>
+                    <p className="font-headline text-5xl font-black text-white tracking-tighter">
+                       ~{(simulatedTotalYield).toFixed(2)} <span className="text-2xl text-white/20">Credits</span>
+                    </p>
+                    <p className="text-[11px] text-white/40 mt-6 max-w-[200px]">Combined value of liquid rewards and service credits</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#1c1c1c] rounded-[32px] p-10 border border-white/10 shadow-2xl relative">
+              <div className="flex justify-between items-center mb-10">
+                <h3 className="font-headline font-bold text-white text-xl flex items-center gap-2">
+                  <span className="material-symbols-outlined text-white">route</span> SfS Router: Sponsorship
+                </h3>
+                <div className="bg-white/5 rounded-full px-6 py-3 border border-white/5">
+                  <span className="font-label text-[10px] uppercase tracking-widest text-white/40 font-bold mr-4">Available Credits</span>
+                  <span className="font-headline font-extrabold text-xl text-white">{availableServiceCredits.toFixed(2)}</span>
                 </div>
               </div>
 
               <div className="mb-10">
-                <div className="flex justify-between items-center mb-4 px-1">
-                  <label className="font-headline font-bold text-sm text-white">Create Sponsorship Path</label>
-                  <span className="font-body text-[10px] text-white/40 tracking-wider">Allocated: {totalAllocated.toFixed(2)}</span>
-                </div>
                 <div className="space-y-4 flex flex-col items-stretch">
                   <input 
                     type="text" 
                     value={sponsorAddress}
                     onChange={(e) => setSponsorAddress(e.target.value)}
                     placeholder="Enter wallet/Contract Address" 
-                    className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 text-sm font-mono text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 transition-all shadow-inner" 
+                    className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-5 py-4 text-sm font-mono text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 transition-all" 
                   />
                   <div className="flex flex-col sm:flex-row gap-3">
                     <input 
@@ -406,12 +397,12 @@ export default function StakingPage() {
                       value={sponsorAmount}
                       onChange={(e) => setSponsorAmount(e.target.value)}
                       placeholder="Credits to allocate" 
-                      className="w-full sm:w-1/3 bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-headline font-bold text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 transition-all shadow-inner" 
+                      className="w-full sm:w-1/3 bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-4 text-sm font-headline font-bold text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 transition-all" 
                     />
                     <button 
                       onClick={handleCreatePath}
                       disabled={isAddingPath}
-                      className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-on-primary rounded-xl px-4 py-3 font-headline font-bold text-sm transition-all flex justify-center items-center gap-2 active:scale-[0.98] disabled:opacity-50 shadow-[0_0_20px_rgba(16,185,129,0.15)]"
+                      className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-on-primary rounded-xl px-4 py-4 font-headline font-bold text-sm transition-all flex justify-center items-center gap-2 active:scale-[0.98] disabled:opacity-50 shadow-[0_0_20px_rgba(16,185,129,0.15)]"
                     >
                       {isAddingPath ? (
                         <span className="material-symbols-outlined animate-spin text-sm">autorenew</span>
@@ -429,21 +420,21 @@ export default function StakingPage() {
                 <label className="font-headline font-bold text-xs text-white/50 mb-4 px-1 flex items-center gap-2 tracking-widest uppercase">
                   <span className="material-symbols-outlined text-[14px]">moving</span> ACTIVE SPONSORED PATHS
                 </label>
-                <div className="bg-[#0a0a0a] rounded-xl border border-white/5 overflow-hidden">
+                <div className="bg-[#0a0a0a] rounded-2xl border border-white/5 overflow-hidden">
                   {activePaths.length === 0 ? (
-                    <div className="py-6 text-center text-white/30 text-[11px] font-body italic flex justify-center items-center gap-2">
+                    <div className="py-10 text-center text-white/30 text-[11px] font-body italic flex justify-center items-center gap-2">
                        <span className="material-symbols-outlined text-sm opacity-50">route</span> No active sponsor paths.
                     </div>
                   ) : (
                     activePaths.map((path, index) => (
-                      <div key={index} className="flex justify-between items-center px-5 py-3 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors group">
+                      <div key={index} className="flex justify-between items-center px-6 py-4 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors group">
                         <div className="flex items-center gap-4">
-                          <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center border border-white/5 group-hover:border-white/10 transition-colors">
-                            <span className="material-symbols-outlined text-[10px] text-white/40">alt_route</span>
+                          <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/5 group-hover:border-white/10 transition-colors">
+                            <span className="material-symbols-outlined text-[12px] text-white/40">alt_route</span>
                           </div>
-                          <span className="font-mono text-[11px] text-white/70">{path.address.slice(0,6)}...{path.address.slice(-4)}</span>
+                          <span className="font-mono text-[12px] text-white/70">{path.address.slice(0,6)}...{path.address.slice(-4)}</span>
                         </div>
-                        <span className="font-headline text-[11px] font-bold text-on-primary bg-emerald-500 px-2 py-1 rounded shadow-sm">
+                        <span className="font-headline text-[12px] font-bold text-on-primary bg-emerald-500 px-3 py-1.5 rounded-lg shadow-sm">
                           {path.amount.toFixed(2)} Credits/yr
                         </span>
                       </div>
