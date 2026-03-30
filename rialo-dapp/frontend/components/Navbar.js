@@ -127,11 +127,11 @@ export default function Navbar() {
         .nav-pill {
           display: flex;
           align-items: center;
-          background: #0e0e0f;
+          background: #111111;
           border-radius: 9999px;
           padding: 5px 6px;
-          border: 1px solid rgba(255,255,255,0.08);
-          box-shadow: 0 4px 24px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06);
+          border: 1px solid rgba(16,185,129,0.15);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03);
         }
         .nav-link {
           position: relative;
@@ -150,12 +150,12 @@ export default function Navbar() {
           transition: color 0.18s, background 0.18s;
         }
         .nav-link:hover {
-          color: rgba(255,255,255,0.75);
-          background: rgba(255,255,255,0.07);
+          color: #10b981;
+          background: rgba(16,185,129,0.08);
         }
         .nav-link.active {
-          color: #fff;
-          background: rgba(255,255,255,0.11);
+          color: #10b981;
+          background: rgba(16,185,129,0.15);
         }
         .nav-link.active::after {
           content: '';
@@ -166,7 +166,8 @@ export default function Navbar() {
           width: 14px;
           height: 2px;
           border-radius: 2px;
-          background: rgba(255,255,255,0.45);
+          background: #10b981;
+          box-shadow: 0 0 8px rgba(16,185,129,0.5);
         }
 
         /* ── Right section ── */
@@ -215,14 +216,14 @@ export default function Navbar() {
           width: 6px;
           height: 6px;
           border-radius: 50%;
-          background: #22c55e;
+          background: #10b981;
           flex-shrink: 0;
           animation: pulse-dot 2s infinite;
         }
         @keyframes pulse-dot {
-          0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
-          70%  { box-shadow: 0 0 0 5px rgba(34,197,94,0); }
-          100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+          0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+          70%  { box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+          100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
         }
       `}</style>
 

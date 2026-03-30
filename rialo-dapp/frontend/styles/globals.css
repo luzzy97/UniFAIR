@@ -10,8 +10,10 @@
 }
 
 .glass-nav {
-  background: rgba(248, 249, 250, 0.8);
-  backdrop-filter: blur(12px);
+  background: rgba(12, 12, 12, 0.7);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 2px solid #10b981;
 }
 
 body {
