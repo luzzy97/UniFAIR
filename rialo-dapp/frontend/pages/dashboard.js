@@ -48,7 +48,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           {[
             { symbol: 'RIALO', label: 'Ecosystem Token', color: 'bg-primary', icon: 'currency_exchange' },
-            { symbol: 'ETH', label: 'Ethereum Mainnet', color: 'bg-[#627EEA]', icon: 'token' },
+            { symbol: 'ETH', label: 'Ethereum Testnet', color: 'bg-[#627EEA]', icon: 'token' },
             { symbol: 'USDC', label: 'USD Coin', color: 'bg-[#2775CA]', icon: 'monetization_on' },
             { symbol: 'USDT', label: 'Tether USD', color: 'bg-[#26A17B]', icon: 'account_balance_wallet' },
           ].map((token) => (
@@ -89,70 +89,82 @@ export default function DashboardPage() {
         {isConnected && triggerOrders?.length > 0 && (
           <section className="mb-16">
             <div className="flex justify-between items-center mb-8">
-              <h3 className="font-headline font-bold text-primary text-lg">Trigger Orders</h3>
-              <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{triggerOrders.filter(o => o.status === 'Pending').length} Pending</span>
+              <div>
+                <h3 className="font-headline font-bold text-primary text-xl">Active Trigger Orders</h3>
+                <p className="text-[10px] text-white/30 uppercase tracking-widest mt-1">{triggerOrders.filter(o => o.status === 'Pending').length} orders awaiting execution</p>
+              </div>
             </div>
-            
-            <div className="bg-surface-container-low rounded-xl border border-outline-variant/10 overflow-hidden">
-              <div className="divide-y divide-white/5">
-                {triggerOrders.slice(0, 5).map((order) => (
-                  <div key={order.id} className="p-6 hover:bg-white/[0.02] transition-colors border-b border-white/5 last:border-0">
-                    <div className="grid grid-cols-[48px_1fr_auto] items-center gap-6">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                        order.status === 'Pending' ? 'bg-yellow-500/10 text-yellow-500' :
-                        order.status === 'Executed' ? 'bg-green-500/10 text-green-500' :
-                        'bg-red-500/10 text-red-500'
-                      } border border-white/5 shadow-sm`}>
-                        <span className="material-symbols-outlined text-xl">
-                          {order.status === 'Pending' ? 'schedule' : order.status === 'Executed' ? 'check_circle' : 'cancel'}
-                        </span>
+
+            <div className="bg-[#0c0c0c] rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
+              {/* Table Header */}
+              <div className="grid grid-cols-[40px_1fr_auto_auto] gap-4 px-6 py-3 border-b border-white/5">
+                <div />
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/20">Order Details</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/20 text-right">Target Fill</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/20 text-right">Action</span>
+              </div>
+
+              <div>
+                {triggerOrders.slice().reverse().slice(0, 5).map((order) => {
+                  const statusConfig = {
+                    'Pending':  { icon: 'schedule',     bg: 'bg-yellow-500/10',  text: 'text-yellow-400',  badge: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/20' },
+                    'Executed': { icon: 'check_circle', bg: 'bg-emerald-500/10', text: 'text-emerald-400', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/20' },
+                    'Cancelled': { icon: 'cancel',       bg: 'bg-red-500/10',     text: 'text-red-400',     badge: 'bg-red-500/20 text-red-300 border-red-500/20' }
+                  };
+                  const cfg = statusConfig[order.status] || statusConfig['Pending'];
+
+                  return (
+                    <div key={order.id} className="grid grid-cols-[40px_1fr_auto_auto] gap-4 items-center px-6 py-5 hover:bg-white/[0.025] transition-colors border-b border-white/[0.04] last:border-0 group">
+                      {/* Icon */}
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${cfg.bg} border border-white/5 shadow-sm`}>
+                        <span className={`material-symbols-outlined text-[18px] ${cfg.text}`}>{cfg.icon}</span>
                       </div>
 
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <div className="flex items-center gap-3">
-                          <p className="font-headline font-bold text-sm text-on-surface truncate">
+                      {/* Details */}
+                      <div className="min-w-0 flex flex-col gap-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${cfg.badge}`}>
+                            {order.status}
+                          </span>
+                          <p className="font-headline font-bold text-sm text-white/90 truncate">
                             Limit: {order.fromToken} → {order.toToken}
                           </p>
-                          <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded border ${
-                            order.status === 'Pending' ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-500' :
-                            order.status === 'Executed' ? 'bg-green-500/20 border-green-500/30 text-green-500' :
-                            'bg-red-500/20 border-red-500/30 text-red-500'
-                          }`}>
-                            <span className="text-[9px] font-bold uppercase tracking-widest">{order.status}</span>
-                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-on-surface/40 font-body uppercase tracking-wider">
-                            Amount: {order.amountIn} {order.fromToken}
-                          </span>
-                          <span className="w-1 h-1 rounded-full bg-white/10"></span>
-                          <span className="text-[10px] text-on-surface/30 font-body italic truncate">
-                            Trigger: {order.condition} {order.targetPrice.toFixed(4)} {order.toToken} (Exp: {order.expiration})
-                          </span>
+                        <div className="flex items-center gap-2 text-[10px] text-white/25 font-body">
+                          <span>Qty: {order.amountIn} {order.fromToken}</span>
+                          <span className="w-0.5 h-0.5 rounded-full bg-white/20"></span>
+                          <span className="italic">Target: {order.condition} {order.targetPrice.toFixed(4)} {order.toToken}</span>
                         </div>
                       </div>
 
-                      <div className="flex flex-col items-end gap-1">
-                        <p className="font-headline font-black text-on-surface text-lg leading-none">
-                          {order.status === 'Executed' ? `${(parseFloat(order.amountIn) * order.executedRate).toFixed(4)} ${order.toToken}` : 'Pending Fill'}
+                      {/* Fill Expected/Actual */}
+                      <div className="text-right">
+                        <p className="font-headline font-black text-white text-base leading-none whitespace-nowrap">
+                          {order.status === 'Executed' 
+                            ? `${(parseFloat(order.amountIn) * order.executedRate).toFixed(4)} ${order.toToken}` 
+                            : `~${(parseFloat(order.amountIn) * order.targetPrice).toFixed(2)} ${order.toToken}`}
                         </p>
-                         {order.status === 'Pending' && (
-                            <button 
-                              onClick={() => removeTriggerOrder(order.id)}
-                              className="text-[10px] font-bold text-red-400 hover:text-red-300 transition-colors uppercase tracking-tighter mt-1"
-                            >
-                              Cancel Order
-                            </button>
-                         )}
                         {order.status === 'Executed' && (
-                           <span className="text-[10px] font-bold text-primary/60 uppercase tracking-tighter mt-1">
-                             Filled at {order.executedRate?.toFixed(4)}
-                           </span>
+                          <p className="text-[9px] font-bold text-emerald-400/60 uppercase tracking-tighter mt-1">Filled @ {order.executedRate.toFixed(4)}</p>
+                        )}
+                      </div>
+
+                      {/* Action */}
+                      <div className="text-right">
+                        {order.status === 'Pending' ? (
+                          <button 
+                            onClick={() => removeTriggerOrder(order.id)}
+                            className="text-[10px] font-bold text-red-400/40 hover:text-red-400 hover:bg-red-500/10 px-2 py-1 rounded transition-all uppercase tracking-tighter"
+                          >
+                            Cancel
+                          </button>
+                        ) : (
+                          <span className="material-symbols-outlined text-white/10 text-xl">history</span>
                         )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </section>
