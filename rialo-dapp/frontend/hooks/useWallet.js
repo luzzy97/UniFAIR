@@ -272,7 +272,8 @@ export function WalletProvider({ children }) {
       }
       return '0x' + Math.random().toString(16).slice(2, 42);
     } catch (err) { throw err; }
-  }, [address, provider, addTransaction]);
+  }, [address, provider, addTransaction, aiPrivateKey]);
+
 
   useEffect(() => {
     if (scheduledTxs.length === 0) return;
