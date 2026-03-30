@@ -217,7 +217,7 @@ export default function RewardsPage() {
                 (() => {
                   const claimHistory = transactions.filter(tx => tx.type === 'Claim');
                   const finalHistory = claimHistory.length > 0 
-                    ? claimHistory.slice().reverse()
+                    ? claimHistory.slice()
                     : INITIAL_HISTORY.map((h, i) => ({
                         type: 'Claim',
                         amount: h.amount,

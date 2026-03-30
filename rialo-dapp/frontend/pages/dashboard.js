@@ -113,7 +113,7 @@ export default function DashboardPage() {
               </div>
 
               <div>
-                {triggerOrders.slice().reverse().slice(0, 5).map((order) => {
+                {triggerOrders.slice(0, 5).map((order) => {
                   const statusConfig = {
                     'Pending':  { icon: 'schedule',     bg: 'bg-yellow-500/10',  text: 'text-yellow-400',  badge: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/20' },
                     'Executed': { icon: 'check_circle', bg: 'bg-emerald-500/10', text: 'text-emerald-400', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/20' },
@@ -201,7 +201,7 @@ export default function DashboardPage() {
             {isConnected ? (
               transactions.length > 0 ? (
                 <div>
-                  {transactions.slice().reverse().slice(0, 10).map((tx, i) => {
+                  {transactions.slice(0, 10).map((tx, i) => {
                     const typeConfig = {
                       'Swap':    { icon: 'swap_horiz',       bg: 'bg-violet-500/10',  text: 'text-violet-400',  badge: 'bg-violet-500/20 text-violet-300 border-violet-500/20' },
                       'Bridge':  { icon: 'merge_type',        bg: 'bg-blue-500/10',    text: 'text-blue-400',    badge: 'bg-blue-500/20 text-blue-300 border-blue-500/20' },
