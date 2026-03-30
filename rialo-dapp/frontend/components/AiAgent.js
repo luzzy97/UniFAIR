@@ -807,9 +807,6 @@ export default function AiAgent() {
                           <option>USDC</option>
                           <option>USDT</option>
                           <option>ETH</option>
-                          <option>BTC</option>
-                          <option>SOL</option>
-                          <option>BNB</option>
                         </select>
                       </div>
                     )}
@@ -825,9 +822,6 @@ export default function AiAgent() {
                           <option>ETH</option>
                           <option>USDC</option>
                           <option>USDT</option>
-                          <option>BTC</option>
-                          <option>SOL</option>
-                          <option>BNB</option>
                         </select>
                       </div>
                     )}

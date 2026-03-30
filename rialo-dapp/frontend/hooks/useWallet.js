@@ -19,20 +19,17 @@ export function WalletProvider({ children }) {
   });
 
   const [basePrices, setBasePrices] = useState({
-    ETH: 3500, BTC: 65000, SOL: 150, BNB: 600, RIALO: 3, USDC: 1, USDT: 1
+    ETH: 3500, RIALO: 3, USDC: 1, USDT: 1
   });
 
   const fetchPrices = useCallback(async () => {
     try {
-      const resp = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,solana,binancecoin,usd-coin,tether&vs_currencies=usd');
+      const resp = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum,usd-coin,tether&vs_currencies=usd');
       const data = await resp.json();
       if (data) {
         setBasePrices(prev => ({
           ...prev,
           ETH: data.ethereum?.usd || prev.ETH,
-          BTC: data.bitcoin?.usd || prev.BTC,
-          SOL: data.solana?.usd || prev.SOL,
-          BNB: data.binancecoin?.usd || prev.BNB,
           RIALO: 3, // Real value fixed as per user request
           USDC: 1, 
           USDT: 1
