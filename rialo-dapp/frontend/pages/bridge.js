@@ -4,7 +4,6 @@ import Footer from '../components/Footer';
 import Toast from '../components/Toast';
 import { useWallet } from '../hooks/useWallet';
 import { useRLO } from '../hooks/useRLO';
-import { useRLO } from '../hooks/useRLO';
 import { ethers } from 'ethers';
 const CHAINS = [
   { id: '1', name: 'Ethereum', icon: '/eth-icon.png', isImage: true },
