@@ -127,7 +127,7 @@ export default function BridgePage() {
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center p-2 overflow-hidden border border-white/10 ${isDeposit ? 'bg-white/5' : 'bg-white shadow-2xl'}`}>
                   {isDeposit ? (
                     CHAINS.find(c => c.id === fromChain)?.isImage ? (
-                      <img src={CHAINS.find(c => c.id === fromChain)?.icon} className="w-full h-full object-contain p-2" alt="chain" />
+                      <img src={CHAINS.find(c => c.id === fromChain)?.icon} className="w-full h-full object-contain" alt="chain" />
                     ) : (
                       <span className="material-symbols-outlined text-white">
                         {CHAINS.find(c => c.id === fromChain)?.icon}
@@ -189,7 +189,7 @@ export default function BridgePage() {
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center p-2 overflow-hidden border border-white/10 ${!isDeposit ? 'bg-white/5' : 'bg-white shadow-2xl'}`}>
                   {!isDeposit ? (
                     CHAINS.find(c => c.id === fromChain)?.isImage ? (
-                      <img src={CHAINS.find(c => c.id === fromChain)?.icon} className="w-full h-full object-contain p-2" alt="chain" />
+                      <img src={CHAINS.find(c => c.id === fromChain)?.icon} className="w-full h-full object-contain" alt="chain" />
                     ) : (
                       <span className="material-symbols-outlined text-white">
                         {CHAINS.find(c => c.id === fromChain)?.icon}
