@@ -156,8 +156,8 @@ export default function BridgePage() {
             </div>
             <div className="bg-[#161616] rounded-2xl p-6 flex items-center justify-between border border-white/5 shadow-inner">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center p-2 overflow-hidden border border-white/10">
-                  <img src="/eth-icon.png" className="w-[85%] h-[85%] object-contain" alt="ETH" />
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-2xl overflow-hidden border border-white/10">
+                  <img src="/rialo-icon-new.png" className="w-full h-full object-contain" alt="Rialo L1 ETH" />
                 </div>
                 <div className="flex flex-col">
                   <span className="text-white font-bold text-xl">ETH <span className="text-sm font-normal text-white/50">(Rialo L1)</span></span>
