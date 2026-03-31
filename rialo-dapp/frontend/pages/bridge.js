@@ -4,8 +4,8 @@ import Footer from '../components/Footer';
 import Toast from '../components/Toast';
 import { useWallet } from '../hooks/useWallet';
 import { useRLO } from '../hooks/useRLO';
-// import { bridgeTokens } from '../lib/api';
-
+import { useRLO } from '../hooks/useRLO';
+import { ethers } from 'ethers';
 const CHAINS = [
   { id: '1', name: 'Ethereum', icon: '/eth-icon.png', isImage: true },
   { id: '42161', name: 'Arbitrum', icon: 'layers' },
@@ -15,14 +15,14 @@ const CHAINS = [
 
 export default function BridgePage() {
   const { isConnected, address, provider, connect, balances: walletBalances, addTransaction, globalRates, fetchEthBalance } = useWallet();
-  const { balance: rloBal, bridgeOut, loading: bridgeLoading, fetchBalance: fetchRloBalance } = useRLO();
+  const { balance: rloBal, fetchBalance: fetchRloBalance } = useRLO();
   const [fromChain, setFromChain] = useState('1');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
   const ethPrice = globalRates['ETH']?.['USDC'] || 3500;
-  const receiveAmount = amount ? (parseFloat(amount) * ethPrice / 3).toFixed(2) : '0.00';
+  const receiveAmount = amount || '0.00';
 
   const balances = { ...walletBalances, RIALO: parseFloat(rloBal || '0') };
 
@@ -34,18 +34,24 @@ export default function BridgePage() {
       setToast({ message: 'Enter an amount greater than 0', type: 'error' });
       return;
     }
-    const currentBalance = balances['RIALO'] || 0;
+    const currentBalance = balances['ETH'] || 0;
     if (parseFloat(amount) > currentBalance) {
-      setToast({ message: 'Insufficient RIALO balance', type: 'error' });
+      setToast({ message: 'Insufficient ETH balance', type: 'error' });
       return;
     }
 
     setLoading(true);
-    setToast({ message: 'Initiating bridge (burning RLO)…', type: 'loading' });
+    setToast({ message: 'Initiating bridge (locking ETH)…', type: 'loading' });
     try {
-      const hash = await bridgeOut(amount);
+      const signer = await provider.getSigner();
+      const tx = await signer.sendTransaction({
+        to: '0x000000000000000000000000000000000000dEaD',
+        value: ethers.parseEther(amount)
+      });
+      const receipt = await tx.wait();
+      const hash = receipt.hash;
       setToast({
-        message: `Bridge initiated! ${amount} RLO burned on Sepolia.`,
+        message: `Bridge initiated! ${amount} ETH locked on Sepolia.`,
         type: 'success',
         txHash: hash,
       });
@@ -53,7 +59,7 @@ export default function BridgePage() {
       // Add to history
       addTransaction({
         type: 'Bridge',
-        amount: `${amount} RIALO → Rialo Network`,
+        amount: `${amount} ETH → Rialo L1`,
         details: 'Cross-chain Bridge Out',
         txHash: hash,
         source: 'Direct'
@@ -144,15 +150,15 @@ export default function BridgePage() {
           <div className="space-y-4 mt-6 mb-10">
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 font-label">To</span>
-              <span className="text-xs font-medium text-white/20">Balance: {balances['RIALO']?.toFixed(2) || '0.00'} RIALO</span>
+              <span className="text-xs font-medium text-white/20">Balance: 0.00 ETH</span>
             </div>
             <div className="bg-[#161616] rounded-2xl p-6 flex items-center justify-between border border-white/5 shadow-inner">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-2xl overflow-hidden border border-white/10">
-                  <img src="/rialo-icon-new.png" className="w-full h-full object-contain" alt="Rialo" />
+                <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center p-2 overflow-hidden border border-white/10">
+                  <img src="/eth-icon.png" className="w-[85%] h-[85%] object-contain" alt="ETH" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-white font-bold text-xl">Rialo L1</span>
+                  <span className="text-white font-bold text-xl">ETH <span className="text-sm font-normal text-white/50">(Rialo L1)</span></span>
                   <span className="text-[10px] text-white/20 tracking-wider font-bold uppercase mt-1">Destination Chain</span>
                 </div>
               </div>
@@ -167,7 +173,7 @@ export default function BridgePage() {
           {/* Meta Info */}
           <div className="space-y-4 mb-10">
             {[
-              [`1 ETH ≈ ${(ethPrice/3).toFixed(2)} RIALO`, 'Rate'],
+              ['1 ETH = 1 ETH', 'Rate'],
               ['Network Fee', '0.001 ETH'],
               ['Estimated Arrival', '~2 minutes'],
             ].map(([label, value]) => (
@@ -186,14 +192,14 @@ export default function BridgePage() {
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined animate-spin text-xl">autorenew</span> Burning…
+                <span className="material-symbols-outlined animate-spin text-xl">autorenew</span> Bridging…
               </span>
             ) : !isConnected ? (
               'Connect Wallet'
-            ) : amount && parseFloat(amount) > (balances['RIALO'] || 0) ? (
-              'Insufficient RLO Balance'
+            ) : amount && parseFloat(amount) > (balances['ETH'] || 0) ? (
+              'Insufficient ETH Balance'
             ) : (
-              'Bridge to Rialo L1'
+              'Bridge ETH to Rialo L1'
             )}
           </button>
         </div>
