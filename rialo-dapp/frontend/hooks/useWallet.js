@@ -89,6 +89,14 @@ export function WalletProvider({ children }) {
     }
     return [];
   });
+  const [aiMessages, setAiMessages] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('rialo_ai_messages');
+      const initialMessage = { role: 'ai', content: { raw: "Rialo AI is online. How can I optimize your on-chain operations today?" } };
+      return saved ? JSON.parse(saved) : [initialMessage];
+    }
+    return [];
+  });
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -96,13 +104,14 @@ export function WalletProvider({ children }) {
       localStorage.setItem('rialo_transactions', JSON.stringify(transactions));
       localStorage.setItem('rialo_trigger_orders', JSON.stringify(triggerOrders));
       localStorage.setItem('rialo_scheduled_txs', JSON.stringify(scheduledTxs));
+      localStorage.setItem('rialo_ai_messages', JSON.stringify(aiMessages));
       if (aiPrivateKey) {
         localStorage.setItem('rialo_ai_private_key', aiPrivateKey);
       } else {
         localStorage.removeItem('rialo_ai_private_key');
       }
     }
-  }, [transactions, triggerOrders, scheduledTxs, aiPrivateKey]);
+  }, [transactions, triggerOrders, scheduledTxs, aiMessages, aiPrivateKey]);
 
   const addTransaction = useCallback((tx) => {
     const newTx = {
@@ -112,6 +121,10 @@ export function WalletProvider({ children }) {
       ...tx
     };
     setTransactions(prev => [newTx, ...prev]);
+  }, []);
+
+  const addAiMessage = useCallback((msg) => {
+    setAiMessages(prev => [...prev, msg]);
   }, []);
 
   const addTriggerOrder = useCallback((order) => {
@@ -310,11 +323,16 @@ export function WalletProvider({ children }) {
         }
 
         addTransaction({ type: txType, amount: actionDetail, details: 'AI Strategy', txHash: tx.hash, source: 'AI Agent' });
+        if (!isAuto) {
+           // Success message for direct chat triggers is handled in AiAgent.js by response
+        } else {
+           addAiMessage({ role: 'ai', content: { raw: `Successfully executed your background ${txType}: ${actionDetail}` } });
+        }
         return tx.hash;
       }
       return '0x' + Math.random().toString(16).slice(2, 42);
     } catch (err) { throw err; }
-  }, [address, provider, addTransaction, aiPrivateKey, globalRates, updateBalance]);
+  }, [address, provider, addTransaction, aiPrivateKey, globalRates, updateBalance, addAiMessage]);
 
 
   useEffect(() => {
@@ -418,6 +436,7 @@ export function WalletProvider({ children }) {
         addTransaction, addTriggerOrder, executeAiTransaction,
         scheduledTxs, addScheduledTx, removeScheduledTx, removeTriggerOrder,
         aiPrivateKey, setAiPrivateKey,
+        aiMessages, addAiMessage,
         toast, showToast
       }}
     >

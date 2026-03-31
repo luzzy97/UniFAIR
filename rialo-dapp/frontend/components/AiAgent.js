@@ -203,10 +203,7 @@ const getAiResponse = (input, globalRates) => {
 };
 
 export default function AiAgent() {
-  const { isConnected, executeAiTransaction, addTriggerOrder, globalRates, scheduledTxs, addScheduledTx, removeScheduledTx, toast, showToast, aiPrivateKey, setAiPrivateKey } = useWallet();
-  const [messages, setMessages] = useState([
-    { role: 'ai', content: { raw: "Rialo AI is online. How can I optimize your on-chain operations today?" } }
-  ]);
+  const { isConnected, executeAiTransaction, addTriggerOrder, globalRates, scheduledTxs, addScheduledTx, removeScheduledTx, toast, showToast, aiPrivateKey, setAiPrivateKey, aiMessages: messages, addAiMessage } = useWallet();
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [showSchedulePanel, setShowSchedulePanel] = useState(false);
@@ -233,14 +230,14 @@ export default function AiAgent() {
     if (!input.trim()) return;
 
     const userMsg = input.trim();
-    setMessages(prev => [...prev, { role: 'user', content: { raw: userMsg } }]);
+    addAiMessage({ role: 'user', content: { raw: userMsg } });
     setInput('');
     setIsThinking(true);
 
     // Simulate network delay
     setTimeout(() => {
       const response = getAiResponse(userMsg, globalRates);
-      setMessages(prev => [...prev, { role: 'ai', content: response }]);
+      addAiMessage({ role: 'ai', content: response });
       setIsThinking(false);
       
       // If successful transaction, trigger toast or schedule

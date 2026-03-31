@@ -94,6 +94,13 @@ export default function SwapPage() {
         expiration
       });
       
+      addTransaction({
+        type: 'Limit',
+        amount: `${amountIn} ${fromToken} → ${toToken}`,
+        details: `Limit Order Placed @ ${tp}`,
+        source: 'Direct'
+      });
+      
       setToast({ message: `Limit order placed: ${amountIn} ${fromToken} at ${tp} ${toToken}`, type: 'success' });
       setAmountIn('');
       setTargetPrice('');

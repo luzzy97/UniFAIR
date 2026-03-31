@@ -208,6 +208,7 @@ export default function DashboardPage() {
                       'Unstake': { icon: 'lock_open',         bg: 'bg-orange-500/10',  text: 'text-orange-400',  badge: 'bg-orange-500/20 text-orange-300 border-orange-500/20' },
                       'Faucet':  { icon: 'water_drop',        bg: 'bg-cyan-500/10',    text: 'text-cyan-400',    badge: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/20' },
                       'Claim':   { icon: 'redeem',            bg: 'bg-yellow-500/10',  text: 'text-yellow-400',  badge: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/20' },
+                      'Limit':   { icon: 'event_repeat',     bg: 'bg-orange-500/10',  text: 'text-orange-400',  badge: 'bg-orange-500/20 text-orange-300 border-orange-500/20' },
                     };
                     const cfg = typeConfig[tx.type] || { icon: 'receipt_long', bg: 'bg-white/5', text: 'text-white/40', badge: 'bg-white/10 text-white/40 border-white/10' };
                     const shortHash = tx.txHash && !tx.txHash.startsWith('simulated_')
