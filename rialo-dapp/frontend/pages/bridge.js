@@ -85,14 +85,17 @@ export default function BridgePage() {
         </div>
 
         {/* Bridge Card */}
-        <div className="w-full max-w-[520px] bg-[#1c1c1c] rounded-2xl p-10 shadow-2xl border border-white/10">
+        <div className="w-full max-w-[520px] bg-[#0c0c0c] rounded-2xl p-8 shadow-2xl border border-white/5 relative overflow-hidden">
+          {/* Subtle background glow */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-50"></div>
+
           {/* From */}
           <div className="space-y-4 mb-6">
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 font-label">From</span>
               <span className="text-xs font-medium text-white/20">Balance: {balances['ETH']?.toFixed(2) || '0.00'} ETH</span>
             </div>
-            <div className="bg-white/5 rounded-2xl p-6 flex items-center justify-between border border-white/5 focus-within:border-white/20 transition-all">
+            <div className="bg-[#161616] rounded-2xl p-6 flex items-center justify-between border border-white/5 focus-within:border-white/20 transition-all shadow-inner">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center border border-white/10 overflow-hidden">
                   {CHAINS.find(c => c.id === fromChain)?.isImage ? (
@@ -110,7 +113,7 @@ export default function BridgePage() {
                     className="bg-transparent border-none p-0 text-white font-bold text-xl focus:ring-0 cursor-pointer appearance-none"
                   >
                     {CHAINS.map(c => (
-                      <option key={c.id} value={c.id} className="bg-[#1c1c1c] text-white">{c.name}</option>
+                    <option key={c.id} value={c.id} className="bg-[#0c0c0c] text-white">{c.name}</option>
                     ))}
                   </select>
                   <span className="text-[10px] text-white/20 tracking-wider font-bold uppercase mt-1">Source Chain</span>
@@ -129,9 +132,9 @@ export default function BridgePage() {
           </div>
 
           {/* Direction Icon */}
-          <div className="flex justify-center -my-8 relative z-10">
-            <div className="bg-[#1c1c1c] border-8 border-[#1c1c1c] rounded-full p-2 shadow-2xl">
-              <div className="bg-white w-12 h-12 rounded-full flex items-center justify-center text-black">
+          <div className="flex justify-center -my-6 relative z-10">
+            <div className="bg-[#0c0c0c] p-3 rounded-2xl shadow-xl border border-white/10 hover:scale-110 transition-transform">
+              <div className="text-white flex items-center justify-center">
                 <span className="material-symbols-outlined">south</span>
               </div>
             </div>
@@ -143,7 +146,7 @@ export default function BridgePage() {
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 font-label">To</span>
               <span className="text-xs font-medium text-white/20">Balance: {balances['RIALO']?.toFixed(2) || '0.00'} RIALO</span>
             </div>
-            <div className="bg-white/5 rounded-2xl p-6 flex items-center justify-between border border-white/5">
+            <div className="bg-[#161616] rounded-2xl p-6 flex items-center justify-between border border-white/5 shadow-inner">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-2xl overflow-hidden border border-white/10">
                   <img src="/rialo-icon-new.png" className="w-full h-full object-contain" alt="Rialo" />
@@ -154,7 +157,7 @@ export default function BridgePage() {
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-3xl font-headline font-bold text-white/10">
+                <span className="text-3xl font-headline font-extrabold text-white/10">
                   {receiveAmount}
                 </span>
               </div>
@@ -169,8 +172,8 @@ export default function BridgePage() {
               ['Estimated Arrival', '~2 minutes'],
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between items-center text-sm">
-                <span className="text-white/20">{label}</span>
-                <span className="text-white/80 font-bold">{value}</span>
+                <span className="text-white/30 font-body">{label}</span>
+                <span className="text-white/80 font-headline font-bold">{value}</span>
               </div>
             ))}
           </div>
@@ -179,7 +182,7 @@ export default function BridgePage() {
           <button
             onClick={handleBridge}
             disabled={loading || (isConnected && amount && parseFloat(amount) > (balances['ETH'] || 0))}
-            className="w-full bg-white text-black py-5 rounded-2xl font-bold text-lg hover:bg-white/90 transition-all scale-[0.98] active:scale-95 shadow-2xl disabled:opacity-50"
+            className="w-full bg-white text-black py-5 rounded-2xl font-headline font-extrabold text-lg tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl disabled:opacity-50"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">

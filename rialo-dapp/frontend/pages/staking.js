@@ -240,16 +240,17 @@ export default function StakingPage() {
           {/* LEFT COLUMN: Stake RLO */}
           <div className="flex flex-col animate-in fade-in slide-in-from-left-4 duration-700">
             <div className="text-center mb-8">
-              <h1 className="font-headline font-extrabold text-white text-3xl tracking-tighter mb-2">Stake RLO</h1>
-              <p className="font-body text-white/60 text-sm max-w-sm mx-auto">Stake RLO, receive sRLO, and fund your transactions via SfS.</p>
+              <h1 className="font-headline font-extrabold text-primary text-3xl tracking-tighter mb-2">Stake RLO.</h1>
+              <p className="font-body text-white/50 text-sm max-w-sm mx-auto">Stake RLO, receive sRLO, and fund your transactions via SfS.</p>
             </div>
 
-            <div className="bg-[#1c1c1c] rounded-[24px] p-8 border border-white/10 shadow-2xl relative flex-grow">
+            <div className="bg-[#0c0c0c] rounded-2xl p-8 border border-white/5 shadow-2xl relative flex-grow overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-50"></div>
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-20 border-t border-white/10 rounded-t-[24px]"></div>
               
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-3">
-                  <label className="font-label text-[10px] uppercase tracking-widest text-white/40 font-bold">RLO AMOUNT</label>
+                  <label className="font-label text-[10px] uppercase tracking-widest text-white/30 font-bold">RLO AMOUNT</label>
                   <button 
                     onClick={() => setRloAmount((balances['RIALO'] || 0).toString())}
                     className="font-headline font-bold text-[10px] text-black bg-white hover:bg-white/90 px-3 py-1 rounded-md transition-all uppercase tracking-widest"
@@ -257,7 +258,7 @@ export default function StakingPage() {
                     MAX
                   </button>
                 </div>
-                <div className="bg-white/5 rounded-xl flex items-center px-4 py-3 border border-white/5 focus-within:border-white/20 transition-colors">
+                <div className="bg-[#161616] rounded-2xl flex items-center px-4 py-3 border border-white/5 focus-within:border-white/20 transition-all shadow-inner">
                   <span className="material-symbols-outlined text-white mr-4 text-2xl">local_fire_department</span>
                   <input
                     type="number"
@@ -283,7 +284,7 @@ export default function StakingPage() {
                   <button 
                     onClick={handleStake}
                     disabled={stakingLoading}
-                    className={`flex-1 bg-white text-black py-4 rounded-xl font-headline font-bold text-lg hover:bg-white/90 active:scale-[0.98] transition-all shadow-lg disabled:opacity-50 flex justify-center items-center gap-3`}
+                    className="flex-1 bg-white text-black py-4 rounded-xl font-headline font-extrabold text-lg hover:bg-white/90 active:scale-[0.98] transition-all shadow-lg disabled:opacity-50 flex justify-center items-center gap-3"
                   >
                     {stakingLoading ? 'Processing...' : 'Simulate Staking'}
                   </button>
@@ -360,22 +361,23 @@ export default function StakingPage() {
           {/* RIGHT COLUMN: SfS Router */}
           <div className="flex flex-col animate-in fade-in slide-in-from-right-4 duration-700">
             <div className="text-center mb-8">
-              <h1 className="font-headline font-extrabold text-white text-3xl tracking-tighter mb-2 flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-white text-3xl">route</span>
+              <h1 className="font-headline font-extrabold text-primary text-3xl tracking-tighter mb-2 flex items-center justify-center gap-2">
+                <span className="material-symbols-outlined text-primary text-3xl">route</span>
                 SfS Router: Sponsorship
               </h1>
-              <p className="font-body text-white/60 text-sm max-w-sm mx-auto">Manage your Service Credits and sponsor external addresses.</p>
+              <p className="font-body text-white/50 text-sm max-w-sm mx-auto">Manage your Service Credits and sponsor external addresses.</p>
             </div>
 
-            <div className="bg-[#1c1c1c] rounded-[24px] p-8 border border-white/10 shadow-2xl relative flex-grow">
+            <div className="bg-[#0c0c0c] rounded-2xl p-8 border border-white/5 shadow-2xl relative flex-grow overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-50"></div>
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-20 border-t border-white/10 rounded-t-[24px]"></div>
 
-              <div className="bg-white/5 rounded-2xl p-6 border border-white/5 mb-8 flex justify-between items-center relative overflow-hidden group">
+              <div className="bg-[#161616] rounded-2xl p-6 border border-white/5 mb-8 flex justify-between items-center relative overflow-hidden group shadow-inner">
                 <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-50"></div>
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="material-symbols-outlined text-[12px] text-white/40">info</span>
-                    <label className="font-label text-[10px] uppercase tracking-widest text-white/40 font-bold block">AVAILABLE SERVICE CREDITS</label>
+                    <label className="font-label text-[10px] uppercase tracking-widest text-white/30 font-bold block">AVAILABLE SERVICE CREDITS</label>
                   </div>
                   <div className="font-headline font-extrabold text-3xl text-white tracking-tighter flex items-end gap-2">
                     {availableServiceCredits.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
@@ -398,7 +400,7 @@ export default function StakingPage() {
                     value={sponsorAddress}
                     onChange={(e) => setSponsorAddress(e.target.value)}
                     placeholder="Enter wallet/Contract Address" 
-                    className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 text-sm font-mono text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 transition-all shadow-inner" 
+                    className="w-full bg-[#161616] border border-white/5 rounded-xl px-5 py-3 text-sm font-mono text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 transition-all shadow-inner" 
                   />
                   <div className="flex flex-col sm:flex-row gap-3">
                     <input 
@@ -406,12 +408,12 @@ export default function StakingPage() {
                       value={sponsorAmount}
                       onChange={(e) => setSponsorAmount(e.target.value)}
                       placeholder="Credits to allocate" 
-                      className="w-full sm:w-1/3 bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-headline font-bold text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 transition-all shadow-inner" 
+                      className="w-full sm:w-1/3 bg-[#161616] border border-white/5 rounded-xl px-4 py-3 text-sm font-headline font-extrabold text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 transition-all shadow-inner" 
                     />
                     <button 
                       onClick={handleCreatePath}
                       disabled={isAddingPath}
-                      className="flex-1 bg-white hover:bg-white/90 text-black rounded-xl px-4 py-3 font-headline font-bold text-sm transition-all flex justify-center items-center gap-2 active:scale-[0.98] disabled:opacity-50 shadow-md"
+                      className="flex-1 bg-white hover:bg-white/90 text-black rounded-xl px-4 py-3 font-headline font-extrabold text-sm transition-all flex justify-center items-center gap-2 active:scale-[0.98] disabled:opacity-50 shadow-md"
                     >
                       {isAddingPath ? (
                         <span className="material-symbols-outlined animate-spin text-sm">autorenew</span>

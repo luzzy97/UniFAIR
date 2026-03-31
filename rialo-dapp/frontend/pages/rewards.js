@@ -102,9 +102,10 @@ export default function RewardsPage() {
         {/* Stats Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
           {/* Total Earned */}
-          <div className="bg-[#1c1c1c] rounded-2xl p-10 flex flex-col justify-between min-h-[260px] border border-white/10 shadow-2xl">
+          <div className="bg-[#0c0c0c] rounded-2xl p-8 flex flex-col justify-between min-h-[260px] border border-white/5 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-50"></div>
             <div>
-              <span className="font-label text-[10px] text-white/30 uppercase tracking-[0.2em] font-bold mb-6 block">Total Cumulative Earned</span>
+              <span className="font-label text-[10px] text-white/20 uppercase tracking-[0.2em] font-bold mb-6 block">Total Cumulative Earned</span>
               <h2 className="font-headline text-[3.5rem] font-extrabold text-white leading-none">
                 {loading ? <span className="animate-pulse">—</span> : rewards.totalEarned}{' '}
                 <span className="text-white/10 text-2xl tracking-tighter block mt-2 font-body font-normal">RIALO</span>
@@ -117,7 +118,7 @@ export default function RewardsPage() {
           </div>
 
           {/* Claim Card */}
-          <div className="bg-white rounded-2xl p-10 flex flex-col justify-between min-h-[260px] text-black shadow-2xl transition-transform hover:scale-[1.02]">
+          <div className="bg-white rounded-2xl p-8 flex flex-col justify-between min-h-[260px] text-black shadow-2xl transition-transform hover:scale-[1.02] relative overflow-hidden">
             <div>
               <span className="font-label text-[10px] text-black/40 uppercase tracking-[0.2em] font-bold mb-6 block">Available to Claim</span>
               <h2 className="font-headline text-[3.5rem] font-extrabold leading-none">
@@ -145,9 +146,10 @@ export default function RewardsPage() {
           </div>
 
           {/* APY */}
-          <div className="bg-[#1c1c1c] rounded-2xl p-10 flex flex-col justify-between min-h-[260px] border border-white/10 shadow-2xl">
+          <div className="bg-[#0c0c0c] rounded-2xl p-8 flex flex-col justify-between min-h-[260px] border border-white/5 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-50"></div>
             <div>
-              <span className="font-label text-[10px] text-white/30 uppercase tracking-[0.2em] font-bold mb-6 block">Network Yield (APY)</span>
+              <span className="font-label text-[10px] text-white/20 uppercase tracking-[0.2em] font-bold mb-6 block">Network Yield (APY)</span>
               <h2 className="font-headline text-[3.5rem] font-extrabold text-white leading-none">
                 {loading ? <span className="animate-pulse">—</span> : `${rewards.apy}%`}
               </h2>
@@ -163,7 +165,8 @@ export default function RewardsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           {/* Chart */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-surface-container-low rounded-xl p-8 border border-outline-variant/10">
+            <div className="bg-[#0c0c0c] rounded-2xl p-8 border border-white/5 shadow-2xl overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 blur-[100px] opacity-30"></div>
               <div className="flex justify-between items-center mb-10">
                 <h3 className="font-headline font-bold text-primary text-lg">Earnings Trajectory</h3>
                 <div className="flex gap-2">
@@ -173,8 +176,8 @@ export default function RewardsPage() {
                       onClick={() => setActiveRange(r)}
                       className={`px-3 py-1 text-[10px] font-bold rounded-lg uppercase transition-colors ${
                         activeRange === r
-                          ? 'bg-primary text-on-primary'
-                          : 'bg-surface-container-lowest border border-outline-variant/20 text-on-surface/60'
+                          ? 'bg-primary text-black font-extrabold'
+                          : 'bg-[#161616] border border-white/5 text-white/40 hover:text-white'
                       }`}
                     >
                       {r}
@@ -187,7 +190,7 @@ export default function RewardsPage() {
                   <div
                     key={i}
                     className="rounded-t-lg transition-all duration-500 w-full cursor-pointer group relative"
-                    style={{ height: `${h}%`, backgroundColor: `rgba(0,0,0,${0.05 + (h / 100) * 0.95})` }}
+                    style={{ height: `${h}%`, backgroundColor: `rgba(255,255,255,${0.1 + (h / 100) * 0.4})` }}
                   >
                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-primary text-on-primary text-[10px] font-bold px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                       {(h * 10).toFixed(1)} RIALO

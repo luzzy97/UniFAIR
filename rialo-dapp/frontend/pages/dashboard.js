@@ -60,10 +60,10 @@ export default function DashboardPage() {
             { symbol: 'USDC', label: 'USD Coin', color: 'bg-[#2775CA]', icon: 'monetization_on' },
             { symbol: 'USDT', label: 'Tether USD', color: 'bg-[#26A17B]', icon: 'account_balance_wallet' },
           ].map((token) => (
-            <div key={token.symbol} className="bg-[#1c1c1c] rounded-2x p-6 flex flex-col justify-between min-h-[180px] border border-white/10 shadow-2xl relative overflow-hidden group hover:border-primary/20 transition-all">
+            <div key={token.symbol} className="bg-[#0c0c0c] rounded-2xl p-6 flex flex-col justify-between min-h-[180px] border border-white/5 shadow-2xl relative overflow-hidden group hover:border-primary/20 transition-all">
               <div className="relative z-10 flex justify-between items-start">
                 <div>
-                  <span className="font-label text-[9px] text-white/30 uppercase tracking-[0.2em] font-bold mb-2 block">{token.label}</span>
+                  <span className="font-label text-[9px] text-white/20 uppercase tracking-[0.2em] font-bold mb-2 block">{token.label}</span>
                   <h2 className="font-headline text-2xl font-extrabold text-white leading-none tracking-tighter">
                     {isConnected ? (displayBalances[token.symbol] || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
                   </h2>
@@ -103,7 +103,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="bg-[#1c1c1c] rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
+            <div className="bg-[#0c0c0c] rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
               {/* Table Header */}
               <div className="grid grid-cols-[40px_1fr_auto_auto] gap-4 px-6 py-3 border-b border-white/5 bg-white/5 text-transparent">
                 <div />
@@ -187,7 +187,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="bg-[#1c1c1c] rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
+          <div className="bg-[#0c0c0c] rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
             {/* Table Header */}
             {isConnected && transactions.length > 0 && (
               <div className="grid grid-cols-[40px_1fr_auto_auto] gap-4 px-6 py-3 border-b border-white/5 bg-white/5">
@@ -371,7 +371,7 @@ export default function DashboardPage() {
                 <Link 
                   key={i} 
                   href={action.href}
-                  className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/5 hover:border-primary/30 transition-all group"
+                  className="bg-[#0c0c0c] p-6 rounded-xl border border-white/5 hover:border-primary/30 transition-all group shadow-xl"
                 >
                   <div className="flex items-start gap-4">
                     <div className="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center group-hover:bg-primary group-hover:text-on-primary transition-colors border border-on-surface/5">
