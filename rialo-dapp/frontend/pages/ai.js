@@ -20,7 +20,7 @@ export default function AiPage() {
         }}>
           Rialo AI Assistant
         </h1>
-        <p className="font-body text-on-surface/60 text-lg text-center max-w-md mx-auto mb-12">
+        <p className="font-body text-white/80 text-lg text-center max-w-md mx-auto mb-12">
           Execute highly optimized on-chain operations using natural language. Fast, secure, and intent-driven.
         </p>
 
