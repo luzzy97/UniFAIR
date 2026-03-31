@@ -5,6 +5,7 @@ import Toast from '../components/Toast';
 import { useWallet } from '../hooks/useWallet';
 import { useRLO } from '../hooks/useRLO';
 import { ethers } from 'ethers';
+
 const CHAINS = [
   { id: '1', name: 'Ethereum', icon: '/eth-icon.png', isImage: true },
   { id: '42161', name: 'Arbitrum', icon: 'layers' },
@@ -19,6 +20,7 @@ export default function BridgePage() {
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [isDeposit, setIsDeposit] = useState(true);
 
   const ethPrice = globalRates['ETH']?.['USDC'] || 3500;
   const receiveAmount = amount || '0.00';
@@ -26,6 +28,8 @@ export default function BridgePage() {
   const balances = { ...walletBalances, RIALO: parseFloat(rloBal || '0') };
 
   const fromChainName = CHAINS.find(c => c.id === fromChain)?.name || 'Ethereum';
+  const sourceBalance = isDeposit ? (balances['ETH'] || 0) : (balances['ETH_RIALO'] || 0);
+  const destBalance = isDeposit ? (balances['ETH_RIALO'] || 0) : (balances['ETH'] || 0);
 
   const handleBridge = async () => {
     if (!isConnected) { connect(); return; }
@@ -33,24 +37,34 @@ export default function BridgePage() {
       setToast({ message: 'Enter an amount greater than 0', type: 'error' });
       return;
     }
-    const currentBalance = balances['ETH'] || 0;
-    if (parseFloat(amount) > currentBalance) {
-      setToast({ message: 'Insufficient ETH balance', type: 'error' });
+    
+    if (parseFloat(amount) > sourceBalance) {
+      setToast({ message: `Insufficient ${isDeposit ? 'ETH' : 'Rialo L1'} balance`, type: 'error' });
       return;
     }
 
     setLoading(true);
-    setToast({ message: 'Initiating bridge (locking ETH)…', type: 'loading' });
+    setToast({ message: isDeposit ? 'Initiating bridge (locking ETH)…' : 'Initiating withdraw (burning ETH on Rialo L1)…', type: 'loading' });
     try {
       const signer = await provider.getSigner();
-      const tx = await signer.sendTransaction({
-        to: '0x000000000000000000000000000000000000dEaD',
-        value: ethers.parseEther(amount)
-      });
+      let tx;
+      if (isDeposit) {
+        tx = await signer.sendTransaction({
+          to: '0x000000000000000000000000000000000000dEaD',
+          value: ethers.parseEther(amount)
+        });
+      } else {
+        tx = await signer.sendTransaction({
+          to: address, // Send 0 ETH to self to trigger metamask for mock purposes
+          value: 0
+        });
+      }
+      
       const receipt = await tx.wait();
       const hash = receipt.hash;
+      
       setToast({
-        message: `Bridge initiated! ${amount} ETH locked on Sepolia.`,
+        message: isDeposit ? `Bridge initiated! ${amount} ETH locked on Sepolia.` : `Withdraw initiated! ${amount} ETH returning to Sepolia.`,
         type: 'success',
         txHash: hash,
       });
@@ -58,19 +72,24 @@ export default function BridgePage() {
       // Add to history
       addTransaction({
         type: 'Bridge',
-        amount: `${amount} ETH → Rialo L1`,
-        details: 'Cross-chain Bridge Out',
+        amount: isDeposit ? `${amount} ETH → Rialo L1` : `${amount} Rialo L1 → ETH`,
+        details: isDeposit ? 'Cross-chain Bridge Out' : 'Cross-chain Bridge In',
         txHash: hash,
         source: 'Direct'
       });
       
-      // Update balances from chain and local mock
+      // Update balances
       if (address && provider) {
         fetchEthBalance(address, provider);
         fetchRloBalance();
       }
+      
       if (updateBalance) {
-        updateBalance('ETH_RIALO', parseFloat(amount));
+        if (isDeposit) {
+          updateBalance('ETH_RIALO', parseFloat(amount));
+        } else {
+          updateBalance('ETH_RIALO', -parseFloat(amount));
+        }
       }
       
       setAmount('');
@@ -101,29 +120,37 @@ export default function BridgePage() {
           <div className="space-y-4 mb-6">
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 font-label">From</span>
-              <span className="text-xs font-medium text-white/20">Balance: {balances['ETH']?.toFixed(2) || '0.00'} ETH</span>
+              <span className="text-xs font-medium text-white/20">Balance: {sourceBalance?.toFixed(2) || '0.00'} ETH</span>
             </div>
             <div className="bg-[#161616] rounded-2xl p-6 flex items-center justify-between border border-white/5 focus-within:border-white/20 transition-all shadow-inner">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center border border-white/10 overflow-hidden">
-                  {CHAINS.find(c => c.id === fromChain)?.isImage ? (
-                    <img src={CHAINS.find(c => c.id === fromChain)?.icon} className="w-full h-full object-contain p-2" alt="chain" />
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center p-2 overflow-hidden border border-white/10 ${isDeposit ? 'bg-white/5' : 'bg-white shadow-2xl'}`}>
+                  {isDeposit ? (
+                    CHAINS.find(c => c.id === fromChain)?.isImage ? (
+                      <img src={CHAINS.find(c => c.id === fromChain)?.icon} className="w-full h-full object-contain p-2" alt="chain" />
+                    ) : (
+                      <span className="material-symbols-outlined text-white">
+                        {CHAINS.find(c => c.id === fromChain)?.icon}
+                      </span>
+                    )
                   ) : (
-                    <span className="material-symbols-outlined text-white">
-                      {CHAINS.find(c => c.id === fromChain)?.icon}
-                    </span>
+                    <img src="/rialo-icon-new.png" className="w-full h-full object-contain" alt="Rialo" />
                   )}
                 </div>
                 <div className="flex flex-col">
-                  <select
-                    value={fromChain}
-                    onChange={e => setFromChain(e.target.value)}
-                    className="bg-transparent border-none p-0 text-white font-bold text-xl focus:ring-0 cursor-pointer appearance-none"
-                  >
-                    {CHAINS.map(c => (
-                    <option key={c.id} value={c.id} className="bg-[#0c0c0c] text-white">{c.name}</option>
-                    ))}
-                  </select>
+                  {isDeposit ? (
+                    <select
+                      value={fromChain}
+                      onChange={e => setFromChain(e.target.value)}
+                      className="bg-transparent border-none p-0 text-white font-bold text-xl focus:ring-0 cursor-pointer appearance-none"
+                    >
+                      {CHAINS.map(c => (
+                        <option key={c.id} value={c.id} className="bg-[#0c0c0c] text-white">{c.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="text-white font-bold text-xl">ETH <span className="text-sm font-normal text-white/50">(Rialo L1)</span></span>
+                  )}
                   <span className="text-[10px] text-white/20 tracking-wider font-bold uppercase mt-1">Source Chain</span>
                 </div>
               </div>
@@ -139,28 +166,45 @@ export default function BridgePage() {
             </div>
           </div>
 
-          {/* Direction Icon */}
-          <div className="flex justify-center -my-6 relative z-10">
-            <div className="bg-[#0c0c0c] p-3 rounded-2xl shadow-xl border border-white/10 hover:scale-110 transition-transform">
+          {/* Direction Icon Toggle */}
+          <div className="flex justify-center -my-6 relative z-10 w-full">
+            <button 
+              onClick={() => setIsDeposit(!isDeposit)} 
+              className="bg-[#0c0c0c] p-3 rounded-2xl shadow-xl border border-white/10 hover:scale-110 transition-transform cursor-pointer outline-none focus:outline-none"
+            >
               <div className="text-white flex items-center justify-center">
-                <span className="material-symbols-outlined">south</span>
+                <span className="material-symbols-outlined transition-transform duration-300" style={{ transform: isDeposit ? 'rotate(0deg)' : 'rotate(180deg)' }}>south</span>
               </div>
-            </div>
+            </button>
           </div>
 
           {/* To */}
           <div className="space-y-4 mt-6 mb-10">
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 font-label">To</span>
-              <span className="text-xs font-medium text-white/20">Balance: {balances['ETH_RIALO']?.toFixed(2) || '0.00'} ETH</span>
+              <span className="text-xs font-medium text-white/20">Balance: {destBalance?.toFixed(2) || '0.00'} ETH</span>
             </div>
             <div className="bg-[#161616] rounded-2xl p-6 flex items-center justify-between border border-white/5 shadow-inner">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-2xl overflow-hidden border border-white/10">
-                  <img src="/rialo-icon-new.png" className="w-full h-full object-contain" alt="Rialo L1 ETH" />
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center p-2 overflow-hidden border border-white/10 ${!isDeposit ? 'bg-white/5' : 'bg-white shadow-2xl'}`}>
+                  {!isDeposit ? (
+                    CHAINS.find(c => c.id === fromChain)?.isImage ? (
+                      <img src={CHAINS.find(c => c.id === fromChain)?.icon} className="w-full h-full object-contain p-2" alt="chain" />
+                    ) : (
+                      <span className="material-symbols-outlined text-white">
+                        {CHAINS.find(c => c.id === fromChain)?.icon}
+                      </span>
+                    )
+                  ) : (
+                    <img src="/rialo-icon-new.png" className="w-full h-full object-contain" alt="Rialo L1 ETH" />
+                  )}
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-white font-bold text-xl">ETH <span className="text-sm font-normal text-white/50">(Rialo L1)</span></span>
+                  {!isDeposit ? (
+                    <span className="text-white font-bold text-xl">{fromChainName}</span>
+                  ) : (
+                    <span className="text-white font-bold text-xl">ETH <span className="text-sm font-normal text-white/50">(Rialo L1)</span></span>
+                  )}
                   <span className="text-[10px] text-white/20 tracking-wider font-bold uppercase mt-1">Destination Chain</span>
                 </div>
               </div>
@@ -189,19 +233,19 @@ export default function BridgePage() {
           {/* CTA */}
           <button
             onClick={handleBridge}
-            disabled={loading || (isConnected && amount && parseFloat(amount) > (balances['ETH'] || 0))}
+            disabled={loading || (isConnected && amount && parseFloat(amount) > sourceBalance)}
             className="w-full bg-white text-black py-5 rounded-2xl font-headline font-extrabold text-lg tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl disabled:opacity-50"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined animate-spin text-xl">autorenew</span> Bridging…
+                <span className="material-symbols-outlined animate-spin text-xl">autorenew</span> {isDeposit ? 'Bridging…' : 'Withdrawing…'}
               </span>
             ) : !isConnected ? (
               'Connect Wallet'
-            ) : amount && parseFloat(amount) > (balances['ETH'] || 0) ? (
-              'Insufficient ETH Balance'
+            ) : amount && parseFloat(amount) > sourceBalance ? (
+              `Insufficient ${isDeposit ? 'ETH' : 'Rialo L1'} Balance`
             ) : (
-              'Bridge ETH to Rialo L1'
+              isDeposit ? 'Bridge ETH to Rialo L1' : 'Withdraw ETH to Sepolia'
             )}
           </button>
         </div>
