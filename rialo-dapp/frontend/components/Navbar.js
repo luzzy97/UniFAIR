@@ -232,7 +232,7 @@ export default function Navbar() {
           {/* Left: Logo */}
           <Link href="/" className="logo-link">
             <img
-              src="/logo.png"
+              src="/rialo-text-logo.png"
               alt="Rialo Logo"
               className={`logo-img ${isDark ? 'on-dark' : 'on-light'}`}
             />
