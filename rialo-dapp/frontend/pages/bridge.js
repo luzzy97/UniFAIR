@@ -7,7 +7,7 @@ import { useRLO } from '../hooks/useRLO';
 import { ethers } from 'ethers';
 
 const CHAINS = [
-  { id: '1', name: 'Ethereum', icon: '/eth-icon.png', isImage: true },
+  { id: '1', name: 'Ethereum', icon: '/eth-icon-new.png', isImage: true },
   { id: '42161', name: 'Arbitrum', icon: 'layers' },
   { id: '10', name: 'Optimism', icon: 'layers' },
   { id: '137', name: 'Polygon', icon: 'layers' },
