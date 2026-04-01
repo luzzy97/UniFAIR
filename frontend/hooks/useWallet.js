@@ -186,11 +186,21 @@ export function WalletProvider({ children }) {
   const fetchEthBalance = useCallback(async (addr, prov) => {
     try {
       const bal = await prov.getBalance(addr);
-      setBalances(prev => ({ ...prev, 'ETH': parseFloat(ethers.formatEther(bal)) }));
+      
+      setBalances(prev => {
+        // Only allow ETH contract sync to overwrite if it's been more than 60s since manual adjustment
+        const lastManual = lastManualUpdates['ETH'] || 0;
+        if (Date.now() - lastManual < 60000) return prev; // Preserve simulated balance
+        
+        return { 
+          ...prev, 
+          'ETH': parseFloat(ethers.formatEther(bal)) 
+        };
+      });
     } catch (err) {
       console.error('Error fetching ETH balance:', err);
     }
-  }, []);
+  }, [lastManualUpdates]);
 
   const switchNetwork = useCallback(async () => {
     if (typeof window !== 'undefined' && window.ethereum) {
