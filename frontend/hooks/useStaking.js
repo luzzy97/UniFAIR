@@ -151,5 +151,18 @@ export function useStaking() {
     }
   }, [isConnected, provider, fetchStakingData]);
 
-  return { stakedBalance, pendingRewards, totalStaked, sfsFraction, sponsorshipPaths, loading, stake, withdraw, claimRewards, updateSfsFraction, addSponsorshipPath, fetchStakingData };
+  return { 
+    stakedBalance, 
+    pendingRewards, 
+    totalStaked, 
+    sfsFraction, 
+    sponsorshipPaths, 
+    loading, 
+    stake, 
+    withdraw, 
+    claimRewards, 
+    updateSfsFraction, 
+    addSponsorshipPath, 
+    fetchStakingData 
+  };
 }

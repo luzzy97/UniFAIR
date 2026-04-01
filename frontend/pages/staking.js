@@ -21,7 +21,8 @@ export default function StakingPage() {
     withdraw: withdrawAction, 
     claimRewards: claimAction,
     updateSfsFraction,
-    addSponsorshipPath
+    addSponsorshipPath,
+    fetchStakingData
   } = useStaking();
 
   const balances = { ...walletBalances };
@@ -60,6 +61,31 @@ export default function StakingPage() {
   const pendingServiceCredits = pendingRewards * (contractSfsFraction / 100); // This reflects what's actually accumulated on-chain
   const availableServiceCredits = Math.max(0, realRawYieldToServiceCredits - totalAllocated);
 
+  const [liveCredits, setLiveCredits] = useState(0);
+
+  // --- LIVE CREDIT TICKER ---
+  useEffect(() => {
+    // Initialize liveCredits whenever the chain value changes
+    setLiveCredits(pendingServiceCredits);
+  }, [pendingServiceCredits]);
+
+  useEffect(() => {
+    if (!isConnected || stakedBalance <= 0 || contractSfsFraction <= 0) return;
+
+    // 18.4% APY -> Yearly multiplier is 0.184
+    // Credit Yield per year = stakedBalance * networkApy * (contractSfsFraction / 100)
+    const creditsPerYear = stakedBalance * networkApy * (contractSfsFraction / 100);
+    const creditsPerSecond = creditsPerYear / (365 * 24 * 60 * 60);
+    const tickRateMs = 100; // Tick every 100ms for smoothness
+    const creditsPerTick = creditsPerSecond * (tickRateMs / 1000);
+
+    const timer = setInterval(() => {
+      setLiveCredits(prev => prev + creditsPerTick);
+    }, tickRateMs);
+
+    return () => clearInterval(timer);
+  }, [isConnected, stakedBalance, contractSfsFraction]);
+
   const handleStake = async () => {
     if (!isConnected) { connect(); return; }
     if (numRlo < 10) {
@@ -89,6 +115,7 @@ export default function StakingPage() {
         updateBalance('RIALO', -numRlo);
         fetchEthBalance(address, provider);
         fetchRloBalance();
+        fetchStakingData(); // Force immediate refresh of staked amount
       }
     } catch (e) {
       showToast({ message: "Staking failed", type: "error" });
@@ -117,6 +144,7 @@ export default function StakingPage() {
         updateBalance('RIALO', stakedBalance);
         fetchEthBalance(address, provider);
         fetchRloBalance();
+        fetchStakingData(); // Force immediate refresh
       }
     } catch (e) {
       showToast({ message: "Unstaking failed", type: "error" });
@@ -144,6 +172,7 @@ export default function StakingPage() {
       if (address && provider) {
         fetchEthBalance(address, provider);
         fetchRloBalance();
+        fetchStakingData(); // Refresh rewards state
       }
     } catch (e) {
       showToast({ message: "Claim failed", type: "error" });
@@ -351,7 +380,7 @@ export default function StakingPage() {
                     <label className="font-label text-[10px] uppercase tracking-widest text-white/30 font-bold block">PENDING SERVICE CREDITS</label>
                   </div>
                   <div className="font-headline font-extrabold text-3xl text-white tracking-tighter flex items-end gap-2">
-                    {pendingServiceCredits.toLocaleString(undefined, {minimumFractionDigits: 4, maximumFractionDigits: 6})}
+                    {liveCredits.toLocaleString(undefined, {minimumFractionDigits: 4, maximumFractionDigits: 6})}
                     <span className="font-label text-[10px] font-bold uppercase tracking-widest text-white/50 mb-1.5">CREDITS</span>
                   </div>
                   <div className="text-[10px] text-primary font-black mt-1 uppercase tracking-widest flex items-center gap-1.5">
