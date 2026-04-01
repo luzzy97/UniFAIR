@@ -10,6 +10,7 @@ export default function Navbar() {
 
   // true = background behind navbar is DARK -> show white logo/icons
   const [isDark, setIsDark] = useState(false);
+  const [showWalletMenu, setShowWalletMenu] = useState(false);
 
   useEffect(() => {
     const detect = () => {
@@ -224,6 +225,46 @@ export default function Navbar() {
           70%  { box-shadow: 0 0 0 5px rgba(34,197,94,0); }
           100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
         }
+
+        /* ── Wallet Dropdown ── */
+        .wallet-dropdown {
+          position: absolute;
+          top: calc(100% + 8px);
+          right: 36px;
+          background: #161616;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 12px;
+          padding: 6px;
+          min-width: 160px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+          z-index: 100;
+          animation: drop-fade 0.2s ease;
+        }
+        @keyframes drop-fade {
+          from { opacity: 0; transform: translateY(-5px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .disconnect-btn {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 14px;
+          background: transparent;
+          border: none;
+          color: #ef4444;
+          font-family: inherit;
+          font-weight: 700;
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+        .disconnect-btn:hover {
+          background: rgba(239, 68, 68, 0.1);
+        }
       `}</style>
 
       <nav ref={navRef} className="rialo-nav">
@@ -272,11 +313,12 @@ export default function Navbar() {
               ) : (
                 <button
                   id="disconnect-wallet-btn"
-                  onClick={disconnect}
+                  onClick={() => setShowWalletMenu(!showWalletMenu)}
                   className={`wallet-btn ${isDark ? 'on-dark' : 'on-light'}`}
                 >
                   <span className="wallet-dot" />
                   {shortAddress}
+                  <span className="material-symbols-outlined" style={{ fontSize: '14px', marginLeft: '2px' }}>expand_more</span>
                 </button>
               )
             ) : (
@@ -289,6 +331,21 @@ export default function Navbar() {
                 <WalletIcon />
                 {connecting ? 'Connecting…' : 'Connect Wallet'}
               </button>
+            )}
+            
+            {showWalletMenu && isConnected && !isWrongNetwork && (
+              <div className="wallet-dropdown">
+                <button 
+                  className="disconnect-btn"
+                  onClick={() => {
+                    disconnect();
+                    setShowWalletMenu(false);
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
+                  Disconnect
+                </button>
+              </div>
             )}
           </div>
 
