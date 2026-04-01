@@ -340,31 +340,37 @@ export function WalletProvider({ children }) {
   const executeAiTransaction = useCallback(async (txType, userMsg, actionDetail, isAuto = false) => {
     if (!address || !provider) throw new Error('Wallet not connected');
     try {
+      // Parse swap details BEFORE branching so all code paths share the same variables
+      let parsedFromToken = null, parsedToToken = null, parsedAmountVal = null;
+      if (txType === 'Swap') {
+        const match = actionDetail.match(/([\d.]+)\s+([A-Z0-9]+)\s+->\s+([A-Z0-9]+)/i);
+        if (match) {
+          parsedAmountVal = parseFloat(match[1]);
+          parsedFromToken = match[2].toUpperCase();
+          parsedToToken   = match[3].toUpperCase();
+        }
+      }
+
       let signer;
       if (aiPrivateKey) {
         // Use local AI wallet
         const wallet = new ethers.Wallet(aiPrivateKey, provider);
         signer = wallet;
       } else if (isAuto) {
-        // For automated triggers, if no AI wallet is provided, we simulate the transaction 
+        // For automated triggers, if no AI wallet is provided, we simulate the transaction
         // silently to provide a seamless demo experience without blocking the UI with popups
         const fakeHash = 'simulated_0x' + Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('');
-        
-        // Handle mock balance updates for simulated transactions
-        if (txType === 'Swap') {
-          const match = actionDetail.match(/([\d.]+)\s+([A-Z0-9]+)\s+->\s+([A-Z0-9]+)/i);
-          if (match) {
-            const amount = parseFloat(match[1]);
-            const from = match[2].toUpperCase();
-            const to = match[3].toUpperCase();
-            const rate = globalRates[from]?.[to] || 1;
-            const amountOut = amount * rate;
 
-            if (from !== 'ETH') updateBalance(from, -amount);
-            if (to !== 'ETH') updateBalance(to, amountOut);
-          }
+        // Handle mock balance updates for simulated transactions
+        if (txType === 'Swap' && parsedFromToken && parsedToToken && parsedAmountVal) {
+          const rate = globalRates[parsedFromToken]?.[parsedToToken] || 1;
+          const amountOut = parsedAmountVal * rate;
+          updateBalances({
+            [parsedFromToken]: -parsedAmountVal,
+            [parsedToToken]:   amountOut
+          });
         }
-        
+
         addTransaction({ type: txType, amount: actionDetail, details: 'AI Auto Execution (Simulated)', txHash: fakeHash, source: 'AI Agent' });
         return fakeHash;
       } else {
@@ -373,7 +379,6 @@ export function WalletProvider({ children }) {
       }
 
       let tx;
-      let fromToken, toToken, amountVal;
 
       if (txType === 'Stake') {
         const amount = actionDetail.match(/[\d.]+/)?.[0] || '10';
@@ -383,79 +388,69 @@ export function WalletProvider({ children }) {
         const amount = actionDetail.match(/[\d.]+/)?.[0] || '1';
         tx = await getContract('RLO', signer).bridgeOut(ethers.parseEther(amount));
       } else if (txType === 'Swap') {
-        const match = actionDetail.match(/([\d.]+)\s+([A-Z0-9]+)\s+->\s+([A-Z0-9]+)/i);
-        if (match) {
-          amountVal = parseFloat(match[1]);
-          fromToken = match[2].toUpperCase();
-          toToken = match[3].toUpperCase();
-          
-          if (fromToken === 'RIALO') {
-            tx = await getContract('RLO', signer).transfer('0x000000000000000000000000000000000000dEaD', ethers.parseEther(amountVal.toString()));
-          } else if (fromToken === 'ETH') {
+        if (parsedFromToken && parsedToToken && parsedAmountVal !== null) {
+          if (parsedFromToken === 'RIALO') {
+            tx = await getContract('RLO', signer).transfer(
+              '0x000000000000000000000000000000000000dEaD',
+              ethers.parseEther(parsedAmountVal.toString())
+            );
+          } else if (parsedFromToken === 'ETH') {
             // Send to dead address to safely simulate a swap
-             tx = await signer.sendTransaction({
-                to: '0x000000000000000000000000000000000000dEaD',
-                value: ethers.parseEther((amountVal * 1).toString()) // Changed from 0.001 to 1 for full value simulation
-             });
+            tx = await signer.sendTransaction({
+              to: '0x000000000000000000000000000000000000dEaD',
+              value: ethers.parseEther(parsedAmountVal.toString())
+            });
           } else {
-             // Simulated swap for non-RIALO tokens (e.g. USDC -> RIALO)
-             // Send to user's own address instead of contract to avoid revert
-             tx = await signer.sendTransaction({
-                to: address, 
-                value: 0
-             });
+            // Simulated swap for non-native tokens (USDC, USDT, etc.)
+            // Send 0-value tx to own address so MetaMask pops up without reverting
+            tx = await signer.sendTransaction({
+              to: address,
+              value: 0
+            });
           }
+        } else {
+          // Could not parse action detail — fall back to a 0-value self-tx
+          tx = await signer.sendTransaction({ to: address, value: 0 });
         }
       }
 
       if (tx) {
-        // Add to history immediately for a "langsung" feel
+        // Add to history immediately for instant feedback
         addTransaction({ type: txType, amount: actionDetail, details: 'AI Strategy', txHash: tx.hash, source: 'AI Agent' });
 
-        // Resolve early so the AI Agent and Toast show success immediately
-        // but still handle the wait and balance updates in background
+        // Optimistically update balances immediately for a snappy UX
+        if (txType === 'Swap' && parsedFromToken && parsedToToken && parsedAmountVal !== null) {
+          const rate = globalRates[parsedFromToken]?.[parsedToToken] || 1;
+          const amountOut = parsedAmountVal * rate;
+          updateBalances({
+            [parsedFromToken]: -parsedAmountVal,
+            [parsedToToken]:   amountOut
+          });
+        }
+        if (txType === 'Bridge' && actionDetail) {
+          const amount = parseFloat(actionDetail.match(/[\d.]+/)?.[0] || '0');
+          const detailLower = actionDetail.toLowerCase();
+          if (detailLower.includes('rialo l1') || detailLower.includes('to rialo')) {
+            updateBalances({ 'ETH': -amount, 'ETH_RIALO': amount });
+          } else if (detailLower.includes('from rialo') || detailLower.includes('to eth')) {
+            updateBalances({ 'ETH_RIALO': -amount, 'ETH': amount });
+          }
+        }
+
+        // Wait for actual chain confirmation softly in the background
         tx.wait().then(() => {
-          if (txType === 'Swap' && fromToken && toToken) {
-            const rate = globalRates[fromToken]?.[toToken] || 1;
-            const amountOut = amountVal * rate;
-            
-            // Instantly apply balance changes for ALL tokens explicitly for smooth UI
-            updateBalances({
-                [fromToken]: -amountVal,
-                [toToken]: amountOut
-            });
-          }
-
-          if (txType === 'Bridge' && actionDetail) {
-            const amount = parseFloat(actionDetail.match(/[\d.]+/)?.[0] || '0');
-            const detailLower = actionDetail.toLowerCase();
-            if (detailLower.includes('rialo l1') || detailLower.includes('to rialo')) {
-               // Bridge Out (Deposit ETH to Rialo L1)
-               updateBalances({
-                   'ETH': -amount,
-                   'ETH_RIALO': amount
-               });
-            } else if (detailLower.includes('from rialo') || detailLower.includes('to eth')) {
-               // Bridge In (Withdraw Rialo L1 to ETH)
-               updateBalances({
-                   'ETH_RIALO': -amount,
-                   'ETH': amount
-               });
-            }
-          }
-
           if (isAuto) {
-             addAiMessage({ role: 'ai', content: { raw: `Successfully confirmed background ${txType}: ${actionDetail}` } });
+            addAiMessage({ role: 'ai', content: { raw: `Successfully confirmed background ${txType} on-chain: ${actionDetail}` } });
           }
         }).catch(err => {
-          console.error("Transaction failed after wait:", err);
+          console.error('Transaction failed after wait:', err);
         });
 
         return tx.hash;
       }
       return '0x' + Math.random().toString(16).slice(2, 42);
     } catch (err) { throw err; }
-  }, [address, provider, addTransaction, aiPrivateKey, globalRates, updateBalance, addAiMessage]);
+  }, [address, provider, addTransaction, updateBalances, aiPrivateKey, globalRates, updateBalance, addAiMessage]);
 
 
   useEffect(() => {
