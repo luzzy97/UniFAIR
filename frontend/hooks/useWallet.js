@@ -75,6 +75,9 @@ export function WalletProvider({ children }) {
   const [scheduledTxs, setScheduledTxs] = useState([]);
   const [aiMessages, setAiMessages] = useState([{ role: 'ai', content: { raw: "Rialo AI is online. How can I optimize your on-chain operations today?" } }]);
   const [toast, setToast] = useState(null);
+  
+  // Track last manual update per token to prevent immediate contract sync overwrites in demo
+  const [lastManualUpdates, setLastManualUpdates] = useState({});
 
   // STEP 1: After mount, load all saved data from localStorage into state.
   // This runs only on the client, after hydration, so there's no SSR mismatch.
@@ -162,11 +165,23 @@ export function WalletProvider({ children }) {
   }, []);
 
   const updateBalance = useCallback((symbol, delta) => {
+    setLastManualUpdates(prev => ({ ...prev, [symbol]: Date.now() }));
     setBalances(prev => ({
       ...prev,
       [symbol]: Math.max(0, (prev[symbol] || 0) + delta)
     }));
   }, []);
+
+  const setTokenBalance = useCallback((symbol, val) => {
+    // Only allow contract sync to overwrite if it's been more than 60s since manual adjustment
+    const lastManual = lastManualUpdates[symbol] || 0;
+    if (Date.now() - lastManual < 60000) return;
+
+    setBalances(prev => ({
+      ...prev,
+      [symbol]: parseFloat(val)
+    }));
+  }, [lastManualUpdates]);
 
   const fetchEthBalance = useCallback(async (addr, prov) => {
     try {
@@ -495,7 +510,7 @@ export function WalletProvider({ children }) {
         isWrongNetwork: chainId !== null && chainId !== SEPOLIA_CHAIN_ID,
         shortAddress: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : null,
         isConnected: !!address,
-        balances, transactions, globalRates, triggerOrders, updateBalance, fetchEthBalance,
+        balances, transactions, globalRates, triggerOrders, updateBalance, setTokenBalance, fetchEthBalance,
         addTransaction, addTriggerOrder, executeAiTransaction,
         scheduledTxs, addScheduledTx, removeScheduledTx, removeTriggerOrder,
         aiPrivateKey, setAiPrivateKey,

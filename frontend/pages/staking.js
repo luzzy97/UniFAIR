@@ -24,7 +24,7 @@ export default function StakingPage() {
     addSponsorshipPath
   } = useStaking();
 
-  const balances = { ...walletBalances, RIALO: parseFloat(rloBal || '0') };
+  const balances = { ...walletBalances };
   const stakedBalance = parseFloat(stakedBalStr || '0');
   const pendingRewards = parseFloat(pendingRewStr || '0');
   const totalProtocolStaked = parseFloat(totalProtStakedStr || '1450200');

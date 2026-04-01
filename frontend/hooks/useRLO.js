@@ -4,7 +4,7 @@ import { getContract } from '../lib/ethers';
 import { useWallet } from './useWallet';
 
 export function useRLO() {
-  const { address, provider, isConnected } = useWallet();
+  const { address, provider, isConnected, setTokenBalance } = useWallet();
   const [balance, setBalance] = useState('0');
   const [loading, setLoading] = useState(false);
 
@@ -13,7 +13,9 @@ export function useRLO() {
     try {
       const contract = getContract('RLO', provider);
       const bal = await contract.balanceOf(address);
-      setBalance(ethers.formatEther(bal));
+      const formatted = ethers.formatEther(bal);
+      setBalance(formatted);
+      if (setTokenBalance) setTokenBalance('RIALO', formatted);
     } catch (error) {
       console.error('Error fetching RLO balance:', error);
     }

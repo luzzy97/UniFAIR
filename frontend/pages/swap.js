@@ -27,8 +27,7 @@ export default function SwapPage() {
   const [showToTokenList, setShowToTokenList] = useState(false);
 
   const balances = {
-    ...walletBalances,
-    RIALO: parseFloat(rloBal || '0')
+    ...walletBalances
   };
 
   const [orderType, setOrderType] = useState('swap');

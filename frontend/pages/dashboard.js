@@ -20,14 +20,13 @@ export default function DashboardPage() {
   }, [address, fetchStakingData]);
 
   const stakedBalance = parseFloat(stakedBalStr || '0');
-  const availableRialo = parseFloat(rialoBalance || '0');
+  const availableRialo = balances['RIALO'] || 0;
   const totalValue = availableRialo + stakedBalance;
 
   // Manual override for asset mapping to show real balances
   const displayBalances = {
     ...balances,
     RIALO: availableRialo,
-    ETH: balances['ETH'] || 0,
     STAKED: stakedBalance
   };
 
