@@ -341,21 +341,23 @@ export default function AiAgent() {
           width: 100%;
           height: calc(100vh - 220px);
           min-height: 500px;
-          background: #0e0e0f;
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 16px;
-          box-shadow: 0 16px 64px rgba(0,0,0,0.6);
+          background: #050505 linear-gradient(165deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0) 60%), url('/Animasi/img.14/shape.png') no-repeat right bottom;
+          background-size: 60%;
+          border: 1px solid rgba(255,255,255,0.12);
+          border-radius: 24px;
+          box-shadow: 0 40px 100px rgba(0,0,0,0.9), inset 0 0 0 1px rgba(255,255,255,0.04);
           display: flex;
           flex-direction: column;
           overflow: hidden;
+          backdrop-filter: blur(24px) saturate(180%);
         }
         .ai-header {
-          padding: 16px 20px;
-          border-bottom: 1px solid rgba(255,255,255,0.08);
+          padding: 20px 24px;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
           display: flex;
           justify-content: space-between;
           align-items: center;
-          background: rgba(255,255,255,0.02);
+          background: rgba(255,255,255,0.03);
         }
         .ai-title {
           font-family: 'Manrope', sans-serif;
@@ -402,10 +404,12 @@ export default function AiAgent() {
         }
         .ai-msg.user {
           align-self: flex-end;
-          background: rgba(255,255,255,0.1);
+          background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
           color: #fff;
-          padding: 10px 14px;
-          border-radius: 12px 12px 0 12px;
+          padding: 12px 18px;
+          border-radius: 18px 18px 4px 18px;
+          border: 1px solid rgba(255,255,255,0.1);
+          box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         .ai-msg.ai {
           align-self: flex-start;
@@ -413,13 +417,14 @@ export default function AiAgent() {
           width: 100%;
         }
         .ai-structured {
-          background: rgba(0,0,0,0.3);
-          border: 1px solid rgba(255,255,255,0.05);
-          border-radius: 8px;
-          padding: 12px;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 16px;
+          padding: 16px;
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 14px;
+          backdrop-filter: blur(8px);
         }
         .ai-section-title {
           font-family: 'Inter', sans-serif;
@@ -442,9 +447,10 @@ export default function AiAgent() {
           font-weight: 500;
         }
         .ai-raw {
-          background: rgba(255,255,255,0.05);
-          padding: 10px 14px;
-          border-radius: 12px 12px 12px 0;
+          background: rgba(255,255,255,0.06);
+          padding: 12px 16px;
+          border-radius: 18px 18px 18px 4px;
+          border: 1px solid rgba(255,255,255,0.05);
         }
         .ai-footer {
           padding: 16px;
