@@ -137,10 +137,11 @@ export default function LearnPage() {
               <span className="font-label text-xs uppercase tracking-[0.2em] text-primary mb-2 block">Core Builders</span>
               <h3 className="font-headline text-2xl font-bold text-black">Architects of the Void</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[800px] mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-[1200px] mx-auto">
               {[
                 { name: 'Hakii', handle: '@frhakii', role: 'Builder', initials: 'HK', color: 'bg-black text-white hover:bg-black/80', image: '/hakii.png', link: 'https://x.com/frhakii' },
-                { name: 'Luzzy', handle: '@luzzyzz97', role: 'Builder', initials: 'LZ', color: 'bg-black text-white hover:bg-black/80', image: '/luzzy.jpg', link: 'https://x.com/luzzyzz97' }
+                { name: 'Luzzy', handle: '@luzzyzz97', role: 'Builder', initials: 'LZ', color: 'bg-black text-white hover:bg-black/80', image: '/luzzy.jpg', link: 'https://x.com/luzzyzz97' },
+                { name: 'GOAT', handle: '@Mantle57222', role: 'Builder', initials: 'GT', color: 'bg-black text-white hover:bg-black/80', image: '/goat.png', link: 'https://x.com/Mantle57222' }
               ].map((dev) => (
                 <a 
                   key={dev.handle} 

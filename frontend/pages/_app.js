@@ -1,4 +1,5 @@
 import '../styles/globals.css';
+import '../styles/navbar.css';
 import { WalletProvider } from '../hooks/useWallet';
 import Head from 'next/head';
 import GlobalToast from '../components/GlobalToast';

@@ -1,0 +1,185 @@
+        .rialo-nav {
+          position: sticky;
+          top: 0;
+          width: 100%;
+          z-index: 50;
+          background: transparent;
+        }
+        .nav-inner {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          position: relative;
+          padding: 14px 36px;
+          max-width: 1440px;
+          margin: 0 auto;
+        }
+
+        /* ── Logo ── */
+        .logo-link {
+          display: flex;
+          align-items: center;
+          text-decoration: none;
+          transition: opacity 0.2s;
+        }
+        .logo-link:hover { opacity: 0.75; }
+        .logo-img {
+          height: 38px;
+          width: auto;
+        }
+        /* dark bg → white logo | light bg → black logo */
+        .logo-img.on-dark  { filter: brightness(0) invert(1); }
+        .logo-img.on-light { filter: brightness(0); }
+
+        /* ── Pill Nav ── */
+        .nav-pill-wrap {
+          display: none;
+        }
+        @media (min-width: 768px) {
+          .nav-pill-wrap {
+            display: flex;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+          }
+        }
+        .nav-pill {
+          display: flex;
+          align-items: center;
+          background: #0e0e0f;
+          border-radius: 9999px;
+          padding: 5px 6px;
+          border: 1px solid rgba(255,255,255,0.08);
+          box-shadow: 0 4px 24px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+        .nav-link {
+          position: relative;
+          display: flex;
+          align-items: center;
+          /* Match tighter Figma spacing: 8px-12px horizontal padding. Letter-spacing optical center fix kept on left limit. */
+          padding: 8px 8px 8px calc(8px + 0.12em);
+          border-radius: 9999px;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.35);
+          text-decoration: none;
+          white-space: nowrap;
+          transition: color 0.18s, background 0.18s;
+        }
+        .nav-link:hover {
+          color: rgba(255,255,255,0.75);
+          background: rgba(255,255,255,0.07);
+        }
+        .nav-link.active {
+          color: #fff;
+          background: rgba(255,255,255,0.11);
+        }
+        .nav-link.active::after {
+          content: '';
+          position: absolute;
+          bottom: 5px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 14px;
+          height: 2px;
+          border-radius: 2px;
+          background: rgba(255,255,255,0.45);
+        }
+
+        /* ── Right section ── */
+        .nav-right { display: flex; align-items: center; gap: 8px; }
+
+        /* ── Wallet Button ── */
+        .wallet-btn {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          padding: 9px 20px;
+          border-radius: 9999px;
+          font-size: 10.5px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          cursor: pointer;
+          border: none;
+          outline: none;
+          white-space: nowrap;
+          transition: transform 0.18s, box-shadow 0.18s, background 0.2s, color 0.2s;
+        }
+        .wallet-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .wallet-btn:not(:disabled):hover { transform: translateY(-1px); }
+
+        /* dark bg → white button | light bg → black button */
+        .wallet-btn.on-dark {
+          background: #ffffff;
+          color: #0e0e0f;
+          box-shadow: 0 2px 14px rgba(255,255,255,0.14);
+        }
+        .wallet-btn.on-dark:not(:disabled):hover {
+          box-shadow: 0 4px 22px rgba(255,255,255,0.22);
+        }
+        .wallet-btn.on-light {
+          background: #0e0e0f;
+          color: #ffffff;
+          box-shadow: 0 2px 14px rgba(0,0,0,0.18);
+        }
+        .wallet-btn.on-light:not(:disabled):hover {
+          box-shadow: 0 4px 22px rgba(0,0,0,0.28);
+        }
+
+        /* Connected state: green pulse dot */
+        .wallet-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #22c55e;
+          flex-shrink: 0;
+          animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+          0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+          70%  { box-shadow: 0 0 0 5px rgba(34,197,94,0); }
+          100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+        }
+
+        /* ── Wallet Dropdown ── */
+        .wallet-dropdown {
+          position: absolute;
+          top: calc(100% + 8px);
+          right: 36px;
+          background: #161616;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 12px;
+          padding: 6px;
+          min-width: 160px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+          z-index: 100;
+          animation: drop-fade 0.2s ease;
+        }
+        @keyframes drop-fade {
+          from { opacity: 0; transform: translateY(-5px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .disconnect-btn {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 14px;
+          background: transparent;
+          border: none;
+          color: #ef4444;
+          font-family: inherit;
+          font-weight: 700;
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+        .disconnect-btn:hover {
+          background: rgba(239, 68, 68, 0.1);
+        }
