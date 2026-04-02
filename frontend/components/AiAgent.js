@@ -176,7 +176,7 @@ const getAiResponse = (input, globalRates) => {
   // Rialo General Knowledge Base Matches
   if (lower.includes('what is rialo') || lower.includes('about rialo') || lower.includes('who are you') || lower.includes('apa itu') || lower.includes('tentang')) {
     return {
-      insight: "How can I assist you with Rialo's DeFi ecosystem today?",
+      insight: "Rialo is a blockchain built for the real world.",
       options: ["Rialo Omni Account", "Rialo Execution Engine", "Rialo VM"],
       recommendation: "Rialo enables event-driven execution, native real-world data streams (without traditional oracles), and gas-less transactions with 50ms block times.",
       action: "I can help you utilize Rialo's DeFi ecosystem. Try 'swap', 'bridge', or 'stake'."
@@ -341,21 +341,7 @@ export default function AiAgent() {
           width: 100%;
           height: calc(100vh - 220px);
           min-height: 500px;
-          background: url('/Animasi/img.14/688ccf4f3711bd6c7da11fb4_intro to rialo.png') center/cover no-repeat;
-          position: relative;
-        }
-        .ai-window::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: rgba(14, 14, 15, 0.7); /* Overlay to ensure readability */
-          z-index: 0;
-        }
-        .ai-header, .ai-body, .ai-footer, .ai-sched-panel, .ai-wallet-panel {
-          position: relative;
-          z-index: 1;
-        }
-
+          background: #0e0e0f;
           border: 1px solid rgba(255,255,255,0.1);
           border-radius: 16px;
           box-shadow: 0 16px 64px rgba(0,0,0,0.6);
