@@ -2,10 +2,10 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0c0c0c] text-white w-full pt-20 pb-12 border-t border-white/5 relative overflow-hidden">
+    <footer className="bg-[#0c0c0c] text-white w-full pt-10 pb-8 border-t border-white/5 relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent"></div>
       <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row justify-between gap-16 md:gap-6 mb-16">
+        <div className="flex flex-col md:flex-row justify-between gap-8 md:gap-6 mb-8">
           
           <div className="w-full md:w-5/12 pr-0 md:pr-12">
             <Link href="/" className="inline-block mb-6 group">
