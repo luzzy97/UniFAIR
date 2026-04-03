@@ -231,11 +231,24 @@ export default function AiAgent() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, scheduledTxs.map(tx => tx.id).join(',')]); // Only scroll when message count or number of active scheduled tasks changes
+  }, [messages, scheduledTxs.map(tx => tx.id).join(',')]); 
 
-
-
-
+  // PERSISTENT BALANCE TRACKING
+  useEffect(() => {
+    if (sessionActive && sessionSigner && provider) {
+      const fetchBal = async () => {
+        try {
+          const bal = await provider.getBalance(sessionSigner.address);
+          setSessionBalance(parseFloat(ethers.formatEther(bal)).toFixed(4));
+        } catch (e) {
+          console.error("Balance fetch error:", e);
+        }
+      };
+      fetchBal();
+      const interval = setInterval(fetchBal, 3000); // Fast polling for snappy UI
+      return () => clearInterval(interval);
+    }
+  }, [sessionActive, sessionSigner, provider]);
 
   const handleSend = (e) => {
     e.preventDefault();
@@ -299,7 +312,6 @@ export default function AiAgent() {
           
           addAiMessage({ role: 'ai', content: { raw: statusMsg } });
 
-          
           executeAiTransaction(type, userMsg, detail).then(res => {
             showToast({
               message: `${type} successful!`,
@@ -315,7 +327,6 @@ export default function AiAgent() {
         }
       }
     }, 600);
-
   };
 
   const submitScheduledForm = (e) => {
@@ -330,7 +341,6 @@ export default function AiAgent() {
     }
     setInput(cmd);
     setShowSchedulePanel(false);
-    // Automatically trigger sending if you want, but letting user see the generated command is safer/better for demo
   };
 
   return (
@@ -891,7 +901,19 @@ export default function AiAgent() {
                         </div>
                       </div>
                       <div style={{ padding: '12px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px' }}>
-                        <div style={{ fontSize: '10px', color: '#10b981', fontWeight: '800', textTransform: 'uppercase' }}>Gas Balance</div>
+                        <div style={{ fontSize: '10px', color: '#10b981', fontWeight: '800', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
+                          Gas Balance
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText(sessionSigner?.address || "");
+                              showToast({ message: "Address Copied!", detail: (sessionSigner?.address || "").slice(0, 10) + '...' });
+                            }}
+                            style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: 0, opacity: 0.5 }}
+                            title="Copy Wallet Address"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>content_copy</span>
+                          </button>
+                        </div>
                         <div style={{ fontSize: '18px', color: '#fff', fontWeight: '700' }}>
                           {sessionBalance} ETH
                         </div>
@@ -907,6 +929,10 @@ export default function AiAgent() {
                           try {
                             await seedSession('0.01');
                             showToast({ message: "AI Wallet Seeded!", detail: "0.01 ETH transferred for gas." });
+                            if (provider && sessionSigner) {
+                               const bal = await provider.getBalance(sessionSigner.address);
+                               setSessionBalance(parseFloat(ethers.formatEther(bal)).toFixed(4));
+                            }
                           } catch (e) {
                             showToast({ message: "Seeding Failed", detail: e.message, type: 'error' });
                           } finally {

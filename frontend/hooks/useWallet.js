@@ -99,6 +99,23 @@ export function WalletProvider({ children }) {
     const savedMessages = localStorage.getItem('rialo_ai_messages');
     if (savedMessages) setAiMessages(JSON.parse(savedMessages));
 
+    const savedSessionActive = localStorage.getItem('rialo_session_active');
+    const savedSessionExpiry = localStorage.getItem('rialo_session_expiry');
+    const savedSessionKey    = localStorage.getItem('rialo_session_key');
+
+    if (savedSessionActive === 'true' && savedSessionExpiry && savedSessionKey) {
+      const expiry = parseInt(savedSessionExpiry);
+      if (expiry > Date.now()) {
+        setSessionActive(true);
+        setSessionExpiry(expiry);
+        // Regenerate signer on next tick once provider is ready or wait
+      } else {
+        localStorage.removeItem('rialo_session_active');
+        localStorage.removeItem('rialo_session_expiry');
+        localStorage.removeItem('rialo_session_key');
+      }
+    }
+
   }, []);
 
   // STEP 2: Persist state to localStorage on every change.
@@ -117,14 +134,17 @@ export function WalletProvider({ children }) {
     localStorage.setItem('rialo_balances', JSON.stringify(balances));
     localStorage.setItem('rialo_simulated_deltas', JSON.stringify(simulatedDeltas));
     // Note: aiPrivateKey is no longer persisted as we moved to ephemeral Session Keys
-    if (sessionActive && sessionExpiry) {
+    // Session Persistence
+    if (sessionActive && sessionExpiry && sessionSigner) {
       localStorage.setItem('rialo_session_active', 'true');
       localStorage.setItem('rialo_session_expiry', sessionExpiry.toString());
-    } else {
+      localStorage.setItem('rialo_session_key', sessionSigner.privateKey);
+    } else if (!sessionActive) {
       localStorage.removeItem('rialo_session_active');
       localStorage.removeItem('rialo_session_expiry');
+      localStorage.removeItem('rialo_session_key');
     }
-  }, [transactions, triggerOrders, scheduledTxs, aiMessages, balances, simulatedDeltas, aiPrivateKey]);
+  }, [transactions, triggerOrders, scheduledTxs, aiMessages, balances, simulatedDeltas, aiPrivateKey, sessionActive, sessionExpiry, sessionSigner]);
 
   const simplifyError = useCallback((err) => {
     if (!err) return null;
@@ -388,6 +408,24 @@ export function WalletProvider({ children }) {
     setSessionExpiry(null);
     setSessionSigner(null);
   }, []);
+
+  // Restore Session Signer once provider is available
+  useEffect(() => {
+    if (provider && !sessionSigner) {
+      const savedKey = localStorage.getItem('rialo_session_key');
+      const savedExt = localStorage.getItem('rialo_session_expiry');
+      if (savedKey && savedExt && parseInt(savedExt) > Date.now()) {
+        try {
+          const wallet = new ethers.Wallet(savedKey, provider);
+          setSessionSigner(wallet);
+          setSessionActive(true);
+          setSessionExpiry(parseInt(savedExt));
+        } catch (e) {
+          console.error("Failed to restore session signer:", e);
+        }
+      }
+    }
+  }, [provider, sessionSigner]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.ethereum) return;
