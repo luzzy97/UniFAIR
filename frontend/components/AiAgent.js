@@ -19,8 +19,12 @@ const getAiResponse = (input, globalRates) => {
   const swapMatch = lower.match(/(?:swap|tukar|buy|sell|beli|jual)\s+([\d.]+)\s+([a-z0-9]+)\s+(?:to|ke|for)\s+([a-z0-9]+)/i);
   if (swapMatch) {
     const amount = swapMatch[1];
-    const fromToken = swapMatch[2].toUpperCase();
-    const toToken = swapMatch[3].toUpperCase();
+    let fromToken = swapMatch[2].toUpperCase();
+    let toToken = swapMatch[3].toUpperCase();
+
+    // Fuzzy matching for common typos
+    if (fromToken === 'ROALO' || fromToken === 'RIALO' || fromToken === 'RLO') fromToken = 'RIALO';
+    if (toToken === 'ROALO' || toToken === 'RIALO' || toToken === 'RLO') toToken = 'RIALO';
     
     // Check for trigger order
     const triggerMatch = lower.match(/(?:at|when|if|saat|jika)\s*(?:price|harga)?\s*(?:hits|is|reaches|<=|>=|<|>|=|menyentuh|-)?\s*([\d.]+)/i);
