@@ -18,12 +18,10 @@ export function WalletProvider({ children }) {
   const [chainId, setChainId] = useState(null);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState(null);
-  const [aiPrivateKey, setAiPrivateKey] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('rialo_ai_private_key') || null;
-    }
-    return null;
-  });
+  const [aiPrivateKey, setAiPrivateKey] = useState(null); // Deprecated in favor of Session Keys
+  const [sessionActive, setSessionActive] = useState(false);
+  const [sessionExpiry, setSessionExpiry] = useState(null);
+  const [sessionSigner, setSessionSigner] = useState(null);
 
   const [basePrices, setBasePrices] = useState({
     ETH: 3500, RIALO: 3, USDC: 1, USDT: 1
@@ -118,10 +116,13 @@ export function WalletProvider({ children }) {
     localStorage.setItem('rialo_ai_messages', JSON.stringify(aiMessages));
     localStorage.setItem('rialo_balances', JSON.stringify(balances));
     localStorage.setItem('rialo_simulated_deltas', JSON.stringify(simulatedDeltas));
-    if (aiPrivateKey) {
-      localStorage.setItem('rialo_ai_private_key', aiPrivateKey);
+    // Note: aiPrivateKey is no longer persisted as we moved to ephemeral Session Keys
+    if (sessionActive && sessionExpiry) {
+      localStorage.setItem('rialo_session_active', 'true');
+      localStorage.setItem('rialo_session_expiry', sessionExpiry.toString());
     } else {
-      localStorage.removeItem('rialo_ai_private_key');
+      localStorage.removeItem('rialo_session_active');
+      localStorage.removeItem('rialo_session_expiry');
     }
   }, [transactions, triggerOrders, scheduledTxs, aiMessages, balances, simulatedDeltas, aiPrivateKey]);
 
@@ -342,6 +343,42 @@ export function WalletProvider({ children }) {
     };
   }, [disconnect]);
 
+  const activateSession = useCallback(async (durationHours = 1) => {
+    if (!address || !provider) throw new Error('Wallet not connected');
+    
+    try {
+      // 1. Generate Ephemeral Session Key
+      const ephemeralWallet = ethers.Wallet.createRandom();
+      
+      // 2. Request Authorization Signature (EIP-191)
+      const signer = await provider.getSigner();
+      const message = `Authorize Rialo AI Session\n\n` +
+                      `Duration: ${durationHours} Hour(s)\n` +
+                      `Scope: Swap, Bridge, Stake\n` +
+                      `Session Wallet: ${ephemeralWallet.address}\n\n` +
+                      `This allows AI to execute transactions without popups.`;
+      
+      await signer.signMessage(message);
+      
+      // 3. Activate
+      const expiry = Date.now() + (durationHours * 3600 * 1000);
+      setSessionSigner(ephemeralWallet.connect(provider));
+      setSessionActive(true);
+      setSessionExpiry(expiry);
+      
+      return { address: ephemeralWallet.address, expiry };
+    } catch (err) {
+      console.error('Session activation failed:', err);
+      throw err;
+    }
+  }, [address, provider]);
+
+  const deactivateSession = useCallback(() => {
+    setSessionActive(false);
+    setSessionExpiry(null);
+    setSessionSigner(null);
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined' || !window.ethereum) return;
     window.ethereum.request({ method: 'eth_accounts' }).then((accounts) => {
@@ -370,10 +407,9 @@ export function WalletProvider({ children }) {
       }
 
       let signer;
-      if (aiPrivateKey) {
-        // Use local AI wallet
-        const wallet = new ethers.Wallet(aiPrivateKey, provider);
-        signer = wallet;
+      if (sessionActive && sessionSigner && sessionExpiry && Date.now() < sessionExpiry) {
+        // Use ACTIVE Session Key (No Popup Experience)
+        signer = sessionSigner;
       } else if (isAuto) {
         // For automated triggers, if no AI wallet is provided, we simulate the transaction
         // silently to provide a seamless demo experience without blocking the UI with popups
@@ -557,6 +593,7 @@ export function WalletProvider({ children }) {
         addTransaction, addTriggerOrder, executeAiTransaction,
         scheduledTxs, addScheduledTx, removeScheduledTx, removeTriggerOrder,
         aiPrivateKey, setAiPrivateKey,
+        sessionActive, sessionExpiry, activateSession, deactivateSession,
         aiMessages, addAiMessage,
         toast, showToast
       }}

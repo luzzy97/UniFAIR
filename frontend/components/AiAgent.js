@@ -209,7 +209,7 @@ const getAiResponse = (input, globalRates) => {
 };
 
 export default function AiAgent() {
-  const { isConnected, executeAiTransaction, addTriggerOrder, globalRates, scheduledTxs, addScheduledTx, removeScheduledTx, toast, showToast, aiPrivateKey, setAiPrivateKey, aiMessages: messages, addAiMessage } = useWallet();
+  const { isConnected, executeAiTransaction, addTriggerOrder, globalRates, scheduledTxs, addScheduledTx, removeScheduledTx, toast, showToast, sessionActive, sessionExpiry, activateSession, deactivateSession, aiMessages: messages, addAiMessage } = useWallet();
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [showSchedulePanel, setShowSchedulePanel] = useState(false);
@@ -287,8 +287,8 @@ export default function AiAgent() {
           });
         } else {
           // EXECUTE ON-CHAIN
-          const statusMsg = aiPrivateKey 
-            ? `🤖 **Headless Mode**: Automating **${type}** on-chain via AI Wallet...` 
+          const statusMsg = sessionActive 
+            ? `🤖 **Session Key Active**: Automating **${type}** on-chain without popups...` 
             : `🔄 Initiating **${type}** on-chain. Please confirm the transaction in your wallet.`;
           
           addAiMessage({ role: 'ai', content: { raw: statusMsg } });
@@ -684,18 +684,18 @@ export default function AiAgent() {
               Rialo AI Assistant
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div className={`automation-badge ${aiPrivateKey ? 'active' : ''}`}>
+              <div className={`automation-badge ${sessionActive ? 'active' : ''}`}>
                 <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-                  {aiPrivateKey ? 'bolt' : 'front_hand'}
+                  {sessionActive ? 'bolt' : 'front_hand'}
                 </span>
-                {aiPrivateKey ? 'AUTO-SIGN ACTIVE' : 'MANUAL APPROVAL'}
+                {sessionActive ? 'SESSION ACTIVE' : 'MANUAL APPROVAL'}
               </div>
               <button 
                 className="ai-settings-btn"
                 onClick={() => setShowAiWalletPanel(!showAiWalletPanel)}
-                title="AI Wallet Settings"
+                title="Session Control"
               >
-                <span className="material-symbols-outlined">settings</span>
+                <span className="material-symbols-outlined">{sessionActive ? 'shield_person' : 'lock_open'}</span>
               </button>
             </div>
           </div>
@@ -863,47 +863,51 @@ export default function AiAgent() {
             {showAiWalletPanel && (
               <div className="ai-wallet-panel">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h3 className="ai-sched-label" style={{ margin: 0 }}>AI Wallet Configuration</h3>
+                  <h3 className="ai-sched-label" style={{ margin: 0 }}>Session Control (EIP-7702)</h3>
                   <button onClick={() => setShowAiWalletPanel(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
                   </button>
                 </div>
                 <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '12px' }}>
-                  Enter a Private Key for a dedicated AI wallet. This allows the assistant to execute transactions without manual approval. 
-                  <span style={{ color: '#ffa500' }}> Use a wallet with limited funds for safety.</span>
+                  {sessionActive 
+                    ? `Your session is ACTIVE. AI can execute swaps, bridges, and stakes without further popups.` 
+                    : `Start a temporary session to allow the AI Agent to execute transactions "from the inside." This only requires ONE initial signature.`
+                  }
                 </p>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <input 
-                    type="password" 
-                    className="ai-sched-input" 
-                    style={{ flex: 1 }}
-                    placeholder="0x... (Private Key)" 
-                    value={localKey}
-                    onChange={(e) => setLocalKey(e.target.value)}
-                  />
+                
+                {sessionActive ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ padding: '12px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px' }}>
+                      <div style={{ fontSize: '10px', color: '#10b981', fontWeight: '800', textTransform: 'uppercase' }}>Expires In</div>
+                      <div style={{ fontSize: '18px', color: '#fff', fontWeight: '700' }}>
+                        {sessionExpiry ? Math.max(0, Math.ceil((sessionExpiry - Date.now()) / (60 * 1000))) : 0} Minutes
+                      </div>
+                    </div>
+                    <button 
+                      className="ai-sched-btn" 
+                      style={{ background: '#ef4444', color: '#fff' }}
+                      onClick={() => {
+                        deactivateSession();
+                        showToast({ message: "Session Terminated", detail: "Manual mode restored", type: 'error' });
+                      }}
+                    >
+                      Revoke Session
+                    </button>
+                  </div>
+                ) : (
                   <button 
                     className="ai-sched-btn" 
-                    style={{ width: 'auto', padding: '0 20px' }}
-                    onClick={() => {
-                      setAiPrivateKey(localKey);
-                      setShowAiWalletPanel(false);
-                      showToast({ message: localKey ? "AI Wallet Active" : "AI Wallet Removed", detail: localKey ? "No-popup mode enabled" : "Manual mode restored" });
+                    onClick={async () => {
+                      try {
+                        await activateSession(1);
+                        setShowAiWalletPanel(false);
+                        showToast({ message: "Session Started!", detail: "Zero-popup automation active for 1 hour." });
+                      } catch (e) {
+                        showToast({ message: "Activation Failed", detail: e.message, type: 'error' });
+                      }
                     }}
                   >
-                    {aiPrivateKey ? 'Update' : 'Enable'}
-                  </button>
-                </div>
-                {aiPrivateKey && (
-                  <button 
-                    onClick={() => {
-                      setAiPrivateKey(null);
-                      setLocalKey('');
-                      setShowAiWalletPanel(false);
-                      showToast({ message: "AI Wallet Removed", type: 'error' });
-                    }}
-                    style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '10px', marginTop: '10px', cursor: 'pointer', fontWeight: '700' }}
-                  >
-                    REMOVE AI WALLET
+                    Authorize 1-Hour Session
                   </button>
                 )}
               </div>
