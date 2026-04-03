@@ -213,11 +213,13 @@ const getAiResponse = (input, globalRates) => {
 };
 
 export default function AiAgent() {
-  const { isConnected, executeAiTransaction, addTriggerOrder, globalRates, scheduledTxs, addScheduledTx, removeScheduledTx, toast, showToast, sessionActive, sessionExpiry, activateSession, deactivateSession, aiMessages: messages, addAiMessage } = useWallet();
+  const { isConnected, provider, executeAiTransaction, addTriggerOrder, globalRates, scheduledTxs, addScheduledTx, removeScheduledTx, toast, showToast, sessionActive, sessionExpiry, sessionSigner, activateSession, deactivateSession, seedSession, aiMessages: messages, addAiMessage } = useWallet();
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [showSchedulePanel, setShowSchedulePanel] = useState(false);
   const [showAiWalletPanel, setShowAiWalletPanel] = useState(false);
+  const [sessionBalance, setSessionBalance] = useState('0');
+  const [isSeeding, setIsSeeding] = useState(false);
   const [schedData, setSchedData] = useState({ type: 'Swap', amount: '10', fromToken: 'USDC', toToken: 'RIALO', timeVal: '5', timeUnit: 'minutes' });
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
@@ -880,15 +882,45 @@ export default function AiAgent() {
                 
                 {sessionActive ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ padding: '12px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px' }}>
-                      <div style={{ fontSize: '10px', color: '#10b981', fontWeight: '800', textTransform: 'uppercase' }}>Expires In</div>
-                      <div style={{ fontSize: '18px', color: '#fff', fontWeight: '700' }}>
-                        {sessionExpiry ? Math.max(0, Math.ceil((sessionExpiry - Date.now()) / (60 * 1000))) : 0} Minutes
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div style={{ padding: '12px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px' }}>
+                        <div style={{ fontSize: '10px', color: '#10b981', fontWeight: '800', textTransform: 'uppercase' }}>Expires In</div>
+                        <div style={{ fontSize: '18px', color: '#fff', fontWeight: '700' }}>
+                          {sessionExpiry ? Math.max(0, Math.ceil((sessionExpiry - Date.now()) / (60 * 1000))) : 0} Min
+                        </div>
+                      </div>
+                      <div style={{ padding: '12px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px' }}>
+                        <div style={{ fontSize: '10px', color: '#10b981', fontWeight: '800', textTransform: 'uppercase' }}>Gas Balance</div>
+                        <div style={{ fontSize: '18px', color: '#fff', fontWeight: '700' }}>
+                          {sessionBalance} ETH
+                        </div>
                       </div>
                     </div>
+
+                    {parseFloat(sessionBalance) < 0.005 && (
+                      <button 
+                        className="ai-sched-btn"
+                        disabled={isSeeding}
+                        onClick={async () => {
+                          setIsSeeding(true);
+                          try {
+                            await seedSession('0.01');
+                            showToast({ message: "AI Wallet Seeded!", detail: "0.01 ETH transferred for gas." });
+                          } catch (e) {
+                            showToast({ message: "Seeding Failed", detail: e.message, type: 'error' });
+                          } finally {
+                            setIsSeeding(false);
+                          }
+                        }}
+                        style={{ background: '#10b981', color: '#000' }}
+                      >
+                        {isSeeding ? 'Seeding...' : 'Seed AI Wallet (0.01 ETH)'}
+                      </button>
+                    )}
+
                     <button 
                       className="ai-sched-btn" 
-                      style={{ background: '#ef4444', color: '#fff' }}
+                      style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
                       onClick={() => {
                         deactivateSession();
                         showToast({ message: "Session Terminated", detail: "Manual mode restored", type: 'error' });

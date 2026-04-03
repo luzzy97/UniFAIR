@@ -373,6 +373,16 @@ export function WalletProvider({ children }) {
     }
   }, [address, provider]);
 
+  const seedSession = useCallback(async (amountEth = '0.01') => {
+    if (!address || !sessionSigner || !provider) throw new Error('Session not active');
+    const signer = await provider.getSigner();
+    const tx = await signer.sendTransaction({
+      to: sessionSigner.address,
+      value: ethers.parseEther(amountEth)
+    });
+    return tx.wait();
+  }, [address, sessionSigner, provider]);
+
   const deactivateSession = useCallback(() => {
     setSessionActive(false);
     setSessionExpiry(null);
@@ -407,21 +417,25 @@ export function WalletProvider({ children }) {
       }
 
       let signer;
-      if (isAuto || (sessionActive && sessionSigner && sessionExpiry && Date.now() < sessionExpiry)) {
-        // For automated sessions or triggers, we simulate the execution to provide 
-        // a seamless "Zero-Popup" demo experience. 
-        // Since ephemeral session keys are empty, this is the only way to "execute" in a frontend-only demo.
-        const fakeHash = 'session_0x' + Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+      let isOnChain = false;
 
-        // Handle mock balance updates for simulated transactions
-        if (txType === 'Swap' && parsedFromToken && parsedToToken && parsedAmountVal) {
-          updateBalances({
-            [parsedFromToken]: -parsedAmountVal,
-            [parsedToToken]:   parsedAmountOut
-          });
+      // 1. Check if Session exists and is FUNDED for real on-chain execution
+      if (sessionActive && sessionSigner && sessionExpiry && Date.now() < sessionExpiry) {
+        const sessionBal = await provider.getBalance(sessionSigner.address);
+        if (sessionBal > ethers.parseEther('0.001')) {
+          signer = sessionSigner;
+          isOnChain = true;
         }
-        
-        // Handle Stake/Bridge simulation
+      }
+
+      if (!signer && isAuto) {
+        // No gas in session wallet? Fallback to simulation for seamless demo, 
+        // but keep it looking identical to a real transaction as requested.
+        const fakeHash = '0x' + Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+
+        if (txType === 'Swap' && parsedFromToken && parsedToToken && parsedAmountVal) {
+          updateBalances({ [parsedFromToken]: -parsedAmountVal, [parsedToToken]: parsedAmountOut });
+        }
         if (txType === 'Stake' || txType === 'Bridge') {
           const amount = actionDetail.match(/[\d.]+/)?.[0] || '1';
           const token = txType === 'Stake' ? 'RIALO' : (actionDetail.toUpperCase().includes('ETH') ? 'ETH' : 'RIALO');
@@ -429,12 +443,12 @@ export function WalletProvider({ children }) {
           if (txType === 'Bridge') updateBalance(token === 'ETH' ? 'RIALO' : 'ETH', parseFloat(amount));
         }
 
-        const source = sessionActive ? 'AI Session Key' : 'AI Agent';
-        addTransaction({ type: txType, amount: displayAmount, details: `Executed via ${source}`, txHash: fakeHash, source: source });
+        addTransaction({ type: txType, amount: displayAmount, details: `AI Strategy Execution`, txHash: fakeHash, source: 'AI Agent' });
         return { hash: fakeHash, detail: displayAmount };
-      } else {
-        // Fallback to MetaMask (will pop up)
+      } else if (!signer) {
+        // Default MetaMask popup
         signer = await provider.getSigner();
+        isOnChain = true;
       }
 
       let tx;
@@ -600,7 +614,7 @@ export function WalletProvider({ children }) {
         addTransaction, addTriggerOrder, executeAiTransaction,
         scheduledTxs, addScheduledTx, removeScheduledTx, removeTriggerOrder,
         aiPrivateKey, setAiPrivateKey,
-        sessionActive, sessionExpiry, activateSession, deactivateSession,
+        sessionActive, sessionExpiry, sessionSigner, activateSession, deactivateSession, seedSession,
         aiMessages, addAiMessage,
         toast, showToast
       }}
