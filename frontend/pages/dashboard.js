@@ -5,7 +5,6 @@ import Toast from '../components/Toast';
 import { useWallet } from '../hooks/useWallet';
 import { useRLO } from '../hooks/useRLO';
 import { useStaking } from '../hooks/useStaking';
-import Link from 'next/link';
 import ActivityWidget from '../components/ActivityWidget';
 
 export default function DashboardPage() {

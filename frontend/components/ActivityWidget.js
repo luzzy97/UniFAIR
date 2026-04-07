@@ -1,5 +1,6 @@
 import { User, Calendar, Clock, Zap, ArrowUpRight, ArrowDownLeft, Lock, Unlock, Droplets, Gift } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
+import Link from 'next/link';
 
 const ActivityCard = ({ tx }) => {
   const typeConfig = {
