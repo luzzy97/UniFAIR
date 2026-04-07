@@ -314,7 +314,7 @@ export default function Home() {
                       <div className="bg-[#161616] rounded-2xl p-5 border border-white/5 shadow-inner transition-all">
                         <div className="flex justify-between items-center mb-3">
                           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 font-label">RLO Amount</span>
-                          <span className="text-[10px] font-medium text-white/20 uppercase tracking-wider">Balance: 10,000</span>
+                          <span className="text-[10px] font-medium text-white/20 uppercase tracking-wider">Balance: {parseFloat(rloBal || '0').toLocaleString('en-US')}</span>
                         </div>
                         <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-3">
                           <div className="w-full">
@@ -330,7 +330,7 @@ export default function Home() {
                           <div className="flex items-center gap-2 shrink-0">
                             {assetType === 'solo_rlo' && (
                               <button 
-                                onClick={() => setRloAmount("10000")} 
+                                onClick={() => setRloAmount(rloBal || "0")} 
                                 className="text-[10px] font-bold text-white bg-white/10 hover:bg-white/20 px-2 py-1 rounded-md border border-white/20"
                               >
                                 MAX
