@@ -1,8 +1,8 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "C:\\Users\\User\\Downloads\\RIALO HQ\\rialo-dapp\\blockchain\\contracts\\RLO.sol": {
-      "lastModificationDate": 1774767004330,
+    "C:\\Users\\User\\Downloads\\RIALO HQ\\blockchain\\contracts\\RLO.sol": {
+      "lastModificationDate": 1775031824363,
       "contentHash": "a9b4746bb6c3ffb6ecb33684214aec70",
       "sourceName": "contracts/RLO.sol",
       "solcConfig": {
@@ -41,7 +41,7 @@
         "RialoToken"
       ]
     },
-    "C:\\Users\\User\\Downloads\\RIALO HQ\\rialo-dapp\\blockchain\\node_modules\\@openzeppelin\\contracts\\access\\Ownable.sol": {
+    "C:\\Users\\User\\Downloads\\RIALO HQ\\blockchain\\node_modules\\@openzeppelin\\contracts\\access\\Ownable.sol": {
       "lastModificationDate": 1774767880204,
       "contentHash": "d3c790edc9ccf808a17c5a6cd13614fd",
       "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
@@ -79,7 +79,7 @@
         "Ownable"
       ]
     },
-    "C:\\Users\\User\\Downloads\\RIALO HQ\\rialo-dapp\\blockchain\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol": {
+    "C:\\Users\\User\\Downloads\\RIALO HQ\\blockchain\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol": {
       "lastModificationDate": 1774767874568,
       "contentHash": "c6375ef25e84c90b3d15f9ec4eef218f",
       "sourceName": "@openzeppelin/contracts/token/ERC20/ERC20.sol",
@@ -120,7 +120,7 @@
         "ERC20"
       ]
     },
-    "C:\\Users\\User\\Downloads\\RIALO HQ\\rialo-dapp\\blockchain\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\extensions\\ERC20Burnable.sol": {
+    "C:\\Users\\User\\Downloads\\RIALO HQ\\blockchain\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\extensions\\ERC20Burnable.sol": {
       "lastModificationDate": 1774767874633,
       "contentHash": "273d8d24b06f67207dd5f35c3a0c1086",
       "sourceName": "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
@@ -159,7 +159,7 @@
         "ERC20Burnable"
       ]
     },
-    "C:\\Users\\User\\Downloads\\RIALO HQ\\rialo-dapp\\blockchain\\node_modules\\@openzeppelin\\contracts\\utils\\Context.sol": {
+    "C:\\Users\\User\\Downloads\\RIALO HQ\\blockchain\\node_modules\\@openzeppelin\\contracts\\utils\\Context.sol": {
       "lastModificationDate": 1774767873097,
       "contentHash": "67bfbc07588eb8683b3fd8f6f909563e",
       "sourceName": "@openzeppelin/contracts/utils/Context.sol",
@@ -195,7 +195,7 @@
         "Context"
       ]
     },
-    "C:\\Users\\User\\Downloads\\RIALO HQ\\rialo-dapp\\blockchain\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\IERC20.sol": {
+    "C:\\Users\\User\\Downloads\\RIALO HQ\\blockchain\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\IERC20.sol": {
       "lastModificationDate": 1774767876933,
       "contentHash": "5517c8678c18eb1a8ba58810e7ca39ca",
       "sourceName": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
@@ -231,7 +231,7 @@
         "IERC20"
       ]
     },
-    "C:\\Users\\User\\Downloads\\RIALO HQ\\rialo-dapp\\blockchain\\node_modules\\@openzeppelin\\contracts\\interfaces\\draft-IERC6093.sol": {
+    "C:\\Users\\User\\Downloads\\RIALO HQ\\blockchain\\node_modules\\@openzeppelin\\contracts\\interfaces\\draft-IERC6093.sol": {
       "lastModificationDate": 1774767873256,
       "contentHash": "4aefc698f77ecbace7f401257dfe182d",
       "sourceName": "@openzeppelin/contracts/interfaces/draft-IERC6093.sol",
@@ -269,7 +269,7 @@
         "IERC721Errors"
       ]
     },
-    "C:\\Users\\User\\Downloads\\RIALO HQ\\rialo-dapp\\blockchain\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\extensions\\IERC20Metadata.sol": {
+    "C:\\Users\\User\\Downloads\\RIALO HQ\\blockchain\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\extensions\\IERC20Metadata.sol": {
       "lastModificationDate": 1774767876985,
       "contentHash": "4c02fa6f7ae7b6c289cef80424f0c875",
       "sourceName": "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol",
@@ -307,9 +307,9 @@
         "IERC20Metadata"
       ]
     },
-    "C:\\Users\\User\\Downloads\\RIALO HQ\\rialo-dapp\\blockchain\\contracts\\Staking.sol": {
-      "lastModificationDate": 1774767007501,
-      "contentHash": "73b1f2aef8760cedfe36975cf6a04d03",
+    "C:\\Users\\User\\Downloads\\RIALO HQ\\blockchain\\contracts\\Staking.sol": {
+      "lastModificationDate": 1775546458294,
+      "contentHash": "c1dda49be49330fc2366f947d3837bbe",
       "sourceName": "contracts/Staking.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -347,7 +347,7 @@
         "Staking"
       ]
     },
-    "C:\\Users\\User\\Downloads\\RIALO HQ\\rialo-dapp\\blockchain\\node_modules\\@openzeppelin\\contracts\\utils\\ReentrancyGuard.sol": {
+    "C:\\Users\\User\\Downloads\\RIALO HQ\\blockchain\\node_modules\\@openzeppelin\\contracts\\utils\\ReentrancyGuard.sol": {
       "lastModificationDate": 1774767880464,
       "contentHash": "a92331adac11b453a4de0323fc948119",
       "sourceName": "@openzeppelin/contracts/utils/ReentrancyGuard.sol",

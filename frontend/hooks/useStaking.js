@@ -6,9 +6,12 @@ import { useWallet } from './useWallet';
 export function useStaking() {
   const { address, provider, isConnected } = useWallet();
   const [stakedBalance, setStakedBalance] = useState('0');
+  const [stakedEthBalance, setStakedEthBalance] = useState('0');
   const [pendingRewards, setPendingRewards] = useState('0');
   const [totalStaked, setTotalStaked] = useState('0');
   const [sfsFraction, setSfsFraction] = useState(0);
+  const [rwaAllocation, setRwaAllocation] = useState(0);
+  const [rwaTarget, setRwaTarget] = useState('');
   const [sponsorshipPaths, setSponsorshipPaths] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -16,27 +19,35 @@ export function useStaking() {
     try {
       const contract = getContract('Staking', provider);
       
-      const total = await contract.totalStaked();
+      const total = await contract.totalStakedRlo(); // Tracking RLO mostly, could add totalStakedEth
       setTotalStaked(ethers.formatEther(total));
 
       if (address) {
         const checksummed = ethers.getAddress(address);
         const stakeInfo = await contract.stakes(checksummed);
         
-        // Ethers v6 Result parsing - more robust check
         let rawAmount = 0n;
+        let rawEthAmount = 0n;
         let rawSfsFraction = 0n;
+        let rawRwaAllocation = 0n;
+        let rawRwaTarget = '';
 
         if (stakeInfo && typeof stakeInfo === 'object') {
-          rawAmount = stakeInfo.amount ?? stakeInfo[0] ?? 0n;
-          rawSfsFraction = stakeInfo.sfsFraction ?? stakeInfo[3] ?? 0n;
+          rawAmount = stakeInfo.rloAmount ?? stakeInfo[0] ?? 0n;
+          rawEthAmount = stakeInfo.ethAmount ?? stakeInfo[1] ?? 0n;
+          rawSfsFraction = stakeInfo.sfsFraction ?? stakeInfo[5] ?? 0n;
+          rawRwaAllocation = stakeInfo.rwaAllocation ?? stakeInfo[6] ?? 0n;
+          rawRwaTarget = stakeInfo.rwaTarget ?? stakeInfo[7] ?? '';
         }
 
         const formattedStaked = ethers.formatEther(rawAmount);
-        console.log(`[Staking Debug] User: ${checksummed}, Raw: ${rawAmount}, Staked: ${formattedStaked}, Sfs: ${rawSfsFraction}`);
+        const formattedEthStaked = ethers.formatEther(rawEthAmount);
         
         setStakedBalance(formattedStaked);
+        setStakedEthBalance(formattedEthStaked);
         setSfsFraction(Number(rawSfsFraction) / 100); 
+        setRwaAllocation(Number(rawRwaAllocation) / 100);
+        setRwaTarget(rawRwaTarget);
         
         const rewards = await contract.calculateRewards(checksummed);
         setPendingRewards(ethers.formatEther(rewards));
@@ -58,7 +69,7 @@ export function useStaking() {
     return () => clearInterval(interval);
   }, [fetchStakingData]);
 
-  const stake = useCallback(async (amount) => {
+  const stakeRlo = useCallback(async (amount, lockMonths) => {
     if (!isConnected) return;
     setLoading(true);
     try {
@@ -74,12 +85,62 @@ export function useStaking() {
         await approveTx.wait();
       }
 
-      const tx = await staking.stake(parsedAmount);
+      const tx = await staking.stake(parsedAmount, lockMonths);
       await tx.wait();
       await fetchStakingData();
       return tx.hash;
     } catch (error) {
-      console.error('Stake error:', error);
+      console.error('Stake RLO error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [isConnected, provider, address, fetchStakingData]);
+
+  const stakeEth = useCallback(async (ethAmount, lockMonths) => {
+    if (!isConnected) return;
+    setLoading(true);
+    try {
+      const signer = await provider.getSigner();
+      const staking = getContract('Staking', signer);
+
+      const parsedEth = ethers.parseEther(ethAmount);
+
+      const tx = await staking.stakeEth(lockMonths, { value: parsedEth });
+      await tx.wait();
+      await fetchStakingData();
+      return tx.hash;
+    } catch (error) {
+      console.error('Stake ETH error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [isConnected, provider, fetchStakingData]);
+
+  const stakePair = useCallback(async (rloAmount, ethAmount, lockMonths) => {
+    if (!isConnected) return;
+    setLoading(true);
+    try {
+      const signer = await provider.getSigner();
+      const rlo = getContract('RLO', signer);
+      const staking = getContract('Staking', signer);
+
+      const parsedRlo = ethers.parseEther(rloAmount);
+      const parsedEth = ethers.parseEther(ethAmount);
+
+      const allowance = await rlo.allowance(address, await staking.getAddress());
+      if (allowance < parsedRlo) {
+        const approveTx = await rlo.approve(await staking.getAddress(), parsedRlo);
+        await approveTx.wait();
+      }
+
+      const tx = await staking.stakePair(parsedRlo, lockMonths, { value: parsedEth });
+      await tx.wait();
+      await fetchStakingData();
+      return tx.hash;
+    } catch (error) {
+      console.error('Stake Pair error:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -105,6 +166,25 @@ export function useStaking() {
     }
   }, [isConnected, provider, fetchStakingData]);
 
+  const updateRwaAllocation = useCallback(async (target, percentage) => {
+    if (!isConnected) return;
+    setLoading(true);
+    try {
+      const signer = await provider.getSigner();
+      const staking = getContract('Staking', signer);
+      const fraction = Math.round(percentage * 100); // 50% -> 5000 bps
+      const tx = await staking.setRwaAllocation(target, fraction);
+      await tx.wait();
+      await fetchStakingData();
+      return tx.hash;
+    } catch (error) {
+      console.error('Update RWA allocation error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [isConnected, provider, fetchStakingData]);
+
   const addSponsorshipPath = useCallback(async (dest, amount) => {
     if (!isConnected) return;
     setLoading(true);
@@ -123,18 +203,38 @@ export function useStaking() {
     }
   }, [isConnected, provider, fetchStakingData]);
 
-  const withdraw = useCallback(async (amount) => {
+  const withdraw = useCallback(async () => {
     if (!isConnected) return;
     setLoading(true);
     try {
       const signer = await provider.getSigner();
       const staking = getContract('Staking', signer);
-      const tx = await staking.withdraw(ethers.parseEther(amount));
+      const tx = await staking.withdraw();
       await tx.wait();
       await fetchStakingData();
       return tx.hash;
     } catch (error) {
       console.error('Withdraw error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [isConnected, provider, fetchStakingData]);
+
+  const withdrawAmount = useCallback(async (rloAmt, ethAmt) => {
+    if (!isConnected) return;
+    setLoading(true);
+    try {
+      const signer = await provider.getSigner();
+      const staking = getContract('Staking', signer);
+      const pRlo = ethers.parseEther(rloAmt.toString());
+      const pEth = ethers.parseEther(ethAmt.toString());
+      const tx = await staking.withdrawAmount(pRlo, pEth);
+      await tx.wait();
+      await fetchStakingData();
+      return tx.hash;
+    } catch (error) {
+      console.error('Withdraw amount error:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -161,13 +261,20 @@ export function useStaking() {
 
   return { 
     stakedBalance, 
+    stakedEthBalance,
     pendingRewards, 
     totalStaked, 
     sfsFraction, 
+    rwaAllocation,
+    rwaTarget,
     sponsorshipPaths, 
     loading, 
-    stake, 
+    stakeRlo,
+    stakeEth,
+    stakePair,
+    updateRwaAllocation,
     withdraw, 
+    withdrawAmount,
     claimRewards, 
     updateSfsFraction, 
     addSponsorshipPath, 
