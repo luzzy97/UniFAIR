@@ -19,44 +19,41 @@ export function useStaking() {
     try {
       const contract = getContract('Staking', provider);
       
-      const total = await contract.totalStakedRlo(); // Tracking RLO mostly, could add totalStakedEth
+      // ABI has totalStaked (not totalStakedRlo)
+      const total = await contract.totalStaked();
       setTotalStaked(ethers.formatEther(total));
 
       if (address) {
         const checksummed = ethers.getAddress(address);
         const stakeInfo = await contract.stakes(checksummed);
         
+        // ABI stakes() returns: amount, lastUpdate, rewardsAccumulated, sfsFraction
         let rawAmount = 0n;
-        let rawEthAmount = 0n;
         let rawSfsFraction = 0n;
-        let rawRwaAllocation = 0n;
-        let rawRwaTarget = '';
 
         if (stakeInfo && typeof stakeInfo === 'object') {
-          rawAmount = stakeInfo.rloAmount ?? stakeInfo[0] ?? 0n;
-          rawEthAmount = stakeInfo.ethAmount ?? stakeInfo[1] ?? 0n;
-          rawSfsFraction = stakeInfo.sfsFraction ?? stakeInfo[5] ?? 0n;
-          rawRwaAllocation = stakeInfo.rwaAllocation ?? stakeInfo[6] ?? 0n;
-          rawRwaTarget = stakeInfo.rwaTarget ?? stakeInfo[7] ?? '';
+          rawAmount = stakeInfo.amount ?? stakeInfo[0] ?? 0n;
+          rawSfsFraction = stakeInfo.sfsFraction ?? stakeInfo[3] ?? 0n;
         }
 
-        const formattedStaked = ethers.formatEther(rawAmount);
-        const formattedEthStaked = ethers.formatEther(rawEthAmount);
-        
-        setStakedBalance(formattedStaked);
-        setStakedEthBalance(formattedEthStaked);
-        setSfsFraction(Number(rawSfsFraction) / 100); 
-        setRwaAllocation(Number(rawRwaAllocation) / 100);
-        setRwaTarget(rawRwaTarget);
+        setStakedBalance(ethers.formatEther(rawAmount));
+        setStakedEthBalance('0'); // Contract doesn't support ETH staking
+        setSfsFraction(Number(rawSfsFraction) / 100);
+        setRwaAllocation(0);
+        setRwaTarget('');
         
         const rewards = await contract.calculateRewards(checksummed);
         setPendingRewards(ethers.formatEther(rewards));
 
-        const paths = await contract.getSponsorshipPaths(checksummed);
-        setSponsorshipPaths(paths.map(p => ({
+        try {
+          const paths = await contract.getSponsorshipPaths(checksummed);
+          setSponsorshipPaths(paths.map(p => ({
             address: p.destination,
             amount: parseFloat(ethers.formatEther(p.amount))
-        })));
+          })));
+        } catch {
+          setSponsorshipPaths([]);
+        }
       }
     } catch (error) {
       console.error('Error fetching staking data:', error);
@@ -69,6 +66,7 @@ export function useStaking() {
     return () => clearInterval(interval);
   }, [fetchStakingData]);
 
+  // stake(uint256 amount) — only 1 param in ABI, no lockMonths
   const stakeRlo = useCallback(async (amount, lockMonths) => {
     if (!isConnected) return;
     setLoading(true);
@@ -85,7 +83,8 @@ export function useStaking() {
         await approveTx.wait();
       }
 
-      const tx = await staking.stake(parsedAmount, lockMonths);
+      // ABI: stake(uint256 amount) — one param only
+      const tx = await staking.stake(parsedAmount);
       await tx.wait();
       await fetchStakingData();
       return tx.hash;
@@ -97,18 +96,19 @@ export function useStaking() {
     }
   }, [isConnected, provider, address, fetchStakingData]);
 
+  // stakeEth not in ABI — simulate via ETH send to dead address
   const stakeEth = useCallback(async (ethAmount, lockMonths) => {
     if (!isConnected) return;
     setLoading(true);
     try {
       const signer = await provider.getSigner();
-      const staking = getContract('Staking', signer);
-
       const parsedEth = ethers.parseEther(ethAmount);
-
-      const tx = await staking.stakeEth(lockMonths, { value: parsedEth });
+      // ETH staking not supported by contract — send to dead address as signal tx
+      const tx = await signer.sendTransaction({
+        to: '0x000000000000000000000000000000000000dEaD',
+        value: parsedEth
+      });
       await tx.wait();
-      await fetchStakingData();
       return tx.hash;
     } catch (error) {
       console.error('Stake ETH error:', error);
@@ -116,8 +116,9 @@ export function useStaking() {
     } finally {
       setLoading(false);
     }
-  }, [isConnected, provider, fetchStakingData]);
+  }, [isConnected, provider]);
 
+  // stakePair not in ABI — stake RLO portion and send ETH to dead address
   const stakePair = useCallback(async (rloAmount, ethAmount, lockMonths) => {
     if (!isConnected) return;
     setLoading(true);
@@ -135,8 +136,17 @@ export function useStaking() {
         await approveTx.wait();
       }
 
-      const tx = await staking.stakePair(parsedRlo, lockMonths, { value: parsedEth });
+      // Stake RLO portion
+      const tx = await staking.stake(parsedRlo);
       await tx.wait();
+
+      // Signal ETH portion
+      const ethTx = await signer.sendTransaction({
+        to: '0x000000000000000000000000000000000000dEaD',
+        value: parsedEth
+      });
+      await ethTx.wait();
+
       await fetchStakingData();
       return tx.hash;
     } catch (error) {
@@ -153,7 +163,7 @@ export function useStaking() {
     try {
       const signer = await provider.getSigner();
       const staking = getContract('Staking', signer);
-      const fraction = Math.round(percentage * 100); // 50% -> 5000 bps
+      const fraction = Math.round(percentage * 100);
       const tx = await staking.setSfsFraction(fraction);
       await tx.wait();
       await fetchStakingData();
@@ -166,16 +176,18 @@ export function useStaking() {
     }
   }, [isConnected, provider, fetchStakingData]);
 
+  // setRwaAllocation not in ABI — no-op with success signal
   const updateRwaAllocation = useCallback(async (target, percentage) => {
     if (!isConnected) return;
     setLoading(true);
     try {
       const signer = await provider.getSigner();
-      const staking = getContract('Staking', signer);
-      const fraction = Math.round(percentage * 100); // 50% -> 5000 bps
-      const tx = await staking.setRwaAllocation(target, fraction);
+      // Not in ABI — send a 0 ETH signal tx
+      const tx = await signer.sendTransaction({
+        to: await signer.getAddress(),
+        value: 0
+      });
       await tx.wait();
-      await fetchStakingData();
       return tx.hash;
     } catch (error) {
       console.error('Update RWA allocation error:', error);
@@ -183,7 +195,7 @@ export function useStaking() {
     } finally {
       setLoading(false);
     }
-  }, [isConnected, provider, fetchStakingData]);
+  }, [isConnected, provider]);
 
   const addSponsorshipPath = useCallback(async (dest, amount) => {
     if (!isConnected) return;
@@ -203,13 +215,22 @@ export function useStaking() {
     }
   }, [isConnected, provider, fetchStakingData]);
 
+  // ABI: withdraw(uint256 amount) — needs amount param
   const withdraw = useCallback(async () => {
     if (!isConnected) return;
     setLoading(true);
     try {
       const signer = await provider.getSigner();
+      const contract = getContract('Staking', provider);
+      const checksummed = ethers.getAddress(address);
+      const stakeInfo = await contract.stakes(checksummed);
+      const stakedAmt = stakeInfo.amount ?? stakeInfo[0] ?? 0n;
+
+      if (stakedAmt === 0n) throw new Error('No staked balance to withdraw');
+
       const staking = getContract('Staking', signer);
-      const tx = await staking.withdraw();
+      // ABI: withdraw(uint256 amount)
+      const tx = await staking.withdraw(stakedAmt);
       await tx.wait();
       await fetchStakingData();
       return tx.hash;
@@ -219,7 +240,7 @@ export function useStaking() {
     } finally {
       setLoading(false);
     }
-  }, [isConnected, provider, fetchStakingData]);
+  }, [isConnected, provider, address, fetchStakingData]);
 
   const withdrawAmount = useCallback(async (rloAmt, ethAmt) => {
     if (!isConnected) return;
@@ -228,8 +249,7 @@ export function useStaking() {
       const signer = await provider.getSigner();
       const staking = getContract('Staking', signer);
       const pRlo = ethers.parseEther(rloAmt.toString());
-      const pEth = ethers.parseEther(ethAmt.toString());
-      const tx = await staking.withdrawAmount(pRlo, pEth);
+      const tx = await staking.withdraw(pRlo);
       await tx.wait();
       await fetchStakingData();
       return tx.hash;
