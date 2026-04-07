@@ -28,13 +28,13 @@ const displayBalances = {
 };
 
 return (
-  <div className="bg-[#050505] font-body text-white antialiased selection:bg-primary selection:text-black min-h-screen flex flex-col relative overflow-x-hidden">
+  <div className="min-h-screen bg-background text-on-background font-body antialiased selection:bg-primary/30 flex flex-col relative overflow-x-hidden">
     <Navbar />
     
     {/* Ambient backgrounds */}
-    <div className="fixed top-0 left-0 w-full h-[600px] pointer-events-none overflow-hidden z-0">
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] animate-pulse"></div>
-      <div className="absolute top-[20%] right-[-5%] w-[30%] h-[30%] bg-blue-500/10 rounded-full blur-[100px] delay-700 animate-pulse"></div>
+    <div className="fixed top-0 left-0 w-full h-[800px] pointer-events-none overflow-hidden z-0 opacity-40">
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-surface-container-high rounded-full blur-[120px] animate-pulse"></div>
+      <div className="absolute top-[10%] right-[-10%] w-[40%] h-[40%] bg-secondary-container/50 rounded-full blur-[100px] delay-700 animate-pulse"></div>
     </div>
 
     <main className="max-w-7xl mx-auto px-6 py-12 flex-grow w-full relative z-10">
@@ -43,7 +43,7 @@ return (
         <h1 className="font-headline text-5xl md:text-6xl font-extrabold text-primary leading-none tracking-tight mb-4">
           Architectural Dashboard
         </h1>
-        <p className="font-body text-white/50 max-w-2xl text-lg">
+        <p className="font-body text-on-surface/60 max-w-2xl text-lg">
           A comprehensive overview of your position within the Rialo ecosystem. Monitor your assets, yield, and network participation.
         </p>
       </header>
@@ -57,22 +57,22 @@ return (
                   { symbol: 'USDC', label: 'USD Coin', color: 'bg-[#2775CA]' },
                   { symbol: 'STAKED', label: 'Total Staked', color: 'bg-emerald-500' },
               ].map((token, i) => (
-                  <div key={token.symbol} className="bg-white/5 rounded-3xl p-8 border border-white/5 shadow-2xl relative overflow-hidden group hover:bg-white/[0.08] hover:border-white/20 transition-all duration-500 flex flex-col justify-between h-[200px] animate-in fade-in slide-in-from-bottom-4" style={{ animationDelay: `${i * 100}ms` }}>
+                  <div key={token.symbol} className="bg-[#0c0c0c] text-white rounded-3xl p-8 border border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.1)] relative overflow-hidden group hover:bg-[#111111] hover:border-white/10 transition-all duration-500 flex flex-col justify-between h-[200px] animate-in fade-in slide-in-from-bottom-4" style={{ animationDelay: `${i * 100}ms` }}>
                       <div className="relative z-10 flex justify-between items-start">
                           <div>
-                              <span className="font-label text-[10px] text-white/30 uppercase tracking-[0.2em] font-bold mb-3 block">{token.label}</span>
+                              <span className="font-label text-[10px] text-white/40 uppercase tracking-[0.2em] font-bold mb-3 block">{token.label}</span>
                               <h2 className="font-headline text-4xl font-extrabold text-white leading-none tracking-tighter">
                                   {isConnected ? (displayBalances[token.symbol] || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
                               </h2>
                           </div>
                       </div>
                       <div className="relative z-10 flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-                            <span className="text-[10px] font-bold text-white/40">{token.symbol.slice(0,1)}</span>
+                        <div className="w-6 h-6 rounded-md bg-white/5 border border-white/10 flex items-center justify-center">
+                            <span className="text-[10px] font-bold text-white/50">{token.symbol.slice(0,1)}</span>
                         </div>
-                        <p className="text-white/20 text-[10px] font-bold uppercase tracking-widest">{token.symbol}</p>
+                        <p className="text-white/30 text-[10px] font-bold uppercase tracking-widest">{token.symbol}</p>
                       </div>
-                      <div className={`absolute -right-4 -bottom-4 w-32 h-32 ${token.color}/10 rounded-full blur-3xl group-hover:${token.color}/20 transition-all duration-700`}></div>
+                      <div className={`absolute -right-4 -bottom-4 w-32 h-32 ${token.color}/20 rounded-full blur-[40px] group-hover:${token.color}/30 transition-all duration-700`}></div>
                   </div>
               ))}
           </div>
@@ -85,23 +85,23 @@ return (
       <section className="mb-24 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400">
         <div className="flex justify-between items-center mb-8 px-2">
           <div>
-            <h3 className="font-headline font-bold text-white text-2xl flex items-center gap-3">
-                <div className="p-2 bg-primary/20 rounded-xl">
+            <h3 className="font-headline font-bold text-primary text-2xl flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-xl">
                     <span className="material-symbols-outlined text-primary text-xl">history</span>
                 </div>
                 Transaction History
             </h3>
-            <p className="text-[10px] text-white/30 uppercase tracking-widest mt-2">{transactions.length} total operations recorded</p>
+            <p className="text-[10px] text-on-surface/50 uppercase tracking-widest mt-2">{transactions.length} total operations recorded</p>
           </div>
         </div>
 
-        <div className="bg-white/5 rounded-3xl border border-white/10 overflow-hidden shadow-2xl backdrop-blur-md">
+        <div className="bg-[#0c0c0c] rounded-3xl border border-white/5 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)]">
           {isConnected && transactions.length > 0 && (
-            <div className="grid grid-cols-[60px_1fr_auto_auto] gap-4 px-8 py-5 border-b border-white/10 bg-white/5">
+            <div className="grid grid-cols-[60px_1fr_auto_auto] gap-4 px-8 py-5 border-b border-white/5 bg-[#111111]">
               <div />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">Transaction</span>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20 text-right">Amount</span>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20 text-right">Receipt</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Transaction</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 text-right">Amount</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 text-right">Receipt</span>
             </div>
           )}
 
@@ -128,9 +128,9 @@ return (
                       <div className="flex flex-col">
                          <div className="flex items-center gap-3">
                            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${cfg.badge}`}>{tx.type}</span>
-                           <span className="text-sm font-bold text-white group-hover:text-primary transition-colors">{tx.details || tx.type}</span>
+                           <span className="text-sm font-bold text-white transition-colors">{tx.details || tx.type}</span>
                          </div>
-                         <span className="text-[10px] text-white/20 mt-1 font-medium">{new Date(tx.timestamp).toLocaleString()}</span>
+                         <span className="text-[10px] text-white/40 mt-1 font-medium">{new Date(tx.timestamp).toLocaleString()}</span>
                       </div>
                       <div className="text-right">
                         <span className="text-base font-bold text-white tracking-tighter">{tx.amount}</span>
@@ -141,7 +141,7 @@ return (
                              SCAN <span className="material-symbols-outlined text-[12px]">open_in_new</span>
                            </a>
                         ) : (
-                          <span className="text-[10px] font-black text-white/10 uppercase tracking-widest">Simulation</span>
+                          <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Simulation</span>
                         )}
                       </div>
                     </div>
@@ -151,14 +151,14 @@ return (
             ) : (
               <div className="py-24 text-center">
                 <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/5">
-                    <span className="material-symbols-outlined text-white/10 text-3xl">inbox</span>
+                    <span className="material-symbols-outlined text-white/20 text-3xl">inbox</span>
                 </div>
-                <p className="text-white/20 text-sm font-bold uppercase tracking-widest">No active transactions</p>
+                <p className="text-white/30 text-sm font-bold uppercase tracking-widest">No active transactions</p>
               </div>
             )
           ) : (
             <div className="py-24 text-center">
-               <button onClick={connect} className="bg-white text-black px-8 py-4 rounded-2xl font-headline font-extrabold text-sm hover:bg-white/90 transition-all shadow-xl">Connect Wallet</button>
+               <button onClick={connect} className="bg-white text-black px-8 py-4 rounded-2xl font-headline font-extrabold text-sm hover:bg-white/90 transition-all shadow-[0_10px_30px_rgba(255,255,255,0.1)]">Connect Wallet</button>
             </div>
           )}
         </div>

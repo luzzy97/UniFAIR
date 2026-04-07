@@ -51,7 +51,7 @@ export default function ActivityWidget() {
   const recentTxs = transactions.slice(0, 3);
 
   return (
-    <div className="w-full h-full flex flex-col p-6 bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl group transition-all duration-300 hover:bg-white/[0.08] hover:border-white/20 shadow-xl overflow-hidden min-h-[400px]">
+    <div className="w-full h-full flex flex-col p-6 bg-[#0c0c0c] border border-white/5 rounded-3xl group transition-all duration-300 hover:bg-[#111111] hover:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.1)] overflow-hidden min-h-[400px]">
       <div className="flex items-center justify-between mb-6">
         <div className="space-y-1">
           <h3 className="text-xs font-black text-white/30 uppercase tracking-[0.2em]">Live Feed</h3>
