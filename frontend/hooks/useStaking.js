@@ -15,6 +15,8 @@ export function useStaking() {
   const [sponsorshipPaths, setSponsorshipPaths] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
   const fetchStakingData = useCallback(async () => {
     try {
       const contract = getContract('Staking', provider);
@@ -28,16 +30,18 @@ export function useStaking() {
         const stakeInfo = await contract.stakes(checksummed);
         
         // ABI stakes() returns: amount, lastUpdate, rewardsAccumulated, sfsFraction
+        // Try both named and positional access for robustness
         let rawAmount = 0n;
         let rawSfsFraction = 0n;
 
-        if (stakeInfo && typeof stakeInfo === 'object') {
-          rawAmount = stakeInfo.amount ?? stakeInfo[0] ?? 0n;
-          rawSfsFraction = stakeInfo.sfsFraction ?? stakeInfo[3] ?? 0n;
+        if (stakeInfo != null) {
+          // Try named first, fallback to index
+          rawAmount = (stakeInfo.amount !== undefined ? stakeInfo.amount : stakeInfo[0]) ?? 0n;
+          rawSfsFraction = (stakeInfo.sfsFraction !== undefined ? stakeInfo.sfsFraction : stakeInfo[3]) ?? 0n;
         }
 
         setStakedBalance(ethers.formatEther(rawAmount));
-        setStakedEthBalance('0'); // Contract doesn't support ETH staking
+        setStakedEthBalance('0');
         setSfsFraction(Number(rawSfsFraction) / 100);
         setRwaAllocation(0);
         setRwaTarget('');
@@ -86,6 +90,8 @@ export function useStaking() {
       // ABI: stake(uint256 amount) — one param only
       const tx = await staking.stake(parsedAmount);
       await tx.wait();
+      // Wait for RPC node to propagate new state
+      await sleep(2500);
       await fetchStakingData();
       return tx.hash;
     } catch (error) {

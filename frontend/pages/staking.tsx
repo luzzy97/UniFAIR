@@ -557,7 +557,16 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="py-12 text-center animate-in zoom-in-95 duration-300 flex flex-col items-center justify-center min-h-[500px]">
-                  <p className="text-white/60 font-medium mb-3">Your Locked Balance</p>
+                  <div className="flex items-center justify-center gap-3 mb-3">
+                    <p className="text-white/60 font-medium">Your Locked Balance</p>
+                    <button
+                      onClick={() => fetchStakingData()}
+                      title="Refresh balance"
+                      className="text-white/30 hover:text-white transition-colors"
+                    >
+                      <Loader2 className={`w-4 h-4 ${stakingLoading ? 'animate-spin text-white' : ''}`} />
+                    </button>
+                  </div>
                   <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-2 drop-shadow-sm tracking-tight">
                     {realStakedBalance.toLocaleString('en-US')} <span className="text-xl text-white/50 font-bold ml-1">RLO</span>
                   </h2>
@@ -565,9 +574,9 @@ export default function Home() {
                     {realStakedEthBalance.toLocaleString('en-US')} <span className="text-xl text-white/50 font-bold ml-1">ETH</span>
                   </h2>
                   
-                  <div className="inline-flex items-center gap-2 bg-[#161616] border border-white/20/80 px-5 py-2.5 rounded-xl mb-12 shadow-inner">
-                    <AlertCircle className="w-4 h-4 text-white" />
-                    <span className="text-sm font-semibold text-white/80">
+                  <div className="inline-flex items-center gap-2 bg-[#161616] border border-white/10 px-5 py-2.5 rounded-xl mb-12 shadow-inner">
+                    <AlertCircle className="w-4 h-4 text-white/60" />
+                    <span className="text-sm font-semibold text-white/60">
                       Unlock Status: Check Smart Contract Lock End
                     </span>
                   </div>
