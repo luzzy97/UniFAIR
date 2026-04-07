@@ -290,8 +290,7 @@ export default function AiAgent() {
           });
           showToast({
             message: `Limit Order Placed!`,
-            detail: detail,
-            txHash: '0x' + Math.random().toString(16).slice(2, 42)
+            detail: detail
           });
         } else if (response.delaySec > 0) {
           // SCHEDULE IT (global — persists on navigation)
@@ -303,8 +302,7 @@ export default function AiAgent() {
           });
           showToast({
             message: `Scheduled ${type}!`,
-            detail: detail,
-            txHash: '0x' + Math.random().toString(16).slice(2, 42)
+            detail: detail
           });
         } else {
           // EXECUTE ON-CHAIN

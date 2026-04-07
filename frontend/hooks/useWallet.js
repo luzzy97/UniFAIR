@@ -510,8 +510,8 @@ export function WalletProvider({ children }) {
           if (txType === 'Bridge') updateBalance(token === 'ETH' ? 'RIALO' : 'ETH', parseFloat(amount));
         }
 
-        addTransaction({ type: txType, amount: displayAmount, details: `AI Strategy Execution`, txHash: fakeHash, source: 'AI Agent' });
-        return { hash: fakeHash, detail: displayAmount };
+        addTransaction({ type: txType, amount: displayAmount, details: `AI Strategy Execution`, txHash: null, source: 'AI Agent' });
+        return { hash: null, detail: displayAmount };
       } else if (!signer) {
         // Default MetaMask popup
         signer = await provider.getSigner();
@@ -606,7 +606,7 @@ export function WalletProvider({ children }) {
 
         return { hash: tx.hash, detail: displayAmount };
       }
-      return { hash: '0x' + Math.random().toString(16).slice(2, 42), detail: displayAmount };
+      return { hash: null, detail: displayAmount };
     } catch (err) { throw err; }
   }, [address, provider, addTransaction, updateBalances, aiPrivateKey, globalRates, updateBalance, addAiMessage]);
 
