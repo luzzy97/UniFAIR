@@ -278,8 +278,13 @@ export function useStaking() {
       const signer = await provider.getSigner();
       const contract = getContract('Staking', provider);
       const checksummed = ethers.getAddress(address);
-      const stakeInfo = await contract.stakes(checksummed);
-      const stakedAmt = stakeInfo.amount ?? stakeInfo[0] ?? 0n;
+      let stakedAmt = 0n;
+      try {
+        const stakeInfo = await contract.stakes(checksummed);
+        stakedAmt = stakeInfo.amount ?? stakeInfo[0] ?? 0n;
+      } catch (e) {
+        console.warn('Withdraw: Failed to fetch on-chain stake, defaulting to simulated info', e);
+      }
 
       const simEth = parseFloat(stakedEthBalance);
       const simRlo = parseFloat(localStorage.getItem('rialo_staked_rlo') || '0');
