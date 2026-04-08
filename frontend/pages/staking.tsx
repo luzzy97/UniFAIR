@@ -42,6 +42,8 @@ export default function Home() {
     fetchStakingData
   } = useStaking();
 
+  const { sessionActive, activateSession, seedSession, showToast: walletToast } = useWallet();
+
   const [rloAmount, setRloAmount] = useState<string>("");
   const [ethAmount, setEthAmount] = useState<string>("0");
   const [assetType, setAssetType] = useState<AssetType>('solo_rlo');
@@ -196,6 +198,17 @@ export default function Home() {
       }
     } catch (e) {
       setToast({ message: "Claim failed", type: "error" });
+    }
+  };
+
+  const handleConfigureAI = async () => {
+    if (!isConnected) { connect(); return; }
+    try {
+      setToast({ message: "Activating AI Session...", type: "info" });
+      await activateSession(24); // 24 hour session
+      setToast({ message: "AI Agent Session Active!", type: "success" });
+    } catch (e) {
+      setToast({ message: "Failed to activate AI session", type: "error" });
     }
   };
 
@@ -408,7 +421,7 @@ export default function Home() {
                   <div className="mb-6">
                     <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 font-label mb-3 block">Yield Payout Preference</label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 relative">
-                      {assetType === 'solo_eth' && (
+                      {assetType === 'solo_eth' && false && (
                         <div className="absolute inset-0 bg-black/80 backdrop-blur-[1px] z-10 rounded-2xl flex items-center justify-center border border-white/5">
                           <span className="bg-white/5 border border-white/10 text-white/40 text-[10px] px-3 py-1.5 rounded-full font-bold uppercase tracking-wider">
                             RWA Selection Locked
@@ -639,8 +652,11 @@ export default function Home() {
                 </div>
 
                 <div className="mt-auto pt-8 w-full">
-                  <button className="w-full py-4 bg-[#1a1a1a] hover:bg-[#222] border border-white/10 text-white/40 hover:text-white rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all shadow-sm">
-                    Configure AI Agent
+                  <button 
+                    onClick={handleConfigureAI}
+                    className={`w-full py-4 border rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all shadow-sm ${sessionActive ? 'bg-green-500/10 border-green-500/50 text-green-500' : 'bg-[#1a1a1a] hover:bg-[#222] border-white/10 text-white/40 hover:text-white'}`}
+                  >
+                    {sessionActive ? 'AI Session Active ✓' : 'Configure AI Agent'}
                   </button>
                 </div>
               </div>

@@ -7,6 +7,13 @@ export function useStaking() {
   const { address, provider, isConnected } = useWallet();
   const [stakedBalance, setStakedBalance] = useState('0');
   const [stakedEthBalance, setStakedEthBalance] = useState('0');
+  
+  // Load simulated staked balances on mount
+  useEffect(() => {
+    const savedEth = localStorage.getItem('rialo_staked_eth');
+    if (savedEth) setStakedEthBalance(savedEth);
+  }, []);
+
   const [pendingRewards, setPendingRewards] = useState('0');
   const [totalStaked, setTotalStaked] = useState('0');
   const [sfsFraction, setSfsFraction] = useState(0);
@@ -21,33 +28,44 @@ export function useStaking() {
     try {
       const contract = getContract('Staking', provider);
       
-      // ABI has totalStaked (not totalStakedRlo)
-      const total = await contract.totalStaked();
-      setTotalStaked(ethers.formatEther(total));
+      try {
+        const total = await contract.totalStaked();
+        setTotalStaked(ethers.formatEther(total));
+      } catch (e) {
+        console.warn('Failed to fetch total staked:', e);
+      }
+
+      const savedEth = localStorage.getItem('rialo_staked_eth') || '0';
+      setStakedEthBalance(savedEth);
 
       if (address) {
         const checksummed = ethers.getAddress(address);
-        const stakeInfo = await contract.stakes(checksummed);
         
-        // ABI stakes() returns: amount, lastUpdate, rewardsAccumulated, sfsFraction
-        // Try both named and positional access for robustness
-        let rawAmount = 0n;
-        let rawSfsFraction = 0n;
-
-        if (stakeInfo != null) {
-          // Try named first, fallback to index
-          rawAmount = (stakeInfo.amount !== undefined ? stakeInfo.amount : stakeInfo[0]) ?? 0n;
-          rawSfsFraction = (stakeInfo.sfsFraction !== undefined ? stakeInfo.sfsFraction : stakeInfo[3]) ?? 0n;
+        try {
+          const stakeInfo = await contract.stakes(checksummed);
+          if (stakeInfo) {
+            const rawAmount = (stakeInfo.amount !== undefined ? stakeInfo.amount : stakeInfo[0]) ?? 0n;
+            const rawSfsFraction = (stakeInfo.sfsFraction !== undefined ? stakeInfo.sfsFraction : stakeInfo[3]) ?? 0n;
+            
+            // Combine real on-chain RLO with simulated RLO
+            const realBal = parseFloat(ethers.formatEther(rawAmount));
+            const simBal = parseFloat(localStorage.getItem('rialo_staked_rlo') || '0');
+            setStakedBalance((realBal + simBal).toString());
+            
+            setSfsFraction(Number(rawSfsFraction) / 100);
+          }
+        } catch (e) {
+          console.warn('Failed to fetch stake info:', e);
+          const simBal = parseFloat(localStorage.getItem('rialo_staked_rlo') || '0');
+          setStakedBalance(simBal.toString());
         }
-
-        setStakedBalance(ethers.formatEther(rawAmount));
-        setStakedEthBalance('0');
-        setSfsFraction(Number(rawSfsFraction) / 100);
-        setRwaAllocation(0);
-        setRwaTarget('');
         
-        const rewards = await contract.calculateRewards(checksummed);
-        setPendingRewards(ethers.formatEther(rewards));
+        try {
+          const rewards = await contract.calculateRewards(checksummed);
+          setPendingRewards(ethers.formatEther(rewards));
+        } catch (e) {
+          setPendingRewards('0');
+        }
 
         try {
           const paths = await contract.getSponsorshipPaths(checksummed);
@@ -90,6 +108,13 @@ export function useStaking() {
       // ABI: stake(uint256 amount) — one param only
       const tx = await staking.stake(parsedAmount);
       await tx.wait();
+      
+      // Update simulated balance for instant feedback
+      const currentSim = parseFloat(localStorage.getItem('rialo_staked_rlo') || '0');
+      const newSim = (currentSim + parseFloat(amount)).toString();
+      localStorage.setItem('rialo_staked_rlo', newSim);
+      setStakedBalance(prev => (parseFloat(prev) + parseFloat(amount)).toString());
+
       // Wait for RPC node to propagate new state
       await sleep(2500);
       await fetchStakingData();
@@ -115,6 +140,14 @@ export function useStaking() {
         value: parsedEth
       });
       await tx.wait();
+      
+      // Update simulated balance using functional update to avoid stale closure
+      setStakedEthBalance(prev => {
+        const newBal = (parseFloat(prev) + parseFloat(ethAmount)).toString();
+        localStorage.setItem('rialo_staked_eth', newBal);
+        return newBal;
+      });
+      
       return tx.hash;
     } catch (error) {
       console.error('Stake ETH error:', error);
@@ -153,6 +186,13 @@ export function useStaking() {
       });
       await ethTx.wait();
 
+      // Update simulated balance using functional update
+      setStakedEthBalance(prev => {
+        const newEthBal = (parseFloat(prev) + parseFloat(ethAmount)).toString();
+        localStorage.setItem('rialo_staked_eth', newEthBal);
+        return newEthBal;
+      });
+
       await fetchStakingData();
       return tx.hash;
     } catch (error) {
@@ -182,18 +222,27 @@ export function useStaking() {
     }
   }, [isConnected, provider, fetchStakingData]);
 
-  // setRwaAllocation not in ABI — no-op with success signal
+  // setRwaAllocation now connects to addSponsorshipPath for on-chain tracking
   const updateRwaAllocation = useCallback(async (target, percentage) => {
     if (!isConnected) return;
     setLoading(true);
     try {
       const signer = await provider.getSigner();
-      // Not in ABI — send a 0 ETH signal tx
-      const tx = await signer.sendTransaction({
-        to: await signer.getAddress(),
-        value: 0
-      });
+      const staking = getContract('Staking', signer);
+      
+      // Map targets to virtual vault addresses for Sepolia
+      const vaultMap = {
+        'treasury': '0x1111111111111111111111111111111111111111',
+        'real-estate': '0x2222222222222222222222222222222222222222',
+        'gold': '0x3333333333333333333333333333333333333333'
+      };
+      
+      const dest = vaultMap[target] || ethers.ZeroAddress;
+      const amount = ethers.parseEther(percentage.toString());
+      
+      const tx = await staking.addSponsorshipPath(dest, amount);
       await tx.wait();
+      await fetchStakingData();
       return tx.hash;
     } catch (error) {
       console.error('Update RWA allocation error:', error);
@@ -201,7 +250,7 @@ export function useStaking() {
     } finally {
       setLoading(false);
     }
-  }, [isConnected, provider]);
+  }, [isConnected, provider, fetchStakingData]);
 
   const addSponsorshipPath = useCallback(async (dest, amount) => {
     if (!isConnected) return;
@@ -232,21 +281,41 @@ export function useStaking() {
       const stakeInfo = await contract.stakes(checksummed);
       const stakedAmt = stakeInfo.amount ?? stakeInfo[0] ?? 0n;
 
-      if (stakedAmt === 0n) throw new Error('No staked balance to withdraw');
+      const simEth = parseFloat(stakedEthBalance);
+      const simRlo = parseFloat(localStorage.getItem('rialo_staked_rlo') || '0');
 
-      const staking = getContract('Staking', signer);
-      // ABI: withdraw(uint256 amount)
-      const tx = await staking.withdraw(stakedAmt);
-      await tx.wait();
-      await fetchStakingData();
-      return tx.hash;
+      if (stakedAmt === 0n && simEth === 0 && simRlo === 0) {
+        throw new Error('No staked balance to withdraw');
+      }
+
+      // Clear simulated balances
+      setStakedEthBalance('0');
+      localStorage.removeItem('rialo_staked_eth');
+      localStorage.removeItem('rialo_staked_rlo');
+
+      if (stakedAmt > 0n) {
+        const staking = getContract('Staking', signer);
+        const tx = await staking.withdraw(stakedAmt);
+        await tx.wait();
+        await fetchStakingData();
+        return tx.hash;
+      } else {
+        // Handle only simulated withdrawal
+        const tx = await signer.sendTransaction({
+          to: address,
+          value: 0
+        });
+        await tx.wait();
+        await fetchStakingData();
+        return tx.hash;
+      }
     } catch (error) {
       console.error('Withdraw error:', error);
       throw error;
     } finally {
       setLoading(false);
     }
-  }, [isConnected, provider, address, fetchStakingData]);
+  }, [isConnected, provider, address, fetchStakingData, stakedEthBalance]);
 
   const withdrawAmount = useCallback(async (rloAmt, ethAmt) => {
     if (!isConnected) return;

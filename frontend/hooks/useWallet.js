@@ -600,6 +600,16 @@ export function WalletProvider({ children }) {
           if (isAuto) {
             addAiMessage({ role: 'ai', content: { raw: `Successfully confirmed background ${txType} on-chain: ${displayAmount}` } });
           }
+          
+          // Persistence for simulated stakes (especially for AI signal txs)
+          if (txType === 'Stake') {
+            const amountStr = displayAmount.match(/[\d.]+/)?.[0] || '10';
+            const amountFloat = parseFloat(amountStr);
+            const isEth = displayAmount.toUpperCase().includes('ETH');
+            const key = isEth ? 'rialo_staked_eth' : 'rialo_staked_rlo';
+            const current = parseFloat(localStorage.getItem(key) || '0');
+            localStorage.setItem(key, (current + amountFloat).toString());
+          }
         }).catch(err => {
           console.error('Transaction failed after wait:', err);
         });
