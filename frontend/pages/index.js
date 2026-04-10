@@ -1,3 +1,4 @@
+import Spline from '@splinetool/react-spline/next';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useWallet } from '../hooks/useWallet';
@@ -39,12 +40,8 @@ export default function Home() {
             <div className="relative flex items-center justify-center pt-10">
               <div className="absolute inset-0 bg-white/5 rounded-full blur-3xl"></div>
               <div className="relative w-full aspect-square max-w-[500px] bg-[#e6e2d1] rounded-[3rem] shadow-2xl p-6 flex items-center justify-center overflow-hidden border-8 border-white/5 group hover:scale-[1.02] transition-transform duration-500">
-                <video 
-                  src="/hero-animation.mp4" 
-                  autoPlay 
-                  loop 
-                  muted 
-                  playsInline
+                <Spline
+                  scene="https://prod.spline.design/s45hkf6lCVUq7PZ4/scene.splinecode" 
                   className="w-full h-full object-contain mix-blend-multiply opacity-90 scale-110"
                 />
               </div>
