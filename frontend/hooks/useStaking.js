@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
 import { getContract } from '../lib/ethers';
 import { useWallet } from './useWallet';
@@ -8,6 +8,7 @@ export function useStaking() {
   const [stakedBalance, setStakedBalance] = useState('0');
   const [stakedEthBalance, setStakedEthBalance] = useState('0');
   const [tickingCredits, setTickingCredits] = useState(0);
+  const creditsInitialized = useRef(false);
   
   // Initial balance sync will now be handled by the effect below the fetchStakingData definition
 
@@ -59,7 +60,12 @@ export function useStaking() {
           // Set initial values from backend immediately for better UX
           setStakedBalance(simRlo.toString());
           setStakedEthBalance(simEth.toString());
-          setTickingCredits(simCredits);
+          
+          // ONLY INITIALIZE CREDITS ONCE to prevent resets during polling
+          if (!creditsInitialized.current || simCredits > (tickingCredits + 1)) {
+            setTickingCredits(simCredits);
+            creditsInitialized.current = true;
+          }
           
           if (backendData.rewards !== undefined) {
             setPendingRewards(backendData.rewards.toString());
@@ -164,7 +170,7 @@ export function useStaking() {
     if (isConnected && address && tickingCredits > 0) {
       const syncInterval = setInterval(() => {
         syncWithBackend(address, { credits: tickingCredits });
-      }, 30000);
+      }, 10000);
       return () => clearInterval(syncInterval);
     }
   }, [isConnected, address, tickingCredits, syncWithBackend]);
