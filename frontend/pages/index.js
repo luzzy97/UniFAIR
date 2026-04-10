@@ -38,12 +38,16 @@ export default function Home() {
                 </div>
             </div>
             <div className="relative flex items-center justify-center pt-10">
-              <div className="absolute inset-0 bg-white/5 rounded-full blur-3xl"></div>
-              <div className="relative w-full aspect-square max-w-[500px] bg-[#e6e2d1] rounded-[3rem] shadow-2xl p-6 flex items-center justify-center overflow-hidden border-8 border-white/5 group hover:scale-[1.02] transition-transform duration-500">
+              <div className="absolute inset-0 bg-primary/10 rounded-full blur-[100px]"></div>
+              <div className="relative w-full aspect-square max-w-[550px] flex items-center justify-center">
                 <Spline
                   scene="https://prod.spline.design/lHIxJz2iiYiDzZRX/scene.splinecode" 
-                  className="w-[120%] h-[120%] object-contain"
+                  className="w-full h-full transform scale-[1.15] relative z-10"
                 />
+                
+                {/* Watermark Cover */}
+                <div className="absolute bottom-4 right-4 w-[160px] h-[50px] bg-[#0c0c0c] z-20 pointer-events-none rounded-xl blur-[2px]"></div>
+                <div className="absolute bottom-2 right-2 w-[170px] h-[60px] bg-[#0c0c0c] z-20 pointer-events-none rounded-lg"></div>
               </div>
             </div>
           </div>
