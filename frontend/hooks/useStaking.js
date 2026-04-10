@@ -60,10 +60,17 @@ export function useStaking() {
           // Set initial values from backend immediately for better UX
           setStakedBalance(simRlo.toString());
           setStakedEthBalance(simEth.toString());
+
+          // Merge backend persistence with browser high-speed cache
+          let localCredits = 0;
+          if (typeof window !== 'undefined' && address) {
+            localCredits = parseFloat(localStorage.getItem(`rialo_credits_${address}`) || '0');
+          }
+          const finalCredits = Math.max(simCredits, localCredits);
           
           // ONLY INITIALIZE CREDITS ONCE to prevent resets during polling
-          if (!creditsInitialized.current || simCredits > (tickingCredits + 1)) {
-            setTickingCredits(simCredits);
+          if (!creditsInitialized.current || finalCredits > (tickingCredits + 1)) {
+            setTickingCredits(finalCredits);
             creditsInitialized.current = true;
           }
           
@@ -71,7 +78,7 @@ export function useStaking() {
             setPendingRewards(backendData.rewards.toString());
             setTickingRewards(backendData.rewards);
           }
-          console.log(`[useStaking] Backend Load: RLO=${simRlo}, ETH=${simEth}, Credits=${simCredits}`);
+          console.log(`[useStaking] Backend Load: RLO=${simRlo}, ETH=${simEth}, Credits=${simCredits}, Local=${localCredits}`);
         }
       } catch (e) {
         console.warn('[useStaking] Backend fetch failed, using defaults:', e);
@@ -137,6 +144,14 @@ export function useStaking() {
     }
   }, [address, provider]);
 
+  // Fast-boot initial state from cache
+  useEffect(() => {
+    if (address && typeof window !== 'undefined' && !creditsInitialized.current) {
+        const cached = localStorage.getItem(`rialo_credits_${address}`);
+        if (cached) setTickingCredits(parseFloat(cached));
+    }
+  }, [address]);
+
   // Sync whenever address or provider changes
   useEffect(() => {
     if (isConnected && address) {
@@ -159,11 +174,17 @@ export function useStaking() {
         const cps = totalRloEq / 3600;
         const increment = cps / 10; // 10 ticks per second (100ms)
         
-        setTickingCredits(prev => prev + increment);
+        setTickingCredits(prev => {
+          const nextVal = prev + increment;
+          if (typeof window !== 'undefined' && address) {
+            localStorage.setItem(`rialo_credits_${address}`, nextVal.toString());
+          }
+          return nextVal;
+        });
       }, 100);
       return () => clearInterval(tickInterval);
     }
-  }, [isConnected, stakedBalance, stakedEthBalance]);
+  }, [isConnected, address, stakedBalance, stakedEthBalance]);
 
   // BACKGROUND SYNC: Save credits to backend every 30s
   useEffect(() => {

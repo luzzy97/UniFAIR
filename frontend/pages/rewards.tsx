@@ -14,22 +14,14 @@ export default function Rewards() {
   const { 
     pendingRewards: pendingRewStr, 
     tickingRewards,
+    tickingCredits,
     loading: stakingLoading, 
     claimRewards: claimAction,
     fetchStakingData
   } = useStaking();
 
   const [toast, setToast] = useState(null);
-  const [displayCredits, setDisplayCredits] = useState(1250);
   const realPendingRewards = parseFloat(pendingRewStr || '0');
-
-  // Service credits ticking effect
-  useEffect(() => {
-    const int = setInterval(() => {
-      setDisplayCredits(prev => prev + 0.01);
-    }, 2000);
-    return () => clearInterval(int);
-  }, []);
 
   useEffect(() => {
     if (toast) {
@@ -118,7 +110,7 @@ export default function Rewards() {
               </h3>
               <div className="flex flex-col mt-auto mb-8">
                 <div className="text-5xl md:text-6xl font-headline font-extrabold text-white leading-none tracking-tighter">
-                  {displayCredits.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span className="text-xl md:text-2xl text-white/20 font-bold ml-1">ϕ</span>
+                  {(tickingCredits || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span className="text-xl md:text-2xl text-white/20 font-bold ml-1">ϕ</span>
                 </div>
                 <div className="text-white/20 font-bold uppercase tracking-widest text-[10px] mt-4">
                   Ready for Zero-Gas Transactions
