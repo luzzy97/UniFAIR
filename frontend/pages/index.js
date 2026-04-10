@@ -15,8 +15,8 @@ export default function Home() {
         <section className="relative overflow-hidden pt-20 pb-32 bg-[#0c0c0c]">
           <div className="max-w-[1200px] mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="z-10 text-white">
-              <h1 className="text-[3.5rem] leading-[1.1] mb-6 mt-10 uppercase text-white">
-                Unified DeFi Ecosystem
+              <h1 className="text-[3.5rem] md:text-[4.5rem] leading-[1.05] mb-6 mt-10 text-white font-extrabold tracking-tight">
+                Unified DeFi Ecosystem.
               </h1>
               <p className="text-white/50 max-w-lg mb-10 leading-relaxed text-lg font-medium">
                 Access native swapping, bridging, and staking from one intuitive command center. We eliminate Web3 fragmentation by delivering a streamlined, zero-friction interface designed specifically for Rialo.
@@ -57,7 +57,7 @@ export default function Home() {
           <div className="max-w-[1200px] mx-auto px-8">
             <div className="mb-16">
               <span className="font-label text-xs uppercase tracking-[0.2em] text-zinc-400 mb-2 block">UNIFIED INTERFACE</span>
-              <h2 className="font-headline text-[2.5rem] font-extrabold text-black uppercase leading-tight tracking-tighter">Engineered for a Zero-Friction Experience</h2>
+              <h2 className="font-headline text-[2.5rem] font-extrabold text-black leading-tight tracking-tight">Engineered for a Zero-Friction Experience</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
@@ -150,7 +150,7 @@ export default function Home() {
         {/* CTA Section */}
         <section className="py-32 bg-white">
           <div className="max-w-[800px] mx-auto px-8 text-center">
-            <h2 className="font-headline text-[3rem] font-extrabold mb-8 tracking-tighter text-black uppercase">Enter the Architectural Void.</h2>
+            <h2 className="font-headline text-[3rem] font-extrabold mb-8 tracking-tighter text-black">Enter the Architectural Void.</h2>
             <p className="text-lg text-zinc-500 mb-12 font-medium">Ready to deploy on the most resilient infrastructure in the ecosystem? Join the Rialo developer network today.</p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <button
@@ -159,9 +159,14 @@ export default function Home() {
               >
                 {isConnected ? 'Launch Dashboard' : 'Connect Wallet'}
               </button>
-              <button className="bg-zinc-50 text-zinc-600 px-12 py-5 rounded-xl font-bold border border-zinc-200 hover:bg-zinc-100 transition-all">
+              <a 
+                href="https://discord.com/invite/RialoProtocol"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-zinc-50 text-zinc-600 px-12 py-5 rounded-2xl font-bold border border-zinc-200 hover:bg-zinc-100 transition-all flex items-center justify-center"
+              >
                 Join Community
-              </button>
+              </a>
             </div>
           </div>
         </section>

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -26,6 +27,41 @@ const topics = [
 ];
 
 export default function LearnPage() {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState('idle'); // idle, loading, success, error
+  const [message, setMessage] = useState('');
+
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
+    if (!email || !email.includes('@')) {
+      setStatus('error');
+      setMessage('Please enter a valid email.');
+      return;
+    }
+
+    setStatus('loading');
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${baseUrl}/api/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        setStatus('success');
+        setMessage(data.message || 'Thank you for subscribing!');
+        setEmail('');
+      } else {
+        throw new Error(data.error || 'Something went wrong.');
+      }
+    } catch (err) {
+      setStatus('error');
+      setMessage(err.message);
+    }
+  };
+
   return (
     <div className="bg-white font-body text-zinc-900 antialiased selection:bg-black selection:text-white min-h-screen">
       <Navbar />
@@ -37,10 +73,10 @@ export default function LearnPage() {
             <span className="font-label text-xs font-bold tracking-widest uppercase">Knowledge Base</span>
           </div>
           <h1 className="text-6xl text-black mb-8">
-            Master the Dual-Engine Ecosystem.
+            Dual-Engine Ecosystem.
           </h1>
           <p className="font-body text-xl text-zinc-500 leading-relaxed font-medium">
-            Master the nuances of the Rialo ecosystem. From zero-gas staking to automated RWA accumulation, explore the mechanics of intelligent yield.
+            Discover the nuances of the Rialo ecosystem. From zero-gas staking to automated RWA accumulation, explore the mechanics of intelligent yield.
           </p>
         </header>
 
@@ -143,11 +179,11 @@ export default function LearnPage() {
                 { name: 'GOAT', handle: '@Mantle57222', role: 'Builder', initials: 'GT', color: 'bg-black text-white hover:bg-black/80', image: '/goat.png', link: 'https://x.com/Mantle57222' }
               ].map((dev) => (
                 <a 
-                  key={dev.handle} 
+                  key={dev.name}
                   href={dev.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-black border border-white/10 p-6 rounded-2xl flex items-center gap-5 transition-all hover:border-white/30 hover:shadow-lg group"
+                  className="bg-black border border-white/10 p-6 rounded-2xl flex items-center gap-5 transition-all duration-300 hover:border-white/30 hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.02] group"
                 >
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-headline font-bold text-lg overflow-hidden transition-colors ${dev.color}`}>
                     {dev.image ? (
@@ -170,20 +206,50 @@ export default function LearnPage() {
           </div>
         </section>
 
-        {/* Newsletter CTA */}
-        <section className="bg-black text-white rounded-3xl p-12 md:p-24 text-center shadow-2xl">
-          <h2 className="font-headline text-4xl font-extrabold mb-6 tracking-tight">Stay at the Frontier.</h2>
-          <p className="text-white/60 max-w-lg mx-auto mb-10 text-lg leading-relaxed">Get weekly protocol updates, ecosystem reports, and deep-dive technical articles delivered directly to your inbox.</p>
-          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 bg-white/10 border border-white/20 rounded-xl px-6 py-4 focus:ring-2 focus:ring-white/50 focus:border-transparent font-body placeholder:text-white/40 text-white outline-none transition-all shadow-inner"
-            />
-            <button className="bg-white text-black px-10 py-4 rounded-xl font-headline font-bold hover:bg-white/90 transition-all shadow-lg active:scale-95 text-lg">
-              Subscribe
-            </button>
+        <section className="bg-black text-white rounded-3xl p-12 md:p-24 text-center shadow-2xl relative overflow-hidden">
+          <div className="relative z-10">
+            <h2 className="font-headline text-4xl font-extrabold mb-6 tracking-tight">Stay at the Frontier.</h2>
+            <p className="text-white/60 max-w-lg mx-auto mb-10 text-lg leading-relaxed">Get weekly protocol updates, ecosystem reports, and deep-dive technical articles delivered directly to your inbox.</p>
+            
+            {status === 'success' ? (
+              <div className="bg-white/10 border border-white/20 rounded-2xl p-8 max-w-md mx-auto animate-in fade-in zoom-in duration-500">
+                <span className="material-symbols-outlined text-4xl mb-4 text-primary">check_circle</span>
+                <h3 className="font-headline text-xl font-bold mb-2">You're in.</h3>
+                <p className="text-white/60 text-sm">{message}</p>
+                <button 
+                  onClick={() => setStatus('idle')}
+                  className="mt-6 text-xs uppercase tracking-widest font-bold text-white/40 hover:text-white transition-colors"
+                >
+                  Register another email
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                <div className="flex-1 relative">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    disabled={status === 'loading'}
+                    className="w-full bg-white/10 border border-white/20 rounded-xl px-6 py-4 focus:ring-2 focus:ring-white/50 focus:border-transparent font-body placeholder:text-white/40 text-white outline-none transition-all shadow-inner disabled:opacity-50"
+                  />
+                  {status === 'error' && (
+                    <p className="absolute -bottom-6 left-0 text-[10px] text-red-400 font-bold uppercase tracking-wider">{message}</p>
+                  )}
+                </div>
+                <button 
+                  type="submit"
+                  disabled={status === 'loading'}
+                  className="bg-white text-black px-10 py-4 rounded-xl font-headline font-bold hover:bg-white/90 transition-all shadow-lg active:scale-95 text-lg disabled:opacity-50 disabled:scale-100 min-w-[160px]"
+                >
+                  {status === 'loading' ? 'Joining...' : 'Subscribe'}
+                </button>
+              </form>
+            )}
           </div>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -mr-48 -mt-48 blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full -ml-32 -mb-32 blur-3xl"></div>
         </section>
 
       </main>

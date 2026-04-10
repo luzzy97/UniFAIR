@@ -24,9 +24,9 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Inter', sans-serif !important;
-  letter-spacing: -0.05em !important;
-  font-weight: 800 !important;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -0.05em;
+  font-weight: 800;
   line-height: 1.1;
 }
 

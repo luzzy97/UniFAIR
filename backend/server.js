@@ -19,9 +19,13 @@ const DB_PATH = path.join(__dirname, 'db.json');
 
 function readDb() {
   try {
+    if (!fs.existsSync(DB_PATH)) {
+      writeDb({ users: {} });
+    }
     const data = fs.readFileSync(DB_PATH, 'utf8');
     return JSON.parse(data);
   } catch (err) {
+    console.error('DB Read Error:', err);
     return { users: {} };
   }
 }
@@ -295,6 +299,32 @@ app.get('/api/pools', async (req, res) => {
   });
 });
 
+// POST /api/subscribe
+app.post('/api/subscribe', (req, res) => {
+  console.log(`[POST] New newsletter subscription:`, req.body);
+  try {
+    const { email } = req.body;
+    if (!email || !email.includes('@')) {
+      throw new Error('Valid email address required');
+    }
+
+    const db = readDb();
+    if (!db.subscribers) db.subscribers = [];
+    
+    // Check if already exists
+    if (db.subscribers.includes(email.toLowerCase())) {
+      return res.json({ success: true, message: 'Already subscribed' });
+    }
+
+    db.subscribers.push(email.toLowerCase());
+    writeDb(db);
+    res.json({ success: true, message: 'Successfully subscribed' });
+  } catch (err) {
+    console.warn(`[POST] Subscription failed: ${err.message}`);
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -306,29 +336,38 @@ app.get('/api/user-staking/:address', (req, res) => {
     const addr = validateAddress(req.params.address);
     const db = readDb();
     const userData = db.users[addr] || { stakedRlo: 0, stakedEth: 0, rewards: 0, lastUpdate: Date.now() };
+    
+    console.log(`[GET] Staking Data for ${addr}: RLO=${userData.stakedRlo}, ETH=${userData.stakedEth}`);
+    
     res.json({ success: true, ...userData });
-  } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+  } catch (error) {
+    console.error(`[GET] Staking Error for ${req.params.address}:`, error.message);
+    res.status(400).json({ success: false, error: 'Invalid address' });
   }
 });
 
-// POST /api/user-staking/:address (For rewards progress sync)
 app.post('/api/user-staking/:address', (req, res) => {
   try {
     const addr = validateAddress(req.params.address);
     const { rewards, stakedRlo, stakedEth } = req.body;
     const db = readDb();
+    
+    if (!db.users) db.users = {};
     if (!db.users[addr]) db.users[addr] = { stakedRlo: 0, stakedEth: 0, rewards: 0 };
     
     if (rewards !== undefined) db.users[addr].rewards = parseFloat(rewards);
     if (stakedRlo !== undefined) db.users[addr].stakedRlo = parseFloat(stakedRlo);
     if (stakedEth !== undefined) db.users[addr].stakedEth = parseFloat(stakedEth);
+    
     db.users[addr].lastUpdate = Date.now();
     
+    console.log(`[POST] Syncing ${addr}: RLO=${db.users[addr].stakedRlo}, ETH=${db.users[addr].stakedEth}`);
+    
     writeDb(db);
-    res.json({ success: true, message: 'Data persisted' });
-  } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    res.json({ success: true, userData: db.users[addr] });
+  } catch (error) {
+    console.error(`[POST] Sync Error for ${req.params.address}:`, error.message);
+    res.status(400).json({ success: false, error: 'Invalid address or data' });
   }
 });
 

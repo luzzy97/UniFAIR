@@ -37,95 +37,124 @@ export function useStaking() {
   }, []);
 
   const fetchStakingData = useCallback(async () => {
+    if (!address) return;
+    
     try {
-      const contract = getContract('Staking', provider);
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const checksummed = ethers.getAddress(address);
       
+      // 1. Fetch from Backend FIRST (Persistence Layer)
+      let simRlo = 0;
+      let simEth = 0;
+      try {
+        const res = await fetch(`${baseUrl}/api/user-staking/${address}`);
+        const backendData = await res.json();
+        if (backendData.success) {
+          simRlo = backendData.stakedRlo || 0;
+          simEth = backendData.stakedEth || 0;
+          
+          // Set initial values from backend immediately for better UX
+          setStakedBalance(simRlo.toString());
+          setStakedEthBalance(simEth.toString());
+          
+          if (backendData.rewards !== undefined) {
+            setPendingRewards(backendData.rewards.toString());
+            setTickingRewards(backendData.rewards);
+          }
+          console.log(`[useStaking] Backend Load: RLO=${simRlo}, ETH=${simEth}`);
+        }
+      } catch (e) {
+        console.warn('[useStaking] Backend fetch failed, using defaults:', e);
+      }
+
+      // 2. Fetch from Contract and MERGE
+      const contract = getContract('Staking', provider);
+      
+      // Protocol-wide constants
       try {
         const total = await contract.totalStaked();
         setTotalStaked(ethers.formatEther(total));
-        
         const rate = await contract.rewardRate();
         setRewardRate(parseFloat(ethers.formatEther(rate)));
       } catch (e) {
-        console.warn('Failed to fetch contract constants:', e);
+        console.warn('[useStaking] Failed to fetch constants from contract:', e);
       }
 
-      if (address) {
-        // Fetch from backend first for persistence
-        try {
-          const res = await fetch(`${baseUrl}/api/user-staking/${address}`);
-          const backendData = await res.json();
-          if (backendData.success) {
-            setStakedEthBalance(backendData.stakedEth.toString());
-            // We'll merge RLO below
-          }
-        } catch (e) {
-          console.warn('Failed to fetch backend data:', e);
+      // User-specific data from contract
+      try {
+        const stakeInfo = await contract.stakes(checksummed);
+        if (stakeInfo) {
+          const rawAmount = (stakeInfo.amount !== undefined ? stakeInfo.amount : stakeInfo[0]) ?? 0n;
+          const rawSfsFraction = (stakeInfo.sfsFraction !== undefined ? stakeInfo.sfsFraction : stakeInfo[3]) ?? 0n;
+          const realRlo = parseFloat(ethers.formatEther(rawAmount));
+          
+          console.log(`[useStaking] Contract Data: RLO=${realRlo}, Simulation=${simRlo}`);
+          
+          // Use the higher value or the contract value if non-zero
+          const finalRlo = Math.max(realRlo, simRlo);
+          setStakedBalance(finalRlo.toString());
+          setSfsFraction(Number(rawSfsFraction) / 100);
         }
-
-        const checksummed = ethers.getAddress(address);
-        
-        try {
-          const stakeInfo = await contract.stakes(checksummed);
-          if (stakeInfo) {
-            const rawAmount = (stakeInfo.amount !== undefined ? stakeInfo.amount : stakeInfo[0]) ?? 0n;
-            const rawSfsFraction = (stakeInfo.sfsFraction !== undefined ? stakeInfo.sfsFraction : stakeInfo[3]) ?? 0n;
-            
-            const realBal = parseFloat(ethers.formatEther(rawAmount));
-            const simRes = await fetch(`${baseUrl}/api/user-staking/${address}`);
-            const simData = await simRes.json();
-            const simBal = simData.success ? simData.stakedRlo : 0;
-            
-            setStakedBalance(Math.max(realBal, simBal).toString());
-            setSfsFraction(Number(rawSfsFraction) / 100);
-          }
-        } catch (e) {
-          console.warn('Failed to fetch stake info:', e);
-        }
-        
-        try {
-          const rewards = await contract.calculateRewards(checksummed);
-          const val = parseFloat(ethers.formatEther(rewards));
+      } catch (e) {
+        console.warn('[useStaking] Failed to fetch user stake from contract:', e);
+      }
+      
+      // Live rewards from contract (if any)
+      try {
+        const rewards = await contract.calculateRewards(checksummed);
+        const val = parseFloat(ethers.formatEther(rewards));
+        if (val > 0) {
           setPendingRewards(val.toString());
           setTickingRewards(val);
-        } catch (e) {
-          setPendingRewards('0');
         }
-
-        try {
-          const paths = await contract.getSponsorshipPaths(checksummed);
-          setSponsorshipPaths(paths.map(p => ({
-            address: p.destination,
-            amount: parseFloat(ethers.formatEther(p.amount))
-          })));
-        } catch {
-          setSponsorshipPaths([]);
-        }
+      } catch (e) {
+        // Fallback already set from backend
       }
+
+      // Sponsorship paths
+      try {
+        const paths = await contract.getSponsorshipPaths(checksummed);
+        setSponsorshipPaths(paths.map(p => ({
+          address: p.destination,
+          amount: parseFloat(ethers.formatEther(p.amount))
+        })));
+      } catch {
+        setSponsorshipPaths([]);
+      }
+      
     } catch (error) {
-      console.error('Error fetching staking data:', error);
+      console.error('[useStaking] General fetch error:', error);
     }
   }, [address, provider]);
 
+  // Sync whenever address or provider changes
   useEffect(() => {
-    fetchStakingData();
-    const interval = setInterval(fetchStakingData, 30000); // Contract sync every 30s
-    return () => clearInterval(interval);
-  }, [fetchStakingData]);
+    if (isConnected && address) {
+      fetchStakingData();
+      const interval = setInterval(fetchStakingData, 15000); // Poll contract/backend every 15s
+      return () => clearInterval(interval);
+    }
+  }, [isConnected, address, fetchStakingData]);
 
-  // REAL-TIME TICKING LOGIC
+  // REAL-TIME TICKING LOGIC (100ms for premium smoothness)
   useEffect(() => {
-    if (rewardRate > 0 && tickingRewards >= 0) {
+    if (rewardRate > 0 && tickingRewards >= 0 && (parseFloat(stakedBalance) > 0 || parseFloat(stakedEthBalance) > 0)) {
       const tickInterval = setInterval(() => {
-        // Approximate yield growth: (rewardRate * totalStakedByUser / totalProtocolStaked) per second
-        // For simple UI "ticking", we'll just use a small fraction of the rate per 100ms
-        const increment = (rewardRate / 10); 
+        // User's Share = (UserStaked / totalProtocolStaked)
+        // Rate = Rewards emitted per second
+        // YieldPerTick(100ms) = (UserShare * Rate) / 10
+        const totalUserStaked = parseFloat(stakedBalance) + (parseFloat(stakedEthBalance) * 1500); // ETH weighted
+        const protocolTotalParsed = parseFloat(totalStaked) || 1000000;
+        
+        const userShare = totalUserStaked / protocolTotalParsed;
+        const yieldPerSecond = rewardRate * userShare;
+        const increment = yieldPerSecond / 10; 
+        
         setTickingRewards(prev => prev + increment);
       }, 100);
       return () => clearInterval(tickInterval);
     }
-  }, [rewardRate, tickingRewards]);
+  }, [rewardRate, tickingRewards, stakedBalance, stakedEthBalance, totalStaked]);
 
   const stakeRlo = useCallback(async (amount, lockMonths) => {
     if (!isConnected) return;
