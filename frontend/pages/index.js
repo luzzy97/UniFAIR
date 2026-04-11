@@ -10,9 +10,26 @@ export default function Home() {
 
   return (
     <div className="bg-black font-body text-zinc-900 antialiased relative min-h-screen overflow-hidden">
-      {/* Global Seamless Light Wash - Focused and Dimmed */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120%] h-[800px] pointer-events-none z-0">
-        <div className="absolute top-[-25%] left-0 w-full h-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_0%,transparent_50%)] blur-[120px]"></div>
+      {/* Precise Corner Spotlight - Multi-layered to match reference image */}
+      <div className="absolute top-0 right-0 w-[1000px] h-[1000px] pointer-events-none z-0 overflow-hidden">
+        <div className="absolute top-[-250px] right-[-250px] w-[800px] h-[800px] transform rotate-[35deg]">
+          {/* Core Hotspot - Denser center from image */}
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: 'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 40%, transparent 60%)',
+              filter: 'blur(60px)'
+            }}
+          ></div>
+          {/* Atmospheric Halo - Smooth outer diagonal wash */}
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: 'radial-gradient(ellipse at center, rgba(255, 255, 255, 0.12) 0%, transparent 80%)',
+              filter: 'blur(160px)'
+            }}
+          ></div>
+        </div>
       </div>
 
       <Navbar />
@@ -45,7 +62,7 @@ export default function Home() {
             <div className="relative flex items-center justify-center pt-10 min-h-[500px]">
               {/* Cinematic Lighting Effect - Handled by Global Wash above */}
 
-              {/* Inject stealth CSS to eradicate Spline logo cleanly */}
+              {/* Inject stealth CSS to eradicate Spline logo and sharpen rendering */}
               <style jsx global>{`
                 canvas + div[style*="position: absolute"] {
                   display: none !important;
@@ -55,24 +72,22 @@ export default function Home() {
                 a[href*="spline.design"] {
                   display: none !important;
                 }
+                canvas {
+                  image-rendering: -webkit-optimize-contrast !important;
+                  image-rendering: crisp-edges !important;
+                }
               `}</style>
               <div className="relative w-full aspect-square max-w-[650px] flex items-center justify-center">
-                {/* Strong Silhouette White Backlight - Centered behind the robot */}
-                <div 
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 transform -translate-y-12"
-                >
-                  {/* Outer Diffused Halo */}
-                  <div className="absolute w-[80%] h-[80%] bg-white/[0.08] blur-[160px] rounded-full"></div>
-                  {/* Inner Strong Bloom */}
-                  <div className="absolute w-[45%] h-[45%] bg-white/[0.18] blur-[100px] rounded-full"></div>
-                  {/* Dense Core Highlight */}
-                  <div className="absolute w-[15%] h-[15%] bg-white/[0.2] blur-[40px] rounded-full"></div>
+                {/* High-Definition Native Canvas Container - Hyper-refined at 186.5% */}
+                <div className="absolute w-[186.5%] h-[186.5%] pointer-events-none flex items-center justify-center">
+                  <Spline
+                    onLoad={(app) => {
+                      // Native resolution is handled by rendering at the parent's larger size
+                    }}
+                    scene="https://prod.spline.design/dCg8EODulIMNHTkv/scene.splinecode" 
+                    className="w-full h-full transform -translate-y-12 relative z-10 pointer-events-auto"
+                  />
                 </div>
-
-                <Spline
-                  scene="https://prod.spline.design/dCg8EODulIMNHTkv/scene.splinecode" 
-                  className="w-full h-full transform scale-[2.1] -translate-y-12 relative z-10"
-                />
               </div>
             </div>
           </div>
