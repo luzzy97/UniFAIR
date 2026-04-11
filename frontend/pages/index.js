@@ -78,14 +78,14 @@ export default function Home() {
                 }
               `}</style>
               <div className="relative w-full aspect-square max-w-[650px] flex items-center justify-center">
-                {/* High-Definition Native Canvas Container - Hyper-refined at 186.5% */}
-                <div className="absolute w-[186.5%] h-[186.5%] pointer-events-none flex items-center justify-center">
+                {/* High-Definition Native Canvas Container - Specific refinement at 186.7% */}
+                <div className="absolute w-[186.7%] h-[186.7%] pointer-events-none flex items-center justify-center">
                   <Spline
                     onLoad={(app) => {
                       // Native resolution is handled by rendering at the parent's larger size
                     }}
                     scene="https://prod.spline.design/dCg8EODulIMNHTkv/scene.splinecode" 
-                    className="w-full h-full transform -translate-y-12 relative z-10 pointer-events-auto"
+                    className="w-full h-full transform -translate-y-16 relative z-10 pointer-events-auto"
                   />
                 </div>
               </div>
