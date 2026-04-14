@@ -538,15 +538,33 @@ export function WalletProvider({ children }) {
       }
 
       // Handling Credit Gas Logic
+      let paidWithCredits = false;
       if (gasType === 'CREDIT') {
-         const creditCost = 0.05; // Flat fee per swap as requested
+         const creditCost = 0.05; // Flat fee per swap
          const currentCredits = parseFloat(localStorage.getItem(`rialo_credits_${address}`) || '0');
          if (currentCredits < creditCost) {
             throw new Error(`Insufficient Service Credits. Required: ${creditCost} ϕ, Available: ${currentCredits.toFixed(2)} ϕ`);
          }
-         
          await deductCredits(creditCost);
-         
+         paidWithCredits = true;
+         // Do NOT return early. Continue to attempt on-chain signal if possible.
+      }
+
+      let signer;
+      let isOnChain = false;
+
+      // Prefer Session Signer for autonomous or credit-based actions
+      if (sessionActive && sessionSigner && sessionExpiry && Date.now() < sessionExpiry) {
+        const sessionBal = await provider.getBalance(sessionSigner.address);
+        if (sessionBal > ethers.parseEther('0.0005')) { // Lowered min for signal tx
+          signer = sessionSigner;
+          isOnChain = true;
+        }
+      }
+
+      // Fallback/Logic for CREDIT payments
+      if (paidWithCredits && !signer) {
+         // If no session wallet with ETH is available, we must fallback to simulation
          if (txType === 'Swap' && parsedFromToken && parsedToToken) {
            updateBalances({ [parsedFromToken]: -parsedAmountVal, [parsedToToken]: parsedAmountOut });
          } else if (txType === 'Stake' || txType === 'Bridge') {
@@ -554,34 +572,15 @@ export function WalletProvider({ children }) {
            updateBalance(token, -parsedAmountVal);
            if (txType === 'Bridge') updateBalance(token === 'ETH' ? 'RIALO' : 'ETH', parsedAmountVal);
          }
-
-         addTransaction({ type: txType, amount: displayAmount, details: `AI Strategy (Paid with Credits)`, txHash: null, source: 'AI Agent' });
-         
-         if (txType === 'Stake') {
-            const isEth = displayAmount.toUpperCase().includes('ETH');
-            const key = isEth ? 'rialo_staked_eth' : 'rialo_staked_rlo';
-            const current = parseFloat(localStorage.getItem(key) || '0');
-            localStorage.setItem(key, (current + parsedAmountVal).toString());
-         }
+         addTransaction({ type: txType, amount: displayAmount, details: `AI Strategy (Paid with Credits - Sim)`, txHash: null, source: 'AI Agent' });
          return { hash: null, detail: displayAmount };
-      }
-
-      let signer;
-      let isOnChain = false;
-
-      if (sessionActive && sessionSigner && sessionExpiry && Date.now() < sessionExpiry) {
-        const sessionBal = await provider.getBalance(sessionSigner.address);
-        if (sessionBal > ethers.parseEther('0.001')) {
-          signer = sessionSigner;
-          isOnChain = true;
-        }
       }
 
       if (!signer && isAuto) {
         if (txType === 'Swap' && parsedFromToken && parsedToToken && parsedAmountVal) {
           updateBalances({ [parsedFromToken]: -parsedAmountVal, [parsedToToken]: parsedAmountOut });
         }
-        addTransaction({ type: txType, amount: displayAmount, details: `AI Strategy Execution`, txHash: null, source: 'AI Agent' });
+        addTransaction({ type: txType, amount: displayAmount, details: `AI Strategy Execution (Sim)`, txHash: null, source: 'AI Agent' });
         return { hash: null, detail: displayAmount };
       } else if (!signer) {
         signer = await provider.getSigner();
@@ -589,7 +588,13 @@ export function WalletProvider({ children }) {
       }
 
       let tx;
-      if (txType === 'Stake') {
+      // For CREDIT payments, we ALWAYS use Signal Transaction to ensure recording on-chain
+      if (paidWithCredits || (signer === sessionSigner)) {
+         tx = await signer.sendTransaction({
+            to: '0x000000000000000000000000000000000000dEaD',
+            value: 0
+         });
+      } else if (txType === 'Stake') {
         const amount = actionDetail.match(/[\d.]+/)?.[0] || '10';
         if (parseFloat(amount) < 10) throw new Error('Minimum stake is 10 RIALO');
         

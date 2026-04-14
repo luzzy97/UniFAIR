@@ -99,7 +99,7 @@ Example for 'price of btc':
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message },
       ],
-      model: 'groq/compound-mini', // As requested by user
+      model: 'llama-3.3-70b-versatile', // High-performance supported Groq model
       temperature: 0.2, // Keep it precise
     });
 
