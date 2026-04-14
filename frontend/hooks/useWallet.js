@@ -27,6 +27,8 @@ export function WalletProvider({ children }) {
     ETH: 3500, BTC: 65000, RIALO: 3, USDC: 1, USDT: 1,
     BNB: 600, SOL: 150, XRP: 0.6, DOGE: 0.15, TRX: 0.12, AVAX: 40, DOT: 8
   });
+  const [gasPrice, setGasPrice] = useState(0n);
+  const [gasUsd, setGasUsd] = useState("0.00");
 
   const fetchPrices = useCallback(async () => {
     try {
@@ -60,6 +62,31 @@ export function WalletProvider({ children }) {
     const interval = setInterval(fetchPrices, 60000); 
     return () => clearInterval(interval);
   }, [fetchPrices]);
+
+  const fetchGasPrice = useCallback(async () => {
+    if (!provider) return;
+    try {
+      const feeData = await provider.getFeeData();
+      const price = feeData.gasPrice || 0n;
+      setGasPrice(price);
+      
+      // Estimate USD: (GasPrice * 200,000 gas) / 1e18 * ETHPrice
+      if (price > 0n) {
+        const ethPrice = basePrices.ETH || 3500;
+        const gasCostEth = Number(price * 200000n) / 1e18;
+        const totalUsd = gasCostEth * ethPrice;
+        setGasUsd(totalUsd.toFixed(2));
+      }
+    } catch (e) {
+      console.warn("Gas fetch failed:", e);
+    }
+  }, [provider, basePrices.ETH]);
+
+  useEffect(() => {
+    fetchGasPrice();
+    const interval = setInterval(fetchGasPrice, 15000);
+    return () => clearInterval(interval);
+  }, [fetchGasPrice]);
 
   const globalRates = useMemo(() => {
     const rates = {};
@@ -817,7 +844,8 @@ export function WalletProvider({ children }) {
         sessionActive, sessionExpiry, sessionSigner, activateSession, deactivateSession, seedSession, withdrawSessionBalance,
         aiMessages, addAiMessage,
         toast, showToast,
-        tickingCredits, setTickingCredits, deductCredits
+        tickingCredits, setTickingCredits, deductCredits,
+        gasPrice, gasUsd
       }}
     >
       {children}

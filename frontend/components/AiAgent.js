@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useWallet } from '../hooks/useWallet';
 import { useStaking } from '../hooks/useStaking';
 import { ethers } from 'ethers';
+import GasWidget from './GasWidget';
 
 
 export default function AiAgent() {
@@ -198,6 +199,9 @@ export default function AiAgent() {
           </div>
           
           <div className="ai-body">
+            <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center' }}>
+               <GasWidget />
+            </div>
             {messages.map((m, i) => (
               <div key={i} className={`ai-msg ${m.role}`}>
                 {m.role === 'user' ? (
