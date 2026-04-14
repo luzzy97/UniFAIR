@@ -91,7 +91,17 @@ return (
                 </div>
                 Transaction History
             </h3>
-            <p className="text-[10px] text-zinc-400 uppercase tracking-widest mt-2">{transactions.length} total operations recorded</p>
+            <div className="flex items-center gap-3 mt-2">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-zinc-100 rounded-full border border-zinc-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-[8px] font-black text-emerald-600 uppercase tracking-tight">Live Sync</span>
+              </div>
+              <p className="text-[10px] text-zinc-400 uppercase tracking-[0.1em] font-bold">
+                <span className="text-zinc-900 tabular-nums transition-all duration-500 inline-block hover:scale-110">
+                  {transactions.length}
+                </span> total operations recorded
+              </p>
+            </div>
           </div>
         </div>
 

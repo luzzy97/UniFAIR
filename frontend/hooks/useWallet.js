@@ -24,24 +24,34 @@ export function WalletProvider({ children }) {
   const [sessionSigner, setSessionSigner] = useState(null);
 
   const [basePrices, setBasePrices] = useState({
-    ETH: 3500, RIALO: 3, USDC: 1, USDT: 1
+    ETH: 3500, BTC: 65000, RIALO: 3, USDC: 1, USDT: 1,
+    BNB: 600, SOL: 150, XRP: 0.6, DOGE: 0.15, TRX: 0.12, AVAX: 40, DOT: 8
   });
 
   const fetchPrices = useCallback(async () => {
     try {
-      const resp = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum,usd-coin,tether&vs_currencies=usd');
+      const ids = 'bitcoin,ethereum,binancecoin,solana,ripple,usd-coin,tether,dogecoin,tron,avalanche-2,polkadot';
+      const resp = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
       const data = await resp.json();
       if (data) {
         setBasePrices(prev => ({
           ...prev,
+          BTC: data.bitcoin?.usd || prev.BTC,
           ETH: data.ethereum?.usd || prev.ETH,
-          RIALO: 3, // Real value fixed as per user request
+          BNB: data.binancecoin?.usd || prev.BNB,
+          SOL: data.solana?.usd || prev.SOL,
+          XRP: data.ripple?.usd || prev.XRP,
+          DOGE: data.dogecoin?.usd || prev.DOGE,
+          TRX: data.tron?.usd || prev.TRX,
+          AVAX: data['avalanche-2']?.usd || prev.AVAX,
+          DOT: data.polkadot?.usd || prev.DOT,
+          RIALO: 3, // Fixed project value
           USDC: 1, 
           USDT: 1
         }));
       }
     } catch (err) {
-      console.error('Error fetching prices:', err);
+      console.error('Error fetching prices from CoinGecko:', err);
     }
   }, []);
 
@@ -74,6 +84,10 @@ export function WalletProvider({ children }) {
   const [scheduledTxs, setScheduledTxs] = useState([]);
   const [aiMessages, setAiMessages] = useState([{ role: 'ai', content: { raw: "Rialo AI is online. How can I optimize your on-chain operations today?" } }]);
   const [toast, setToast] = useState(null);
+
+  // SHARED credits state — single source of truth across all pages
+  const [tickingCredits, setTickingCredits] = useState(0);
+  const creditsInitializedForAddress = useRef(null);
   
   // Track last manual update per token to prevent immediate contract sync overwrites in demo
   const lastManualUpdates = useRef({});
@@ -117,6 +131,20 @@ export function WalletProvider({ children }) {
     }
 
   }, []);
+
+  // Load credits from localStorage when address changes
+  useEffect(() => {
+    if (address && typeof window !== 'undefined') {
+      if (creditsInitializedForAddress.current !== address) {
+        const saved = parseFloat(localStorage.getItem(`rialo_credits_${address}`) || '0');
+        setTickingCredits(saved);
+        creditsInitializedForAddress.current = address;
+      }
+    } else if (!address) {
+      setTickingCredits(0);
+      creditsInitializedForAddress.current = null;
+    }
+  }, [address]);
 
   // STEP 2: Persist state to localStorage on every change.
   // Skips the FIRST run (mount) where state still has stale zero defaults.
@@ -367,8 +395,19 @@ export function WalletProvider({ children }) {
     if (!address || !provider) throw new Error('Wallet not connected');
     
     try {
-      // 1. Generate Ephemeral Session Key
-      const ephemeralWallet = ethers.Wallet.createRandom();
+      // 1. Recover or Generate Ephemeral Session Key
+      let ephemeralWallet;
+      const savedKey = localStorage.getItem('rialo_session_key');
+      if (savedKey) {
+        try {
+          ephemeralWallet = new ethers.Wallet(savedKey, provider);
+        } catch (e) {
+          console.error("Failed to recover saved session key:", e);
+          ephemeralWallet = ethers.Wallet.createRandom().connect(provider);
+        }
+      } else {
+        ephemeralWallet = ethers.Wallet.createRandom().connect(provider);
+      }
       
       // 2. Request Authorization Signature (EIP-191)
       const signer = await provider.getSigner();
@@ -376,15 +415,20 @@ export function WalletProvider({ children }) {
                       `Duration: ${durationHours} Hour(s)\n` +
                       `Scope: Swap, Bridge, Stake\n` +
                       `Session Wallet: ${ephemeralWallet.address}\n\n` +
-                      `This allows AI to execute transactions without popups.`;
+                      `This allows AI to execute transactions without popups and maintains your gas balance.`;
       
       await signer.signMessage(message);
       
       // 3. Activate
       const expiry = Date.now() + (durationHours * 3600 * 1000);
-      setSessionSigner(ephemeralWallet.connect(provider));
+      setSessionSigner(ephemeralWallet);
       setSessionActive(true);
       setSessionExpiry(expiry);
+      
+      // Persist for restoration
+      localStorage.setItem('rialo_session_key', ephemeralWallet.privateKey);
+      localStorage.setItem('rialo_session_expiry', expiry.toString());
+      localStorage.setItem('rialo_session_active', 'true');
       
       return { address: ephemeralWallet.address, expiry };
     } catch (err) {
@@ -403,40 +447,49 @@ export function WalletProvider({ children }) {
     return tx.wait();
   }, [address, sessionSigner, provider]);
 
-  const deactivateSession = useCallback(async () => {
-    if (sessionSigner && address && provider) {
-      try {
-        const balance = await provider.getBalance(sessionSigner.address);
-        const gasLimit = 21000n;
-        const feeData = await provider.getFeeData();
-        const gasPrice = feeData.gasPrice || ethers.parseUnits('1', 'gwei');
-        const totalGasCost = gasLimit * gasPrice;
-        
-        if (balance > totalGasCost) {
-          const sweepAmount = balance - totalGasCost;
-          const sweepTx = await sessionSigner.sendTransaction({
-            to: address,
-            value: sweepAmount,
-            gasLimit: gasLimit,
-            gasPrice: gasPrice
-          });
-          showToast({ 
-            message: "Returning Funds...", 
-            detail: `${ethers.formatEther(sweepAmount).slice(0, 7)} ETH sent to your main wallet.`,
-            txHash: sweepTx.hash 
-          });
-        }
-      } catch (e) {
-        console.error("Failed to sweep session funds:", e);
+  const withdrawSessionBalance = useCallback(async () => {
+    if (!sessionSigner || !address || !provider) throw new Error('No active session or session wallet');
+    
+    try {
+      const balance = await provider.getBalance(sessionSigner.address);
+      const gasLimit = 21000n;
+      const feeData = await provider.getFeeData();
+      const gasPrice = feeData.gasPrice || ethers.parseUnits('1', 'gwei');
+      const totalGasCost = gasLimit * gasPrice;
+      
+      if (balance <= totalGasCost) {
+        throw new Error('Insufficient balance to cover gas for withdrawal');
       }
+
+      const sweepAmount = balance - totalGasCost;
+      const sweepTx = await sessionSigner.sendTransaction({
+        to: address,
+        value: sweepAmount,
+        gasLimit: gasLimit,
+        gasPrice: gasPrice
+      });
+
+      showToast({ 
+        message: "Withdrawing Funds...", 
+        detail: `${ethers.formatEther(sweepAmount).slice(0, 7)} ETH returning to your main wallet.`,
+        txHash: sweepTx.hash 
+      });
+
+      return sweepTx.wait();
+    } catch (err) {
+      console.error('Withdrawal failed:', err);
+      throw err;
     }
+  }, [sessionSigner, address, provider, showToast]);
+
+  const deactivateSession = useCallback(async () => {
     setSessionActive(false);
     setSessionExpiry(null);
     setSessionSigner(null);
     localStorage.removeItem('rialo_session_active');
     localStorage.removeItem('rialo_session_expiry');
-    localStorage.removeItem('rialo_session_key');
-  }, [sessionSigner, address, provider, showToast]);
+    // We intentionally DO NOT remove 'rialo_session_key' here to allow balance persistence for next time
+  }, []);
 
   // Restore Session Signer once provider is available
   useEffect(() => {
@@ -463,14 +516,13 @@ export function WalletProvider({ children }) {
     });
   }, []);
 
-  const executeAiTransaction = useCallback(async (txType, userMsg, actionDetail, isAuto = false) => {
+  const executeAiTransaction = useCallback(async (txType, userMsg, actionDetail, isAuto = false, gasType = 'ETH') => {
     if (!address || !provider) throw new Error('Wallet not connected');
     try {
       // Parse swap details BEFORE branching so all code paths share the same variables
       let parsedFromToken = null, parsedToToken = null, parsedAmountVal = null, parsedAmountOut = null;
       let displayAmount = actionDetail; // Use original by default
       if (txType === 'Swap') {
-        // Regex improved to optionally catch the output amount if it's already there
         const match = actionDetail.match(/([\d.]+)\s+([A-Z0-9]+)\s+->\s+(?:[\d.]+\s+)?([A-Z0-9]+)/i);
         if (match) {
           parsedAmountVal = parseFloat(match[1]);
@@ -478,15 +530,45 @@ export function WalletProvider({ children }) {
           parsedToToken   = match[3].toUpperCase();
           const rate = globalRates[parsedFromToken]?.[parsedToToken] || 1;
           parsedAmountOut = parsedAmountVal * rate;
-          // Format it beautifully so users see exactly how much they received
           displayAmount = `${parsedAmountVal} ${parsedFromToken} -> ${parseFloat(parsedAmountOut.toFixed(4))} ${parsedToToken}`;
         }
+      } else {
+         const match = actionDetail.match(/[\d.]+/);
+         if (match) parsedAmountVal = parseFloat(match[0]);
+      }
+
+      // Handling Credit Gas Logic
+      if (gasType === 'CREDIT') {
+         const creditCost = 0.05; // Flat fee per swap as requested
+         const currentCredits = parseFloat(localStorage.getItem(`rialo_credits_${address}`) || '0');
+         if (currentCredits < creditCost) {
+            throw new Error(`Insufficient Service Credits. Required: ${creditCost} ϕ, Available: ${currentCredits.toFixed(2)} ϕ`);
+         }
+         
+         await deductCredits(creditCost);
+         
+         if (txType === 'Swap' && parsedFromToken && parsedToToken) {
+           updateBalances({ [parsedFromToken]: -parsedAmountVal, [parsedToToken]: parsedAmountOut });
+         } else if (txType === 'Stake' || txType === 'Bridge') {
+           const token = txType === 'Stake' ? 'RIALO' : (actionDetail.toUpperCase().includes('ETH') ? 'ETH' : 'RIALO');
+           updateBalance(token, -parsedAmountVal);
+           if (txType === 'Bridge') updateBalance(token === 'ETH' ? 'RIALO' : 'ETH', parsedAmountVal);
+         }
+
+         addTransaction({ type: txType, amount: displayAmount, details: `AI Strategy (Paid with Credits)`, txHash: null, source: 'AI Agent' });
+         
+         if (txType === 'Stake') {
+            const isEth = displayAmount.toUpperCase().includes('ETH');
+            const key = isEth ? 'rialo_staked_eth' : 'rialo_staked_rlo';
+            const current = parseFloat(localStorage.getItem(key) || '0');
+            localStorage.setItem(key, (current + parsedAmountVal).toString());
+         }
+         return { hash: null, detail: displayAmount };
       }
 
       let signer;
       let isOnChain = false;
 
-      // 1. Check if Session exists and is FUNDED for real on-chain execution
       if (sessionActive && sessionSigner && sessionExpiry && Date.now() < sessionExpiry) {
         const sessionBal = await provider.getBalance(sessionSigner.address);
         if (sessionBal > ethers.parseEther('0.001')) {
@@ -496,40 +578,23 @@ export function WalletProvider({ children }) {
       }
 
       if (!signer && isAuto) {
-        // No gas in session wallet? Fallback to simulation for seamless demo, 
-        // but keep it looking identical to a real transaction as requested.
-        const fakeHash = '0x' + Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('');
-
         if (txType === 'Swap' && parsedFromToken && parsedToToken && parsedAmountVal) {
           updateBalances({ [parsedFromToken]: -parsedAmountVal, [parsedToToken]: parsedAmountOut });
         }
-        if (txType === 'Stake' || txType === 'Bridge') {
-          const amount = actionDetail.match(/[\d.]+/)?.[0] || '1';
-          const token = txType === 'Stake' ? 'RIALO' : (actionDetail.toUpperCase().includes('ETH') ? 'ETH' : 'RIALO');
-          updateBalance(token, -parseFloat(amount));
-          if (txType === 'Bridge') updateBalance(token === 'ETH' ? 'RIALO' : 'ETH', parseFloat(amount));
-        }
-
         addTransaction({ type: txType, amount: displayAmount, details: `AI Strategy Execution`, txHash: null, source: 'AI Agent' });
         return { hash: null, detail: displayAmount };
       } else if (!signer) {
-        // Default MetaMask popup
         signer = await provider.getSigner();
         isOnChain = true;
       }
 
       let tx;
-
       if (txType === 'Stake') {
         const amount = actionDetail.match(/[\d.]+/)?.[0] || '10';
         if (parseFloat(amount) < 10) throw new Error('Minimum stake is 10 RIALO');
         
         if (signer === sessionSigner) {
-          // AI Signal Transaction to avoid "Insufficient Balance" revert
-          tx = await signer.sendTransaction({
-            to: '0x000000000000000000000000000000000000dEaD',
-            value: 0
-          });
+          tx = await signer.sendTransaction({ to: '0x000000000000000000000000000000000000dEaD', value: 0 });
         } else {
           tx = await getContract('Staking', signer).stake(ethers.parseEther(amount));
         }
@@ -700,6 +765,32 @@ export function WalletProvider({ children }) {
     }
   }, [address, provider, chainId, fetchEthBalance]);
 
+  // Shared deductCredits — updates the global tickingCredits state and persists to storage+backend
+  const deductCredits = useCallback(async (amount) => {
+    const deductAmt = parseFloat(amount);
+    if (isNaN(deductAmt) || deductAmt <= 0 || !address) return;
+
+    setTickingCredits(prev => {
+      const next = Math.max(0, prev - deductAmt);
+      localStorage.setItem(`rialo_credits_${address}`, next.toString());
+      return next;
+    });
+
+    // Sync to backend after a short delay to let state settle
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      // Read updated value directly from localStorage (it was already updated with deduction)
+      const storedVal = parseFloat(localStorage.getItem(`rialo_credits_${address}`) || '0');
+      await fetch(`${baseUrl}/api/user-staking/${address}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credits: storedVal })
+      });
+    } catch (e) {
+      console.warn('[WalletProvider] Credit deduction backend sync failed:', e);
+    }
+  }, [address]);
+
   return (
     <WalletContext.Provider
       value={{ 
@@ -711,9 +802,10 @@ export function WalletProvider({ children }) {
         addTransaction, addTriggerOrder, executeAiTransaction,
         scheduledTxs, addScheduledTx, removeScheduledTx, removeTriggerOrder,
         aiPrivateKey, setAiPrivateKey,
-        sessionActive, sessionExpiry, sessionSigner, activateSession, deactivateSession, seedSession,
+        sessionActive, sessionExpiry, sessionSigner, activateSession, deactivateSession, seedSession, withdrawSessionBalance,
         aiMessages, addAiMessage,
-        toast, showToast
+        toast, showToast,
+        tickingCredits, setTickingCredits, deductCredits
       }}
     >
       {children}

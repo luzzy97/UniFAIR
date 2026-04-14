@@ -1,225 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useWallet } from '../hooks/useWallet';
+import { useStaking } from '../hooks/useStaking';
 import { ethers } from 'ethers';
 
-// Mock logic matching the system prompt
-const getAiResponse = (input, globalRates) => {
-  const lower = input.toLowerCase();
-  
-  // Scheduling detection (e.g., "in 5 minutes", "dalam 2 jam")
-  const delayMatch = lower.match(/(?:in|dalam)\s+([\d.]+)\s+(minute|minutes|menit|hour|hours|jam)/i);
-  let delaySec = 0;
-  if (delayMatch) {
-    const val = parseFloat(delayMatch[1]);
-    const unit = delayMatch[2].toLowerCase();
-    if (unit.startsWith('m')) delaySec = val * 60;
-    else if (unit.startsWith('h') || unit.startsWith('j')) delaySec = val * 3600;
-  }
-
-  // Direct swap execution (e.g., "swap 100 rialo to eth" or "buy 10 eth for usdc at 2500")
-  const swapMatch = lower.match(/(?:swap|tukar|buy|sell|beli|jual)\s+([\d.]+)\s+([a-z0-9]+)\s+(?:to|ke|for)\s+([a-z0-9]+)/i);
-  if (swapMatch) {
-    const amount = swapMatch[1];
-    let fromToken = swapMatch[2].toUpperCase();
-    let toToken = swapMatch[3].toUpperCase();
-
-    // Fuzzy matching for common typos
-    if (fromToken === 'ROALO' || fromToken === 'RIALO' || fromToken === 'RLO') fromToken = 'RIALO';
-    if (toToken === 'ROALO' || toToken === 'RIALO' || toToken === 'RLO') toToken = 'RIALO';
-    
-    // Check for trigger order
-    const triggerMatch = lower.match(/(?:at|when|if|saat|jika)\s*(?:price|harga)?\s*(?:hits|is|reaches|<=|>=|<|>|=|menyentuh|-)?\s*([\d.]+)/i);
-    const targetPrice = triggerMatch ? parseFloat(triggerMatch[1]) : 0;
-
-    if (targetPrice > 0) {
-      return {
-        insight: `Trigger condition recognized for ${amount} ${fromToken} to ${toToken} at target price ${targetPrice}.`,
-        options: ["1. Limit Order (Pending Execution)"],
-        recommendation: "System will automatically execute the swap when the price target is met.",
-        action: `Trigger Order Placed: ${amount} ${fromToken} -> ${toToken} at ${targetPrice}`,
-        targetPrice: targetPrice,
-        fromToken: fromToken,
-        toToken: toToken,
-        amount: amount
-      };
-    }
-
-    return {
-      insight: `Optimal route found for ${amount} ${fromToken} to ${toToken}.${delaySec ? ` (Scheduled for ${delayMatch[1]} ${delayMatch[2]})` : ''}`,
-      options: ["1. Aggregator Route (Executed)"],
-      recommendation: delaySec ? "Transaction will be processed automatically." : "Swap has been optimized and processed.",
-      action: delaySec ? `Scheduled: ${amount} ${fromToken} -> ${toToken}` : `Transaction successful. ${amount} ${fromToken} -> ${toToken} has been completed.`,
-      delaySec: delaySec
-    };
-  }
-
-  // Direct bridge execution (ETH <-> RIALO)
-  const bridgeMatch = lower.match(/(?:bridge|kirim)\s+([\d.]+)\s+([a-z0-9]+)\s+(?:to|ke)\s+([a-z0-9]+)/i);
-  if (bridgeMatch && lower.includes('bridge')) {
-    const amount = parseFloat(bridgeMatch[1]);
-    const fromToken = bridgeMatch[2].toUpperCase();
-    const toToken = bridgeMatch[3].toUpperCase();
-
-    if ((fromToken === 'ETH' && toToken === 'RIALO') || (fromToken === 'RIALO' && toToken === 'ETH')) {
-      if (amount < 0.01) {
-        return {
-          insight: "Bridge requirements not met.",
-          options: ["1. Increase amount to 0.01 ETH or more"],
-          recommendation: "Minimal bridge amount is 0.01 ETH.",
-          action: "Failed: Minimal bridge is 0.01 ETH."
-        };
-      }
-      const dir = fromToken === 'ETH' ? 'ETH -> Rialo L1' : 'Rialo L1 -> ETH';
-      return {
-        insight: `Rialo Bridge is clear. ${dir} migration processed.${delaySec ? ` (Scheduled in ${delayMatch[1]} ${delayMatch[2]})` : ''}`,
-        options: [`1. Native Rialo Bridge (${fromToken} to ${toToken})`],
-        recommendation: "Bridge protocol initiated successfully.",
-        action: delaySec ? `Scheduled: ${amount} ${dir}` : `Transaction successful. ${amount} ${dir} has been completed.`,
-        delaySec: delaySec
-      };
-    }
-  }
-
-  // Direct stake execution (e.g., "stake 1000 rialo")
-  const stakeMatch = lower.match(/(?:stake|staking)\s+([\d.]+)\s+([a-z0-9]+)/i);
-  if (stakeMatch) {
-    const amount = stakeMatch[1];
-    const token = stakeMatch[2].toUpperCase();
-    return {
-      insight: `${token} staking pool processed.${delaySec ? ` (Scheduled in ${delayMatch[1]} ${delayMatch[2]})` : ''}`,
-      options: ["1. Standard Staking Pool (Active)"],
-      recommendation: "Funds are now earning rewards.",
-      action: delaySec ? `Scheduled Stake: ${amount} ${token}` : `Transaction successful. Staking ${amount} ${token} is now active.`,
-      delaySec: delaySec
-    };
-  }
-
-  // Price Inquiry
-  if (lower.includes('price') || lower.includes('harga') || lower.includes('berapa') || lower.includes('how much')) {
-    // Attempt to parse out the token name
-    let token = null;
-    let target = 'USDC';
-    
-    const priceMatchParams = lower.match(/(?:price of|harga|berapa harga)\s+([a-z0-9]+)(?:\s+(?:in|dalam|ke)\s+([a-z0-9]+))?/i);
-    const shortMatch = lower.match(/([a-z0-9]+)\s+price/i) || lower.match(/price\s+([a-z0-9]+)/i);
-
-    if (priceMatchParams) {
-      token = priceMatchParams[1].toUpperCase();
-      if (priceMatchParams[2]) target = priceMatchParams[2].toUpperCase();
-    } else if (shortMatch) {
-      token = shortMatch[1].toUpperCase();
-    }
-
-    // Ignore if it's a swap/buy/sell command
-    if (token && !lower.includes('swap') && !lower.includes('buy') && !lower.includes('sell') && !lower.includes('stake') && !lower.includes('bridge')) {
-       
-       if (token === 'USDC' || token === 'USDT') target = 'ETH';
-
-       let rate = 0;
-       if (globalRates && globalRates[token] && globalRates[token][target]) {
-          rate = globalRates[token][target];
-       } else {
-          // Generate a deterministic pseudo-random price for ANY unknown token
-          let hash = 0;
-          for (let i = 0; i < token.length; i++) {
-             hash = token.charCodeAt(i) + ((hash << 5) - hash);
-          }
-          // Simple pseudo-random formula
-          let pseudoRandom = Math.abs(Math.sin(hash)) * 1000;
-          if (pseudoRandom < 0.01) pseudoRandom += 0.5; // Avoid zero
-
-          // If the target is specified and in globalRates, adjust it
-          if (target !== 'USDC' && globalRates && globalRates[target] && globalRates[target]['USDC']) {
-             rate = pseudoRandom / globalRates[target]['USDC'];
-          } else {
-             rate = pseudoRandom;
-             target = 'USDC'; // Fallback to USDC
-          }
-       }
-       
-       const formatted = rate < 0.01 ? rate.toFixed(6) : rate.toFixed(4);
-       
-       return {
-         insight: `Real-time oracle data retrieved for ${token}/${target} market.`,
-         options: [`Current Rate: 1 ${token} ≈ ${formatted} ${target}`],
-         recommendation: `You can directly swap or set a Limit Order for ${token} here.`,
-         action: `Price Checked: 1 ${token} is ${formatted} ${target}`
-       };
-    }
-  }
-
-  // Generic Swap
-  if (lower.includes('swap') || lower.includes('tukar')) {
-    return {
-      insight: "Liquidity is strong and gas is currently reasonable on Layer 2s.",
-      options: ["1. Swap on Ethereum mainnet (higher gas, deeper liquidity)", "2. Swap via Arbitrum (lower fees)"],
-      recommendation: "Use Arbitrum for lower fees unless you're swapping a large amount.",
-      action: "Provide amount and preferred tokens (e.g., 'swap 100 RIALO to ETH')."
-    };
-  }
-  
-  // Generic Bridge
-  if (lower.includes('bridge') || lower.includes('kirim')) {
-    return {
-      insight: "Rialo Bridge is optimized for liquidity migration from Ethereum.",
-      options: ["1. ETH to RIALO (Standard Route)"],
-      recommendation: "Currently, only ETH to RIALO bridging is supported for maximum safety.",
-      action: "Specify your amount (e.g., 'bridge 0.5 ETH to RIALO')."
-    };
-  }
-
-  // Generic Stake
-  if (lower.includes('stake') || lower.includes('yield') || lower.includes('staking')) {
-    return {
-      insight: "Several stable pools currently offer strong APY with moderate risk.",
-      options: ["1. Stablecoin pool (lower risk)", "2. ETH staking (moderate risk, long-term)"],
-      recommendation: "Start with a stable pool if you want safer yield.",
-      action: "Specify your details (e.g., 'stake 1000 RIALO')."
-    };
-  }
-
-  // Rialo General Knowledge Base Matches
-  if (lower.includes('what is rialo') || lower.includes('about rialo') || lower.includes('who are you') || lower.includes('apa itu') || lower.includes('tentang')) {
-    return {
-      insight: "Rialo is a blockchain built for the real world.",
-      options: ["Rialo Omni Account", "Rialo Execution Engine", "Rialo VM"],
-      recommendation: "Rialo enables event-driven execution, native real-world data streams (without traditional oracles), and gas-less transactions with 50ms block times.",
-      action: "I can help you utilize Rialo's DeFi ecosystem. Try 'swap', 'bridge', or 'stake'."
-    };
-  }
-
-  // Expanded Knowledge Base
-  const broadKnowledge = {
-    'build': 'You can build on Rialo using our custom Rust-based engine. We provide a resilient infrastructure designed for 10x performance compared to traditional EVM chains. Check our docs for SDK details.',
-    'dev': 'Developers are the core of our ecosystem. Rialo provides a unified hub for builders to deploy high-frequency financial applications with sub-second finality.',
-    'consensus': 'Rialo uses a high-throughput parallel execution consensus, achieving 50ms block times and nanosecond latency without compromising security.',
-    'node': 'Rialo supports thousands of validator nodes globally. Our network is designed to be permissionless and decentralized, ensuring no single entity holds governing power.',
-    'fee': 'Rialo is engineered for a zero-friction experience, which includes near-zero fees for most operations. We prioritize accessibility for all users.',
-    'security': 'The Rialo Sentinel protocol provides a multi-layered security shield, protecting every transaction against malicious actors and front-running.',
-    'roadmap': 'We are currently focused on the "Unified Hub" phase, integrating swapping, bridging, and staking into a single, intuitive experience. Ecosystem expansion is next!',
-    'hello': 'Hello! I am your Rialo AI Assistant. I can help you trade, bridge assets, or answer questions about our underlying technology. How can I assist you?',
-    'help': 'I can help with commands like "swap 10 ETH to RIALO", "bridge 0.1 ETH to RIALO", or "stake 500 RIALO". I can also answer questions about our tech!',
-  };
-
-  for (const [key, val] of Object.entries(broadKnowledge)) {
-    if (lower.includes(key)) {
-      return { raw: val };
-    }
-  }
-
-  // Dynamic Fallback for off-topic or unknown queries
-  return {
-    raw: `That's an interesting question about "${input}". As a specialized Rialo AI, I'm constantly evolving. While this specific query is outside my current DeFi optimization parameters, I can tell you that Rialo's "Architectural Void" is designed for exactly this kind of innovation. Is there a specific part of our ecosystem—like swapping or staking—I can help you optimize today?`
-  };
-};
 
 export default function AiAgent() {
-  const { isConnected, provider, executeAiTransaction, addTriggerOrder, globalRates, scheduledTxs, addScheduledTx, removeScheduledTx, toast, showToast, sessionActive, sessionExpiry, sessionSigner, activateSession, deactivateSession, seedSession, aiMessages: messages, addAiMessage } = useWallet();
+  const { isConnected, address, balances, transactions, provider, executeAiTransaction, addTriggerOrder, globalRates, scheduledTxs, addScheduledTx, removeScheduledTx, toast, showToast, sessionActive, sessionExpiry, sessionSigner, activateSession, deactivateSession, seedSession, withdrawSessionBalance, aiMessages: messages, addAiMessage, tickingCredits } = useWallet();
+  const { stakedBalance, stakedEthBalance } = useStaking();
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [showSchedulePanel, setShowSchedulePanel] = useState(false);
   const [showAiWalletPanel, setShowAiWalletPanel] = useState(false);
   const [sessionBalance, setSessionBalance] = useState('0');
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [sessionDuration, setSessionDuration] = useState(1);
   const [isSeeding, setIsSeeding] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
@@ -252,7 +45,7 @@ export default function AiAgent() {
     }
   }, [sessionActive, sessionSigner, provider]);
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
@@ -261,9 +54,29 @@ export default function AiAgent() {
     setInput('');
     setIsThinking(true);
 
-    // Simulate network delay
-    setTimeout(() => {
-      const response = getAiResponse(userMsg, globalRates);
+    try {
+      // Collect current wallet/ecosystem context for the AI
+      const ctx = {
+        isConnected,
+        address,
+        balances,
+        stakedBalance,
+        stakedEthBalance,
+        tickingCredits,
+        globalRates,
+        operationsCount: transactions.length,
+        currentPage: window.location.pathname
+      };
+
+      const resp = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMsg, context: ctx })
+      });
+
+      if (!resp.ok) throw new Error('AI Service unavailable');
+      
+      const response = await resp.json();
       addAiMessage({ role: 'ai', content: response });
       setIsThinking(false);
       
@@ -312,7 +125,7 @@ export default function AiAgent() {
           
           addAiMessage({ role: 'ai', content: { raw: statusMsg } });
 
-          executeAiTransaction(type, userMsg, detail).then(res => {
+          executeAiTransaction(type, userMsg, detail, true, response.gas_type || 'ETH').then(res => {
             showToast({
               message: `${type} successful!`,
               detail: res.detail,
@@ -326,7 +139,11 @@ export default function AiAgent() {
           });
         }
       }
-    }, 600);
+    } catch (err) {
+      console.error('AI Error:', err);
+      addAiMessage({ role: 'ai', content: { raw: `❌ **Error**: ${err.message}. Please check if your API key is configured.` } });
+      setIsThinking(false);
+    }
   };
 
   const submitScheduledForm = (e) => {
@@ -599,6 +416,31 @@ export default function AiAgent() {
                       </button>
                     )}
 
+                    {parseFloat(sessionBalance) > 0 && (
+                      <button 
+                        className="ai-sched-btn" 
+                        disabled={isWithdrawing}
+                        onClick={async () => {
+                          setIsWithdrawing(true);
+                          try {
+                            await withdrawSessionBalance();
+                            showToast({ message: "Withdrawal Complete", detail: "Funds returned to your main wallet." });
+                            if (provider && sessionSigner) {
+                               const bal = await provider.getBalance(sessionSigner.address);
+                               setSessionBalance(parseFloat(ethers.formatEther(bal)).toFixed(4));
+                            }
+                          } catch (e) {
+                            showToast({ message: "Withdrawal Failed", detail: e.message, type: 'error' });
+                          } finally {
+                            setIsWithdrawing(false);
+                          }
+                        }}
+                        style={{ border: '1px solid #10b981', color: '#10b981', background: 'transparent' }}
+                      >
+                        {isWithdrawing ? 'Withdrawing...' : `Withdraw Balance (${sessionBalance} ETH)`}
+                      </button>
+                    )}
+
                     <button 
                       className="ai-sched-btn" 
                       style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
@@ -607,15 +449,15 @@ export default function AiAgent() {
                         setIsRevoking(true);
                         try {
                           await deactivateSession();
-                          showToast({ message: "Session Terminated", detail: "Funds returned to main wallet", type: 'error' });
+                          showToast({ message: "Session Deactivated", detail: "AI automation paused.", type: 'error' });
                         } catch (e) {
-                          showToast({ message: "Revoke Failed", detail: e.message, type: 'error' });
+                          showToast({ message: "Action Failed", detail: e.message, type: 'error' });
                         } finally {
                           setIsRevoking(false);
                         }
                       }}
                     >
-                      {isRevoking ? 'Returning Funds...' : 'Revoke Session'}
+                      {isRevoking ? 'Revoking...' : 'Terminate Session'}
                     </button>
                   </div>
                 ) : (

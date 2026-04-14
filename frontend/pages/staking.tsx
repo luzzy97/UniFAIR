@@ -539,32 +539,32 @@ export default function Home() {
 
                         <div className="h-px bg-white/5 my-3 w-full"></div>
 
-                        <div className="flex justify-between text-white/60 items-center">
+                        <div className="flex justify-between items-center">
                           <span className="text-white/40 flex items-center group cursor-help font-medium">
                             Yield to Wallet
                             <Info className="w-3.5 h-3.5 ml-1.5 text-white/10 group-hover:text-white/30 transition-colors" />
                           </span>
                           <div className="flex flex-col items-end">
                             <span className="font-semibold text-white tracking-wide flex items-center">
-                              {payoutType === 'rwa' ? '$' : ''}{yieldToWallet.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-white/20 text-xs ml-1 mr-1.5">{payoutType === 'rwa' ? 'USD (RWA)' : (assetType === 'solo_eth' ? 'ETH' : 'RLO')}</span>
+                              {payoutType === 'rwa' ? '$' : ''}{yieldToWallet.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-zinc-500 text-xs ml-1 mr-1.5">{payoutType === 'rwa' ? 'USD (RWA)' : (assetType === 'solo_eth' ? 'ETH' : 'RLO')}</span>
                               {payoutType !== 'rwa' && (
                                 <span className="text-white/20 font-medium text-[11px]">(≈ ${(assetType === 'solo_eth' ? yieldToWallet * 2000 : yieldToWallet * 3).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
                               )}
                             </span>
-                            <span className="text-white/20 text-[10px] mt-0.5">(Total over {lockDuration} month{lockDuration > 1 ? 's' : ''})</span>
+                            <span className="text-blue-400 text-[10px] mt-0.5 font-bold uppercase tracking-wide opacity-90">(Total over {lockDuration} month{lockDuration > 1 ? 's' : ''})</span>
                           </div>
                         </div>
 
-                        <div className="flex justify-between text-zinc-600 items-center">
-                          <span className="text-zinc-500 flex items-center group cursor-help font-medium">
+                        <div className="flex justify-between items-center">
+                          <span className="text-white/40 flex items-center group cursor-help font-medium">
                             Total Yield Router
-                            <Info className="w-3.5 h-3.5 ml-1.5 text-zinc-300 group-hover:text-zinc-500 transition-colors" />
+                            <Info className="w-3.5 h-3.5 ml-1.5 text-white/20 group-hover:text-white/30 transition-colors" />
                           </span>
                           <div className="flex flex-col items-end">
-                            <span className="font-bold text-black tracking-wide drop-shadow-sm">
+                            <span className="font-bold text-white tracking-wide drop-shadow-sm">
                               {rawYieldToServiceCredits.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-zinc-500 text-xs ml-0.5">Credits</span>
                             </span>
-                            <span className="text-zinc-400 text-[10px] mt-0.5">(Total over {lockDuration} month{lockDuration > 1 ? 's' : ''})</span>
+                            <span className="text-blue-400 text-[10px] mt-0.5 font-bold uppercase tracking-wide opacity-90">(Total over {lockDuration} month{lockDuration > 1 ? 's' : ''})</span>
                           </div>
                         </div>
                       </div>

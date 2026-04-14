@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import Toast from '../components/Toast';
 import { useWallet } from '../hooks/useWallet';
 import { useRLO } from '../hooks/useRLO';
+import { useStaking } from '../hooks/useStaking';
 import { RLO_ADDRESS } from '../lib/ethers';
 // import { swapTokens } from '../lib/api';
 
@@ -18,6 +19,7 @@ const TOKENS = [
 export default function SwapPage() {
   const { isConnected, address, provider, connect, balances: walletBalances, updateBalance, updateBalances, addTransaction, globalRates, addTriggerOrder, fetchEthBalance, sessionActive, activateSession, deactivateSession } = useWallet();
   const { balance: rloBal, claimFaucet, loading: faucetLoading, transfer, fetchBalance: fetchRloBalance } = useRLO();
+  const { tickingCredits, deductCredits } = useStaking();
   const [fromToken, setFromToken] = useState('ETH');
   const [toToken, setToToken] = useState('RIALO');
   const [amountIn, setAmountIn] = useState('');
@@ -25,6 +27,8 @@ export default function SwapPage() {
   const [toast, setToast] = useState(null);
   const [showFromTokenList, setShowFromTokenList] = useState(false);
   const [showToTokenList, setShowToTokenList] = useState(false);
+  const [useCreditsForGas, setUseCreditsForGas] = useState(false);
+  const SWAP_GAS_CREDIT_COST = 0.05; // credits per swap
 
   const balances = {
     ...walletBalances
@@ -108,6 +112,16 @@ export default function SwapPage() {
 
     setLoading(true);
     setToast({ message: 'Confirming actual transaction in MetaMask…', type: 'loading' });
+    
+    // Check credits for gas before proceeding
+    if (useCreditsForGas) {
+      if ((tickingCredits || 0) < SWAP_GAS_CREDIT_COST) {
+        setToast({ message: `Insufficient credits. Need ${SWAP_GAS_CREDIT_COST} credits for gas. Falling back to normal gas.`, type: 'error' });
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       let hash;
       const signer = await provider.getSigner();
@@ -136,6 +150,12 @@ export default function SwapPage() {
       }
 
       setToast({ message: `Blockchain operation successful!`, type: 'success', txHash: hash });
+      
+      // Deduct credits for gas if enabled
+      if (useCreditsForGas && deductCredits) {
+        await deductCredits(SWAP_GAS_CREDIT_COST);
+        setToast({ message: `Swap successful! Gas paid with ${SWAP_GAS_CREDIT_COST} credits.`, type: 'success', txHash: hash });
+      }
       
       // Update balances from chain
       if (address && provider) {
@@ -435,7 +455,7 @@ export default function SwapPage() {
             )}
 
             {/* Details */}
-            <div className="space-y-4 mb-8 px-2">
+            <div className="space-y-4 mb-6 px-2">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-white/30 font-body">Exchange Rate</span>
                 <span className="font-headline font-bold text-white/80">{displayRate}</span>
@@ -448,13 +468,65 @@ export default function SwapPage() {
                 <span className="text-white/30 font-body">Max Slippage</span>
                 <span className="font-headline font-bold text-white/80">{slippage === 'Auto' ? '0.5%' : `${slippage}%`}</span>
               </div>
+
+              {/* Gas Fee Selection */}
+              <div className="flex justify-between items-center pt-4 border-t border-white/5">
+                <div className="flex flex-col">
+                  <span className="text-white/30 font-body text-sm">Gas Fee</span>
+                  {useCreditsForGas && (
+                    <span className="text-[10px] text-white/20 mt-0.5">
+                      Balance: {(tickingCredits || 0).toFixed(2)} ϕ
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  {!useCreditsForGas && (
+                    <span className="font-headline font-bold text-white/50 text-sm">ETH (Normal)</span>
+                  )}
+                  {useCreditsForGas && (
+                    <span className={`font-headline font-bold text-sm ${
+                      (tickingCredits || 0) >= SWAP_GAS_CREDIT_COST ? 'text-emerald-400' : 'text-red-400'
+                    }`}>
+                      {SWAP_GAS_CREDIT_COST} ϕ Credit
+                    </span>
+                  )}
+                  {/* Toggle */}
+                  <button
+                    id="credits-gas-toggle"
+                    onClick={() => setUseCreditsForGas(prev => !prev)}
+                    className={`relative w-12 h-6 rounded-full transition-all duration-300 ${
+                      useCreditsForGas ? 'bg-emerald-500' : 'bg-white/10'
+                    }`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all duration-300 ${
+                      useCreditsForGas ? 'left-7' : 'left-1'
+                    }`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Credits Tooltip */}
+              {useCreditsForGas && (tickingCredits || 0) < SWAP_GAS_CREDIT_COST && (
+                <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
+                  <span className="material-symbols-outlined text-red-400 text-sm">warning</span>
+                  <span className="text-red-400 text-xs font-bold">Insufficient credits for gas. Need {SWAP_GAS_CREDIT_COST} ϕ.</span>
+                </div>
+              )}
             </div>
 
             {/* CTA */}
             <button
               onClick={handleAction}
-              disabled={loading || (isConnected && amountIn && parseFloat(amountIn) > (balances[fromToken] || 0))}
-              className="w-full bg-white text-black py-5 rounded-2xl font-headline font-extrabold text-lg tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl disabled:opacity-50"
+              disabled={
+                loading ||
+                (isConnected && amountIn && parseFloat(amountIn) > (balances[fromToken] || 0)) ||
+                (isConnected && useCreditsForGas && (tickingCredits || 0) < SWAP_GAS_CREDIT_COST)
+              }
+              className={`w-full py-5 rounded-2xl font-headline font-extrabold text-lg tracking-tight active:scale-[0.98] transition-all shadow-2xl disabled:opacity-50 ${
+                useCreditsForGas && (tickingCredits || 0) >= SWAP_GAS_CREDIT_COST
+                  ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
+                  : 'bg-white hover:bg-white/90 text-black'
+              }`}
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -464,8 +536,15 @@ export default function SwapPage() {
                 'Connect Wallet'
               ) : amountIn && parseFloat(amountIn) > (balances[fromToken] || 0) ? (
                 `Insufficient ${fromToken} Balance`
+              ) : useCreditsForGas && (tickingCredits || 0) < SWAP_GAS_CREDIT_COST ? (
+                `Insufficient Credits (Need ${SWAP_GAS_CREDIT_COST} ϕ)`
               ) : orderType === 'limit' ? (
                 `Place Limit Order`
+              ) : useCreditsForGas ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
+                  {`Swap ${fromToken} → ${toToken} (Gas via Credits)`}
+                </span>
               ) : (
                 `Swap ${fromToken} → ${toToken}`
               )}
