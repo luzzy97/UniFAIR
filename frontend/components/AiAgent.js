@@ -16,7 +16,15 @@ export default function AiAgent() {
   const [sessionDuration, setSessionDuration] = useState(1);
   const [isSeeding, setIsSeeding] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
-  const [schedData, setSchedData] = useState({ type: 'Swap', amount: '10', fromToken: 'USDC', toToken: 'RIALO', timeVal: '5', timeUnit: 'minutes' });
+  const [schedData, setSchedData] = useState({ 
+    type: 'Swap', 
+    amount: '10', 
+    fromToken: 'USDC', 
+    toToken: 'RIALO', 
+    timeVal: '5', 
+    timeUnit: 'minutes',
+    gasType: 'ETH' 
+  });
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
@@ -150,11 +158,11 @@ export default function AiAgent() {
     e.preventDefault();
     let cmd = "";
     if (schedData.type === 'Swap') {
-      cmd = `swap ${schedData.amount} ${schedData.fromToken} to ${schedData.toToken} in ${schedData.timeVal} ${schedData.timeUnit}`;
+      cmd = `swap ${schedData.amount} ${schedData.fromToken} to ${schedData.toToken} in ${schedData.timeVal} ${schedData.timeUnit} using ${schedData.gasType} gas`;
     } else if (schedData.type === 'Bridge') {
-      cmd = `bridge ${schedData.amount} ETH to RIALO in ${schedData.timeVal} ${schedData.timeUnit}`;
+      cmd = `bridge ${schedData.amount} ETH to RIALO in ${schedData.timeVal} ${schedData.timeUnit} using ${schedData.gasType} gas`;
     } else {
-      cmd = `stake ${schedData.amount} ${schedData.fromToken} in ${schedData.timeVal} ${schedData.timeUnit}`;
+      cmd = `stake ${schedData.amount} ${schedData.fromToken} in ${schedData.timeVal} ${schedData.timeUnit} using ${schedData.gasType} gas`;
     }
     setInput(cmd);
     setShowSchedulePanel(false);
@@ -342,6 +350,25 @@ export default function AiAgent() {
                       </select>
                     </div>
                   </div>
+
+                  <div className="gas-sep"></div>
+                  <div className="gas-row">
+                    <div className="gas-label-group">
+                      <span className="gas-main-label">Gas Fee</span>
+                      <span className={`gas-selection-text ${schedData.gasType === 'CREDIT' ? 'credit' : ''}`}>
+                        {schedData.gasType === 'ETH' ? 'ETH (Normal)' : 'Service Credits (ϕ)'}
+                      </span>
+                    </div>
+                    <label className="switch-box">
+                      <input 
+                        type="checkbox" 
+                        checked={schedData.gasType === 'CREDIT'}
+                        onChange={(e) => setSchedData({...schedData, gasType: e.target.checked ? 'CREDIT' : 'ETH'})}
+                      />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+
                   <button type="submit" className="ai-sched-btn">Generate Command</button>
                 </form>
               </div>
