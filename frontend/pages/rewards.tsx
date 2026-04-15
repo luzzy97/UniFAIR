@@ -68,7 +68,7 @@ export default function Rewards() {
   };
 
   return (
-    <main className="min-h-screen bg-background text-on-background font-body antialiased selection:bg-primary/30 flex flex-col relative">
+    <main className="min-h-screen bg-white text-black font-body antialiased selection:bg-primary/30 flex flex-col relative">
       
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
 
