@@ -155,28 +155,28 @@ export default function Rewards() {
           {/* Bottom Section: Yield Trajectory Table */}
           <div className="mt-12 bg-surface-container-low rounded-2xl border border-outline-variant/10 overflow-hidden">
             <div className="p-8 border-b border-outline-variant/5">
-              <h2 className="text-xl font-headline font-extrabold tracking-tighter text-black">Yield Breakdown</h2>
+              <h2 className="text-xl font-headline font-extrabold tracking-tighter text-white">Yield Breakdown</h2>
             </div>
             <div className="flex flex-col divide-y divide-outline-variant/5">
               
               <div className="flex items-center justify-between p-6 hover:bg-black/5 transition-colors">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/60 font-label">Single RLO Staking</span>
-                <span className="font-headline font-extrabold text-lg text-black">+80.00 RLO</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 font-label">Single RLO Staking</span>
+                <span className="font-headline font-extrabold text-lg text-white">+80.00 RLO</span>
               </div>
  
               <div className="flex items-center justify-between p-6 hover:bg-black/5 transition-colors">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/60 font-label">Pair (RLO + ETH)</span>
-                <span className="font-headline font-extrabold text-lg text-black">+45.50 RLO</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 font-label">Pair (RLO + ETH)</span>
+                <span className="font-headline font-extrabold text-lg text-white">+45.50 RLO</span>
               </div>
 
               <div className="flex items-center justify-between p-6 hover:bg-black/5 transition-colors">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/60 font-label">Upfront RWA Payout</span>
-                <span className="font-headline font-extrabold text-lg text-emerald-600">+$10.53 USD</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 font-label">Upfront RWA Payout</span>
+                <span className="font-headline font-extrabold text-lg text-emerald-400">+$10.53 USD</span>
               </div>
  
               <div className="flex items-center justify-between p-6 hover:bg-black/5 transition-colors">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/60 font-label">SfS Routing Fee</span>
-                <span className="font-headline font-extrabold text-lg text-red-600">-550.00 Credits</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 font-label">SfS Routing Fee</span>
+                <span className="font-headline font-extrabold text-lg text-red-500">-550.00 Credits</span>
               </div>
             </div>
           </div>
