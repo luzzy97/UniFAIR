@@ -202,9 +202,10 @@ const TokenSelector = ({ value, onChange, show, setShow, excludeToken, walletBal
         e.stopPropagation();
         setShow(!show);
       }}
-      className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full shadow-sm hover:bg-white/10 active:scale-[0.98] transition-[background-color,transform,border-color,box-shadow] duration-200 border border-white/10"
+      className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10 hover:bg-white/10 transition-colors duration-200 shadow-sm"
+      style={{ filter: 'none', boxShadow: 'none' }}
     >
-      <div className={`w-6 h-6 rounded-full flex items-center justify-center overflow-hidden ${TOKENS.find(t => t.symbol === value)?.iconClass}`}>
+      <div className={`w-6 h-6 rounded-full flex items-center justify-center overflow-hidden pointer-events-none ${TOKENS.find(t => t.symbol === value)?.iconClass}`}>
         {TOKENS.find(t => t.symbol === value)?.isImage ? (
           <img src={TOKENS.find(t => t.symbol === value)?.icon} className="w-full h-full object-contain" alt={value} />
         ) : (
@@ -213,25 +214,25 @@ const TokenSelector = ({ value, onChange, show, setShow, excludeToken, walletBal
           </span>
         )}
       </div>
-      <span className="font-headline font-bold text-sm text-white tracking-tight" style={{ textShadow: 'none' }}>{value}</span>
-      <span className="material-symbols-outlined text-sm text-white/60">expand_more</span>
+      <span className="font-headline font-bold text-sm text-white tracking-tight pointer-events-none" style={{ textShadow: 'none', filter: 'none' }}>{value}</span>
+      <span className="material-symbols-outlined text-sm text-white/60 pointer-events-none">expand_more</span>
     </button>
     {show && (
-      <div className="absolute right-0 top-full mt-2 bg-[#161616] rounded-xl shadow-2xl border border-white/10 z-[100] min-w-[140px] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
+      <div className="absolute right-0 top-full mt-2 bg-[#161616] rounded-xl shadow-2xl border border-white/10 z-[100] min-w-[140px] overflow-hidden animate-in fade-in duration-200">
         {TOKENS.filter(t => t.symbol !== excludeToken).map(t => (
           <button
             key={t.symbol}
             onClick={() => { onChange(t.symbol); setShow(false); }}
             className="flex items-center gap-2 w-full px-4 py-3 hover:bg-white/5 transition-colors text-white group"
           >
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center overflow-hidden ${t.iconClass} transition-transform group-hover:scale-110`}>
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center overflow-hidden pointer-events-none ${t.iconClass}`}>
               {t.isImage ? (
                 <img src={t.icon} className="w-full h-full object-contain" alt={t.symbol} />
               ) : (
                 <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>{t.icon}</span>
               )}
             </div>
-            <span className="font-headline font-bold text-sm text-white group-hover:text-primary transition-colors" style={{ textShadow: 'none' }}>{t.symbol}</span>
+            <span className="font-headline font-bold text-sm text-white pointer-events-none" style={{ textShadow: 'none', filter: 'none' }}>{t.symbol}</span>
           </button>
         ))}
       </div>
@@ -349,7 +350,7 @@ export default function SwapPage() {
             </div>
 
             {/* Input — You Pay */}
-            <div className="bg-[#161616] rounded-2xl p-6 mb-2 transition-all border border-white/5 focus-within:border-white/20">
+            <div className="bg-[#161616] rounded-2xl p-6 mb-2 border border-white/5 focus-within:border-white/20">
               <div className="flex justify-between items-center mb-4">
                 <span className="font-label text-xs uppercase tracking-widest text-white/30 font-bold">You pay</span>
                 <span className="font-label text-xs text-white/40">Balance: {balances[fromToken]?.toFixed(2) || '0.00'} {fromToken}</span>
@@ -384,7 +385,7 @@ export default function SwapPage() {
             </div>
 
             {/* Output — You Receive */}
-            <div className={`bg-[#161616] rounded-2xl p-6 transition-all border border-white/5 focus-within:border-white/20 ${orderType === 'limit' ? 'mb-2' : 'mb-8'}`}>
+            <div className={`bg-[#161616] rounded-2xl p-6 border border-white/5 focus-within:border-white/20 ${orderType === 'limit' ? 'mb-2' : 'mb-8'}`}>
               <div className="flex justify-between items-center mb-4">
                 <span className="font-label text-xs uppercase tracking-widest text-white/30 font-bold">You receive</span>
                 <span className="font-label text-xs text-white/40">Balance: {balances[toToken]?.toFixed(2) || '0.00'} {toToken}</span>
