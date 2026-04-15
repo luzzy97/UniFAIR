@@ -202,7 +202,7 @@ const TokenSelector = ({ value, onChange, show, setShow, excludeToken, walletBal
         e.stopPropagation();
         setShow(!show);
       }}
-      className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full shadow-sm hover:bg-white/10 active:scale-95 transition-all border border-white/10"
+      className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full shadow-sm hover:bg-white/10 active:scale-[0.98] transition-[background-color,transform,border-color,box-shadow] duration-200 border border-white/10"
     >
       <div className={`w-6 h-6 rounded-full flex items-center justify-center overflow-hidden ${TOKENS.find(t => t.symbol === value)?.iconClass}`}>
         {TOKENS.find(t => t.symbol === value)?.isImage ? (
@@ -213,7 +213,7 @@ const TokenSelector = ({ value, onChange, show, setShow, excludeToken, walletBal
           </span>
         )}
       </div>
-      <span className="font-headline font-bold text-sm text-white tracking-tight">{value}</span>
+      <span className="font-headline font-bold text-sm text-white tracking-tight" style={{ textShadow: 'none' }}>{value}</span>
       <span className="material-symbols-outlined text-sm text-white/60">expand_more</span>
     </button>
     {show && (
@@ -231,7 +231,7 @@ const TokenSelector = ({ value, onChange, show, setShow, excludeToken, walletBal
                 <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>{t.icon}</span>
               )}
             </div>
-            <span className="font-headline font-bold text-sm text-white group-hover:text-primary transition-colors">{t.symbol}</span>
+            <span className="font-headline font-bold text-sm text-white group-hover:text-primary transition-colors" style={{ textShadow: 'none' }}>{t.symbol}</span>
           </button>
         ))}
       </div>
