@@ -13,7 +13,7 @@ const BalanceCard = ({ title, value, unit, icon: Icon, color, trend }) => {
             <span className="text-2xl font-black text-white tracking-tighter tabular-nums">
               {typeof value === 'number' ? value.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) : value}
             </span>
-            <span className={`text-xs font-bold ${color} opacity-80 uppercase`}>{unit}</span>
+            <span className={`text-xs font-bold ${color} opacity-80`}>{unit}</span>
           </div>
           {trend && (
             <div className="flex items-center gap-1.5 mt-2">
@@ -60,7 +60,7 @@ export default function ActivityWidget() {
             <BalanceCard 
               title="Staking Rewards"
               value={tickingRewards}
-              unit="RLO"
+              unit="stRLO"
               icon={Coins}
               color="text-emerald-400"
               trend={tickingRewards > 0}

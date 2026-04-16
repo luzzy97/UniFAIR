@@ -250,29 +250,7 @@ h1, h2, h3, h4, h5, h6 {
 .ai-sched-field { display: flex; flex-direction: column; gap: 6px; }
 .ai-sched-label { font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.1em; }
 
-/* Gas Fee Selection UI */
-.gas-sep { height: 1px; background: rgba(255,255,255,0.05); margin: 4px 0 16px; }
-.gas-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 0 4px; }
-.gas-label-group { display: flex; flex-direction: column; gap: 2px; }
-.gas-main-label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.4); }
-.gas-selection-text { font-size: 14px; font-weight: 700; color: #fff; }
-.gas-selection-text.credit { color: #10b981; }
 
-/* Premium Switch Component */
-.switch-box { position: relative; width: 44px; height: 24px; }
-.switch-box input { opacity: 0; width: 0; height: 0; }
-.slider {
-  position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 34px;
-}
-.slider:before {
-  position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
-  background-color: #fff; transition: .4s; border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-input:checked + .slider { background-color: #10b981; }
-input:focus + .slider { box-shadow: 0 0 1px #10b981; }
-input:checked + .slider:before { transform: translateX(20px); }
 
 .ai-sched-input, .ai-sched-select {
   background: #1a1a1b;
@@ -366,6 +344,148 @@ input:checked + .slider:before { transform: translateX(20px); }
   border-top: 1px solid rgba(255,255,255,0.1);
   padding: 20px;
   animation: slideInUp 0.3s ease;
+}
+
+/* AI PAYWALL STYLES */
+.ai-locked-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(5, 5, 5, 0.85);
+  backdrop-filter: blur(12px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+}
+
+.ai-locked-content {
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: slideInUp 0.4s ease-out;
+}
+
+.ai-locked-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.ai-locked-icon {
+  font-size: 32px;
+  color: #fff;
+  opacity: 0.3;
+}
+
+.ai-locked-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.ai-locked-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.6;
+}
+
+.ai-unlock-pricing {
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.pricing-badge {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  padding: 8px 16px;
+  border-radius: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.pricing-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #10b981;
+}
+
+.pricing-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #10b981;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pricing-duration {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.ai-unlock-btn {
+  width: 100%;
+  background: #fff;
+  color: #000;
+  border: none;
+  border-radius: 14px;
+  padding: 14px;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 20px rgba(255,255,255,0.1);
+}
+
+.ai-unlock-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255,255,255,0.2);
+}
+
+.ai-unlock-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-unlock-balance {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ai-access-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 /* ===== GLOBAL TOAST STYLES ===== */

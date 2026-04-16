@@ -8,45 +8,11 @@ import { useWallet } from '../hooks/useWallet';
 import { useRLO } from '../hooks/useRLO';
 import { useStaking } from '../hooks/useStaking';
 import { useRouter } from 'next/router';
-import { Droplet, Info, Route, Plus, Activity, Loader2, CheckCircle2, AlertCircle, CreditCard, Landmark, Building2, ArrowRight, ArrowUpDown, Flame, Lock, Timer, Calendar } from "lucide-react";
+import { Droplet, Info, Route, Plus, Activity, Loader2, CheckCircle2, AlertCircle, CreditCard, Landmark, Building2, ArrowRight, ArrowUpDown, Flame } from "lucide-react";
 
 type Path = {
   address: string;
   amount: number;
-};
-
-const PositionCountdown = ({ lockEnd }: { lockEnd: number }) => {
-  const [timeLeft, setTimeLeft] = useState("");
-
-  useEffect(() => {
-    const update = () => {
-      const now = Date.now();
-      const diff = lockEnd - now;
-      if (diff <= 0) {
-        setTimeLeft("");
-        return;
-      }
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const secs = Math.floor((diff % (1000 * 60)) / 1000);
-      
-      let str = "";
-      if (days > 0) str += `${days}d `;
-      str += `${hours}h ${mins}m ${secs}s`;
-      setTimeLeft(str);
-    };
-    update();
-    const timer = setInterval(update, 1000);
-    return () => clearInterval(timer);
-  }, [lockEnd]);
-
-  return (
-    <div className={`text-[11px] font-black font-label flex items-center gap-1.5 uppercase tracking-[0.1em] ${lockEnd > Date.now() ? 'text-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.1)]' : 'text-emerald-500'}`}>
-      {lockEnd > Date.now() ? <Timer className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />}
-      {timeLeft || (lockEnd > Date.now() ? "Calculating..." : "Ready to Unstake")}
-    </div>
-  );
 };
 
 type AssetType = 'solo_rlo' | 'pair' | 'solo_eth';
@@ -54,7 +20,7 @@ type PayoutType = 'rlo' | 'rwa';
 
 export default function Home() {
   const router = useRouter();
-  const { isConnected, address, provider, connect, balances: walletBalances, addTransaction, fetchEthBalance, updateBalance, addCredits, addRwaPortfolio, addRloYield } = useWallet();
+  const { isConnected, address, provider, connect, balances: walletBalances, addTransaction, fetchEthBalance, updateBalance } = useWallet();
   const { balance: rloBal, fetchBalance: fetchRloBalance } = useRLO();
   const {
     stakedBalance: stakedBalStr,
@@ -73,11 +39,7 @@ export default function Home() {
     claimRewards: claimAction,
     updateSfsFraction,
     updateRwaAllocation,
-    fetchStakingData,
-    tickingCredits,
-    lockEnd,
-    lockStart,
-    stakingPositions
+    fetchStakingData
   } = useStaking();
 
   const { sessionActive, activateSession, seedSession, showToast: walletToast } = useWallet();
@@ -92,42 +54,11 @@ export default function Home() {
   const [activeView, setActiveView] = useState<'stake' | 'rwa'>('stake');
   const [rwaRouter, setRwaRouter] = useState<number>(0);
   const [rwaTarget, setRwaTarget] = useState<string>('treasury');
-  const [selectedRwaTarget, setSelectedRwaTarget] = useState('gold');
+  const [selectedRwaTarget, setSelectedRwaTarget] = useState('treasuries');
   const [rwaStats, setRwaStats] = useState({ total: 0, apy: 0 });
   const [isSavingRoute, setIsSavingRoute] = useState<boolean>(false);
   const [routeSaved, setRouteSaved] = useState<boolean>(false);
   const [liveEthPrice, setLiveEthPrice] = useState<number>(3000);
-  const [timeLeft, setTimeLeft] = useState<string>("");
-
-  useEffect(() => {
-    if (!lockEnd || lockEnd <= Date.now()) {
-      setTimeLeft("");
-      return;
-    }
-
-    const timer = setInterval(() => {
-      const now = Date.now();
-      const diff = lockEnd - now;
-
-      if (diff <= 0) {
-        setTimeLeft("");
-        clearInterval(timer);
-        return;
-      }
-
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const secs = Math.floor((diff % (1000 * 60)) / 1000);
-
-      let str = "";
-      if (days > 0) str += `${days}d `;
-      str += `${hours}h ${mins}m ${secs}s`;
-      setTimeLeft(str);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [lockEnd]);
 
   useEffect(() => {
     let isMounted = true;
@@ -189,13 +120,6 @@ export default function Home() {
 
   const realStakedEthBalance = parseFloat(stakedEthBalStr || '0');
 
-  // Calculate totals from positions for UI consistency
-  const totalRloPositions = stakingPositions.reduce((acc, pos) => acc + (parseFloat(pos.amount) || 0), 0);
-  const totalEthPositions = stakingPositions.reduce((acc, pos) => {
-    const ethAmt = pos.token === 'ETH' ? pos.amount : (pos.token === 'PAIR' ? pos.ethAmount : '0');
-    return acc + (parseFloat(ethAmt || '0') || 0);
-  }, 0);
-
   useEffect(() => {
     if (contractRwaAllocation > 0) {
       setRwaRouter(contractRwaAllocation * 100);
@@ -220,71 +144,39 @@ export default function Home() {
     }
   }, [toast]);
 
-  const handleStake = async (targetId?: string, targetAmount?: string, targetToken?: string) => {
+  const handleStake = async () => {
     if (!isConnected) { connect(); return; }
 
     setIsSimulating(true);
     try {
-      if (isStaking && !targetId) {
+      if (isStaking) {
         if (assetType === 'solo_rlo') {
           if (numRlo < 10) { setToast({ message: "Min 10 RLO", type: "error" }); setIsSimulating(false); return; }
           const hash = await stakeRlo(numRlo.toString(), lockDuration);
           addTransaction({ type: 'Stake', amount: `${numRlo.toLocaleString('en-US')} RLO`, details: 'Staked RLO (Solo)', txHash: hash });
           setToast({ message: `Successfully staked ${numRlo.toLocaleString('en-US')} RLO!`, type: "success", txHash: hash });
-          if (rawYieldToServiceCredits > 0) {
-            await addCredits(rawYieldToServiceCredits);
-          }
-          if (payoutType === 'rwa' && yieldToWallet > 0) {
-            addRwaPortfolio(yieldToWallet);
-          }
-          if (payoutType === 'rlo' && yieldToWallet > 0) {
-            addRloYield(yieldToWallet);
-          }
         } else if (assetType === 'solo_eth') {
           if (numEth <= 0) { setToast({ message: "Invalid ETH Amount", type: "error" }); setIsSimulating(false); return; }
           const hash = await stakeEth(numEth.toString(), lockDuration);
           addTransaction({ type: 'Stake', amount: `${numEth} ETH`, details: 'Staked ETH (Solo)', txHash: hash });
           setToast({ message: `Successfully staked ${numEth} ETH!`, type: "success", txHash: hash });
-          if (rawYieldToServiceCredits > 0) {
-            await addCredits(rawYieldToServiceCredits);
-          }
-          if (payoutType === 'rwa' && yieldToWallet > 0) {
-            addRwaPortfolio(yieldToWallet);
-          }
-          if (payoutType === 'rlo' && yieldToWallet > 0) {
-            addRloYield(yieldToWallet);
-          }
         } else if (assetType === 'pair') {
           if (numRlo < 10 || numEth <= 0) { setToast({ message: "Invalid Pair Amount", type: "error" }); setIsSimulating(false); return; }
           const hash = await stakePair(numRlo.toString(), numEth.toString(), lockDuration);
           addTransaction({ type: 'Stake', amount: 'LP Pair', details: `Staked ${numRlo} RLO + ${numEth} ETH`, txHash: hash });
           setToast({ message: `Successfully staked Pair!`, type: "success", txHash: hash });
-          if (rawYieldToServiceCredits > 0) {
-            await addCredits(rawYieldToServiceCredits);
-          }
-          if (payoutType === 'rwa' && yieldToWallet > 0) {
-            addRwaPortfolio(yieldToWallet);
-          }
-          if (payoutType === 'rlo' && yieldToWallet > 0) {
-            addRloYield(yieldToWallet);
-          }
         }
         setRloAmount("");
         setEthAmount("0");
       } else {
-        // Unstake logic
-        const amt = targetAmount || (assetType === 'solo_eth' ? realStakedEthBalance.toString() : realStakedBalance.toString());
-        const tok = targetToken || (assetType === 'solo_eth' ? 'ETH' : 'RLO');
-        
-        if (parseFloat(amt) <= 0) {
+        if (realStakedBalance <= 0 && realStakedEthBalance <= 0) {
           setToast({ message: "No assets staked", type: "error" });
           setIsSimulating(false);
           return;
         }
-        
-        const hash = await withdraw(targetId, amt, tok);
-        addTransaction({ type: 'Unstake', amount: `${amt} ${tok}`, details: `Unstaked ${tok}`, txHash: hash });
-        setToast({ message: `Successfully unstaked ${amt} ${tok}!`, type: "success", txHash: hash });
+        const hash = await withdraw();
+        addTransaction({ type: 'Unstake', amount: 'All Assets', details: 'Unstaked RLO/ETH', txHash: hash });
+        setToast({ message: `Successfully unstaked!`, type: "success", txHash: hash });
       }
 
       if (address && provider) {
@@ -448,7 +340,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-white text-black font-body antialiased selection:bg-primary/30 flex flex-col relative">
+    <main className="min-h-screen bg-background text-on-background font-body antialiased selection:bg-primary/30 flex flex-col relative">
 
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
 
@@ -456,22 +348,22 @@ export default function Home() {
 
 
 
-      <div className="max-w-7xl mx-auto flex-grow w-full mt-10 md:mt-16 px-4 pb-24">
+      <div className="max-w-7xl mx-auto flex-grow w-full mt-10 md:mt-16 px-4">
         {activeView === 'stake' ? (
           <>
             {/* Main Grid: 2 Columns for headers and cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-0 lg:gap-y-0 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-0 lg:gap-y-0 items-start">
 
               {/* Header 1 (Stake Assets) */}
               <div className="lg:col-start-1 lg:row-start-1 text-center mb-6 lg:mb-12 min-h-[auto] lg:min-h-[120px] flex flex-col justify-center animate-in fade-in slide-in-from-bottom-2 duration-300 delay-100">
-                <h1 className="text-5xl font-headline font-extrabold mb-4 tracking-tighter text-black">Stake Assets</h1>
-                <p className="text-black/60 max-w-xl mx-auto font-medium">Stake RLO or ETH to mint yield-bearing assets and auto-generate credits for a completely gasless experience.</p>
+                <h1 className="text-5xl font-headline font-extrabold mb-4 tracking-tighter text-primary">Stake Assets</h1>
+                <p className="text-on-surface/60 max-w-xl mx-auto font-medium">Stake RLO or ETH to mint yield-bearing assets and auto-generate credits for a completely gasless experience.</p>
               </div>
 
               {/* Header 2 (Paymaster) */}
               <div className="lg:col-start-2 lg:row-start-1 text-center mb-6 lg:mb-12 min-h-[auto] lg:min-h-[120px] flex flex-col justify-center animate-in fade-in slide-in-from-bottom-2 duration-300 delay-200">
-                <h1 className="text-5xl font-headline font-extrabold mb-4 tracking-tighter text-black">Paymaster</h1>
-                <p className="text-black/60 max-w-xl mx-auto font-medium">Power your on-chain experience with automated gas routing and AI credits.</p>
+                <h1 className="text-5xl font-headline font-extrabold mb-4 tracking-tighter text-primary">Paymaster</h1>
+                <p className="text-on-surface/60 max-w-xl mx-auto font-medium">Power your on-chain experience with automated gas routing and AI credits.</p>
               </div>
 
               {/* Card 1 (Stake Assets Card) */}
@@ -668,7 +560,7 @@ export default function Home() {
 
                       <div className="mb-6">
                         <button
-                          onClick={() => handleStake()}
+                          onClick={handleStake}
                           disabled={isSimulating}
                           className="w-full bg-white text-black py-5 rounded-2xl font-headline font-extrabold text-lg tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl disabled:opacity-50"
                         >
@@ -766,103 +658,43 @@ export default function Home() {
                       </div>
                     </div>
                   ) : (
-                    <div className="py-8 animate-in zoom-in-95 duration-300 flex flex-col min-h-[500px] w-full">
-                      <div className="flex items-center justify-between mb-8">
-                        <h2 className="text-xl font-headline font-bold text-white tracking-tight">Your Staking Positions</h2>
-                        <div className="flex flex-col items-end gap-1">
-                          <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em]">Total Staked Assets</span>
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-4 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl">
-                              {totalRloPositions > 0 && (
-                                <div className="flex items-center gap-2">
-                                  <Droplet className="w-3 h-3 text-white/40" />
-                                  <span className="text-white font-bold text-xs">{totalRloPositions.toLocaleString('en-US', { minimumFractionDigits: 2 })} RLO</span>
-                                </div>
-                              )}
-                              {totalEthPositions > 0 && (
-                                <div className="flex items-center gap-2 border-l border-white/10 pl-4">
-                                  <div className="w-3 h-3 rounded-full bg-white/10 text-white/60 flex items-center justify-center text-[7px] font-bold">Ξ</div>
-                                  <span className="text-white font-bold text-xs">{totalEthPositions.toLocaleString('en-US', { minimumFractionDigits: 4 })} ETH</span>
-                                </div>
-                              )}
-                              {totalRloPositions === 0 && totalEthPositions === 0 && (
-                                <span className="text-white/20 font-bold text-xs">0.00 Assets</span>
-                              )}
-                            </div>
-                            <button
-                              onClick={() => fetchStakingData()}
-                              className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white transition-all outline-none"
-                              title="Refresh Balances"
-                            >
-                              <Loader2 className={`w-3.5 h-3.5 ${stakingLoading ? 'animate-spin' : ''}`} />
-                            </button>
-                          </div>
-                        </div>
+                    <div className="py-12 text-center animate-in zoom-in-95 duration-300 flex flex-col items-center justify-center min-h-[500px]">
+                      <div className="flex items-center justify-center gap-3 mb-3">
+                        <p className="text-white/60 font-medium">Your Locked Balance</p>
+                        <button
+                          onClick={() => fetchStakingData()}
+                          title="Refresh balance"
+                          className="text-white/30 hover:text-white transition-colors"
+                        >
+                          <Loader2 className={`w-4 h-4 ${stakingLoading ? 'animate-spin text-white' : ''}`} />
+                        </button>
+                      </div>
+                      <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-2 drop-shadow-sm tracking-tight">
+                        {realStakedBalance.toLocaleString('en-US')} <span className="text-xl text-white/50 font-bold ml-1">RLO</span>
+                      </h2>
+                      <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-8 drop-shadow-sm tracking-tight">
+                        {realStakedEthBalance.toLocaleString('en-US')} <span className="text-xl text-white/50 font-bold ml-1">ETH</span>
+                      </h2>
+
+                      <div className="inline-flex items-center gap-2 bg-[#161616] border border-white/10 px-5 py-2.5 rounded-xl mb-12 shadow-inner">
+                        <AlertCircle className="w-4 h-4 text-white/60" />
+                        <span className="text-sm font-semibold text-white/60">
+                          Unlock Status: Check Smart Contract Lock End
+                        </span>
                       </div>
 
-                      <div className="flex-1 flex flex-col min-h-0 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
-                        {stakingPositions.length === 0 ? (
-                          <div className="bg-[#111111] rounded-2xl p-12 border border-white/5 text-center flex flex-col items-center justify-center opacity-40">
-                             <Droplet className="w-12 h-12 mb-4 text-white/20" />
-                             <p className="text-sm font-bold text-white/40 uppercase tracking-widest">No active positions</p>
-                          </div>
-                        ) : (
-                          stakingPositions.map((pos) => (
-                            <div key={pos.id} className="bg-[#111111] rounded-2xl p-6 border border-white/5 flex items-center gap-4 shadow-2xl relative overflow-hidden group">
-                              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
-                              
-                              {/* Lock Icon Box */}
-                              <div className="relative z-10 w-12 h-12 shrink-0 rounded-2xl bg-[#0a1a14] border border-emerald-500/20 flex items-center justify-center">
-                                <Lock className="w-5 h-5 text-emerald-500" />
-                              </div>
-
-                              <div className="flex-1 relative z-10">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="bg-[#0f2a20] text-emerald-500 text-[9px] font-black px-2 py-0.5 rounded tracking-widest uppercase border border-emerald-500/10">Stake</span>
-                                  <span className="text-white font-bold text-[15px] tracking-tight">
-                                  {pos.token === 'PAIR' ? (
-                                    <>
-                                      {parseFloat(pos.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })} RLO + {parseFloat(pos.ethAmount || '0').toLocaleString('en-US', { minimumFractionDigits: 4 })} ETH
-                                    </>
-                                  ) : (
-                                    <>
-                                      {parseFloat(pos.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })} {pos.token}
-                                    </>
-                                  )}
-                                </span>
-                                </div>
-                                
-                                <PositionCountdown lockEnd={pos.lockEnd} />
-                              </div>
-
-                              {/* Unstake Action Button (Right Side) */}
-                              <div className="relative z-10">
-                                 <button
-                                   onClick={() => handleStake(pos.id, pos.amount, pos.token)}
-                                   disabled={isSimulating || pos.lockEnd > Date.now()}
-                                   className={`px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all border shadow-lg flex items-center gap-2 ${pos.lockEnd > Date.now() ? 'bg-white/5 border-white/5 text-white/20 cursor-not-allowed opacity-50' : 'bg-white text-black border-transparent hover:bg-zinc-200 active:scale-95 shadow-white/5'}`}
-                                 >
-                                   {isSimulating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Unstake"}
-                                 </button>
-                              </div>
-
-                              {/* Floating "Locked" Bubble */}
-                              {pos.lockEnd > Date.now() && (
-                                <div className="absolute top-4 right-4 animate-bounce">
-                                   <div className="bg-orange-500 text-black text-[8px] font-black px-2 py-1 rounded-full shadow-lg flex items-center gap-1 border border-black/10">
-                                     <Lock className="w-2 h-2" />
-                                     LOCKED
-                                   </div>
-                                </div>
-                              )}
-                            </div>
-                          ))
-                        )}
+                      <div className="w-full mt-auto">
+                        <button
+                          onClick={handleStake}
+                          disabled={isSimulating}
+                          className="w-full font-bold py-4 rounded-2xl transition-all border border-transparent shadow-[0_4px_14px_0_rgba(249,115,22,0.39)] text-[1.05rem] flex justify-center items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white hover:shadow-[0_6px_20px_rgba(249,115,22,0.23)] hover:-translate-y-0.5 active:translate-y-0"
+                        >
+                          {isSimulating ? <Loader2 className="w-5 h-5 animate-spin" /> : "Initiate Unstaking"}
+                        </button>
+                        <p className="text-center text-[11.5px] font-medium text-white/70 mt-3 animate-in fade-in">
+                          Note: Withdrawals revert if lock duration has not ended.
+                        </p>
                       </div>
-
-
-
-
                     </div>
                   )}
                 </div>
@@ -878,17 +710,9 @@ export default function Home() {
                       Available Service Credits
                     </h3>
                     <div className="text-[3.5rem] md:text-[4.5rem] font-headline font-extrabold text-white leading-none mb-2 z-10 tracking-tighter">
-                      {(tickingCredits || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {rawYieldToServiceCredits.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                     <span className="text-white/20 font-bold tracking-[0.3em] uppercase text-[10px] mt-2 z-10 font-label">Credits</span>
-
-                    {rawYieldToServiceCredits > 0 && (
-                      <div className="mt-4 px-3 py-1 bg-white/5 border border-white/10 rounded-full animate-pulse">
-                        <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest">
-                          + {rawYieldToServiceCredits.toFixed(2)} Projected
-                        </span>
-                      </div>
-                    )}
 
                     <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-gradient-to-br from-white/20/10 to-transparent/5 rounded-full flex items-center justify-center border border-white/20 shadow-[0_0_20px_rgba(249,115,22,0.1)] transform rotate-12 transition-transform duration-500 group-hover/card:rotate-0 group-hover/card:scale-110 opacity-70 pointer-events-none">
                       <Droplet className="w-14 h-14 text-white fill-white/20" />
@@ -902,6 +726,14 @@ export default function Home() {
                     </h3>
 
                     <div className="space-y-0 bg-[#161616] rounded-2xl border border-white/5 shadow-inner flex flex-col">
+                      <div className="flex items-center justify-between text-sm p-5 border-b border-white/5">
+                        <span className="text-slate-300 font-medium">Basic Swap & Stake</span>
+                        <span className="font-headline font-bold text-white/40 text-[11px]">~0.05 Credits</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm p-5 border-b border-white/5">
+                        <span className="text-slate-300 font-medium">RWA Allocation</span>
+                        <span className="font-headline font-bold text-white/40 text-[11px]">~0.50 Credits</span>
+                      </div>
                       <div className="flex items-center justify-between text-sm p-5">
                         <span className="text-slate-300 font-medium">AI Agent Pass</span>
                         <span className="font-headline font-bold text-white text-[11px]">5.00 Credits/mo</span>
@@ -918,47 +750,49 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
 
-                {/* RWA Banner Section (Moved below Paymaster) */}
-                <div className="mt-6 flex-grow">
-                  <div className="bg-[#0c0c0c] rounded-2xl p-8 md:p-10 shadow-2xl border border-white/5 relative overflow-hidden group h-full flex flex-col justify-center">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 blur-[100px] opacity-50"></div>
+            {/* RWA Banner Section */}
+            <div className="mt-12 mb-24 max-w-7xl mx-auto px-4 md:px-0">
+              <div className="bg-[#0c0c0c] rounded-2xl p-8 md:p-12 shadow-2xl border border-white/5 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 blur-[100px] opacity-50"></div>
 
-                    <div className="flex flex-col items-center text-center gap-6 w-full relative z-10">
-                      <div className="space-y-3">
-                        <h2 className="text-2xl md:text-3xl font-headline font-extrabold tracking-tighter text-white leading-tight">
-                          RWA Hub 🌍
-                        </h2>
-                        <p className="text-white/40 text-xs md:text-sm font-medium max-w-sm mx-auto">
-                          Diversify your remaining RLO staking yield into Real-World Assets with institutional-grade stability.
-                        </p>
-                      </div>
+                <div className="flex flex-col md:flex-row items-center justify-between gap-8 w-full relative z-10">
+                  <div className="flex-1 space-y-4 text-center md:text-left">
+                    <h2 className="text-3xl md:text-4xl font-headline font-extrabold tracking-tighter text-white leading-tight">
+                      RWA Hub 🌍
+                    </h2>
+                    <p className="text-white/40 text-sm md:text-base font-medium max-w-2xl">
+                      Diversify your remaining RLO staking yield into Real-World Assets. Zero exposure to crypto volatility with institutional-grade stability.
+                    </p>
+                  </div>
 
-                      <div className="w-full shrink-0">
-                        <button
-                          onClick={handleExploreRwa}
-                          disabled={isExploringRwa}
-                          className="w-full bg-white text-black py-4 rounded-xl font-headline font-extrabold text-md tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl disabled:opacity-50"
-                        >
-                          {isExploringRwa ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Explore RWA"}
-                        </button>
-                      </div>
-                    </div>
+                  {/* Minimal Bridge CTA */}
+                  <div className="w-full md:w-auto shrink-0">
+                    <button
+                      onClick={handleExploreRwa}
+                      disabled={isExploringRwa}
+                      className="bg-white text-black px-10 py-5 rounded-2xl font-headline font-extrabold text-lg tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl disabled:opacity-50"
+                    >
+                      {isExploringRwa ? <Loader2 className="w-5 h-5 animate-spin" /> : "Explore RWA"}
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
+
 
           </>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Header Section */}
             <div className="text-center mb-12">
-              <h1 className="text-5xl font-headline font-extrabold mb-4 tracking-tighter text-black">RWA Hub 🌍</h1>
-              <p className="text-black/60 max-w-xl mx-auto font-medium">Automatically diversify your yield into stable, institutional-grade real-world assets.</p>
+              <h1 className="text-5xl font-headline font-extrabold mb-4 tracking-tighter text-primary">RWA Hub 🌍</h1>
+              <p className="text-on-surface/60 max-w-xl mx-auto font-medium">Automatically diversify your yield into stable, institutional-grade real-world assets.</p>
               <button
                 onClick={() => setActiveView('stake')}
-                className="mt-6 inline-flex items-center gap-2 text-black font-bold text-sm hover:underline underline-offset-8 transition-all"
+                className="mt-6 inline-flex items-center gap-2 text-primary font-bold text-sm hover:underline underline-offset-8 transition-all"
               >
                 <ArrowRight className="w-4 h-4 rotate-180" />
                 Return to Staking
@@ -992,39 +826,32 @@ export default function Home() {
               {/* Kolom Kanan: Available Vaults */}
               <div className="flex flex-col gap-6">
                 {[
-                  { id: 'gold', name: 'Tokenized Gold', symbol: 'XAUT', apy: 'Safe Haven', risk: 'Hedge', icon: CreditCard },
-                  { id: 'treasuries', name: 'US Treasuries', symbol: 'tBILL', apy: '5.2%', risk: 'Low', icon: Landmark, comingSoon: true },
-                  { id: 'realEstate', name: 'Real Estate', symbol: 'rEST', apy: '8.0%', risk: 'Medium', icon: Building2, comingSoon: true }
+                  { id: 'treasuries', name: 'US Treasuries', symbol: 'tBILL', apy: '5.2%', risk: 'Low', icon: Landmark },
+                  { id: 'realEstate', name: 'Real Estate', symbol: 'rEST', apy: '8.0%', risk: 'Medium', icon: Building2 },
+                  { id: 'gold', name: 'Tokenized Gold', symbol: 'tGOLD', apy: 'Safe Haven', risk: 'Hedge', icon: CreditCard }
                 ].map((vault) => (
                   <div
                     key={vault.id}
-                    onClick={() => !vault.comingSoon && setSelectedRwaTarget(vault.id)}
-                    className={`transition-all duration-300 bg-[#0c0c0c] rounded-2xl p-6 border flex items-center justify-between gap-4 ${vault.comingSoon ? 'cursor-not-allowed px-6' : 'cursor-pointer'} ${selectedRwaTarget === vault.id ? 'border-white px-8' : 'border-white/5 hover:border-white/10'}`}
+                    onClick={() => setSelectedRwaTarget(vault.id)}
+                    className={`cursor-pointer transition-all duration-300 bg-[#0c0c0c] rounded-2xl p-6 border flex items-center justify-between gap-4 ${selectedRwaTarget === vault.id ? 'border-white px-8' : 'border-white/5 hover:border-white/10'}`}
                   >
                     <div className="flex items-center gap-6">
                       <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white/40">
                         <vault.icon className="w-6 h-6" />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-headline font-bold text-white text-lg tracking-tight">
-                            {vault.name} <span className="text-[10px] text-slate-300 ml-2 uppercase tracking-widest">{vault.symbol}</span>
-                          </h3>
-                          {vault.comingSoon && (
-                            <span className="bg-white/10 text-white text-[8px] font-bold px-1.5 py-0.5 rounded tracking-widest uppercase">Coming Soon</span>
-                          )}
-                        </div>
+                        <h3 className="font-headline font-bold text-white text-lg tracking-tight">
+                          {vault.name} <span className="text-[10px] text-slate-300 ml-2 uppercase tracking-widest">{vault.symbol}</span>
+                        </h3>
                         <div className="flex items-center gap-4 mt-1">
                           <span className="text-slate-300 font-bold text-[10px] uppercase tracking-wider bg-white/5 px-2 py-0.5 rounded">{vault.apy} APY</span>
                           <span className="text-slate-300 text-[10px] font-bold uppercase tracking-widest">{vault.risk} Risk</span>
                         </div>
                       </div>
                     </div>
-                    {!vault.comingSoon && (
-                      <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all ${selectedRwaTarget === vault.id ? 'border-white bg-white shadow-xl' : 'border-white/10'}`}>
-                        {selectedRwaTarget === vault.id && <div className="w-2.5 h-2.5 rounded-full bg-black"></div>}
-                      </div>
-                    )}
+                    <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all ${selectedRwaTarget === vault.id ? 'border-white bg-white shadow-xl' : 'border-white/10'}`}>
+                      {selectedRwaTarget === vault.id && <div className="w-2.5 h-2.5 rounded-full bg-black"></div>}
+                    </div>
                   </div>
                 ))}
               </div>

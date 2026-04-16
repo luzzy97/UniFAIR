@@ -24,7 +24,7 @@ export function WalletProvider({ children }) {
   const [sessionSigner, setSessionSigner] = useState(null);
 
   const [basePrices, setBasePrices] = useState({
-    ETH: 3500, BTC: 65000, RIALO: 3, USDC: 1, USDT: 1,
+    ETH: 3500, BTC: 65000, RIALO: 1, stRLO: 1 / 0.9998, USDC: 1, USDT: 1,
     BNB: 600, SOL: 150, XRP: 0.6, DOGE: 0.15, TRX: 0.12, AVAX: 40, DOT: 8
   });
 
@@ -45,7 +45,8 @@ export function WalletProvider({ children }) {
           TRX: data.tron?.usd || prev.TRX,
           AVAX: data['avalanche-2']?.usd || prev.AVAX,
           DOT: data.polkadot?.usd || prev.DOT,
-          RIALO: 3, // Fixed project value
+          RIALO: 1, // Fixed project value
+          stRLO: 1 / 0.9998,
           USDC: 1, 
           USDT: 1
         }));
@@ -75,7 +76,7 @@ export function WalletProvider({ children }) {
 
   // SSR-safe default — same value on server and client to avoid hydration mismatch.
   // The real saved values are loaded from localStorage in a useEffect below.
-  const [balances, setBalances] = useState({ 'ETH': 0, 'RIALO': 0, 'BTC': 0, 'SOL': 0, 'BNB': 0, 'USDC': 0, 'USDT': 0 });
+  const [balances, setBalances] = useState({ 'ETH': 0, 'RIALO': 0, 'stRLO': 0, 'BTC': 0, 'SOL': 0, 'BNB': 0, 'USDC': 0, 'USDT': 0 });
   const [simulatedDeltas, setSimulatedDeltas] = useState({});
 
   // SSR-safe defaults — same on server and client.
@@ -87,11 +88,17 @@ export function WalletProvider({ children }) {
 
   // SHARED credits state — single source of truth across all pages
   const [tickingCredits, setTickingCredits] = useState(0);
+  const [rwaPortfolio, setRwaPortfolio] = useState(0);
+  const [rloYield, setRloYield] = useState(0);
   const [stakedBalance, setStakedBalance] = useState('0');
   const [stakedEthBalance, setStakedEthBalance] = useState('0');
   const [tickingRewards, setTickingRewards] = useState(0);
   const [rewardRate, setRewardRate] = useState(0);
   const [totalStaked, setTotalStaked] = useState('0');
+  const [lockEnd, setLockEnd] = useState(0);
+  const [lockStart, setLockStart] = useState(0);
+  const [stakingPositions, setStakingPositions] = useState([]);
+  const [aiAccessExpiry, setAiAccessExpiry] = useState(0);
   const creditsInitializedForAddress = useRef(null);
   
   // Track last manual update per token to prevent immediate contract sync overwrites in demo
@@ -134,30 +141,76 @@ export function WalletProvider({ children }) {
 
   }, []);
 
-  // Load credits and staked balances from localStorage when address changes
+  // Load credits, rwaPortfolio, and staked balances from localStorage when address changes
   useEffect(() => {
     if (address && typeof window !== 'undefined') {
       if (creditsInitializedForAddress.current !== address) {
         const savedCredits = parseFloat(localStorage.getItem(`rialo_credits_${address}`) || '0');
+        const savedRwa = parseFloat(localStorage.getItem(`rialo_rwa_portfolio_${address}`) || '0');
+        const savedRloYield = parseFloat(localStorage.getItem(`rialo_rlo_yield_${address}`) || '0');
         const savedStakedRlo = localStorage.getItem(`rialo_staked_rlo_${address}`) || '0';
         const savedStakedEth = localStorage.getItem(`rialo_staked_eth_${address}`) || '0';
         
         setTickingCredits(savedCredits);
+        setRwaPortfolio(savedRwa);
+        setRloYield(savedRloYield);
         setStakedBalance(savedStakedRlo);
         setStakedEthBalance(savedStakedEth);
+        setLockEnd(parseInt(localStorage.getItem(`rialo_lock_end_${address}`) || '0'));
+        setLockStart(parseInt(localStorage.getItem(`rialo_lock_start_${address}`) || '0'));
+        setAiAccessExpiry(parseInt(localStorage.getItem(`rialo_ai_access_expiry_${address}`) || '0'));
+        
+        const savedPositions = localStorage.getItem(`rialo_staking_positions_${address}`);
+        if (savedPositions) {
+          setStakingPositions(JSON.parse(savedPositions));
+        } else {
+          const migratedPositions = [];
+          const now = Date.now();
+          const savedLockEnd = parseInt(localStorage.getItem(`rialo_lock_end_${address}`) || '0');
+          const savedLockStart = parseInt(localStorage.getItem(`rialo_lock_start_${address}`) || '0') || (savedLockEnd - (30 * 24 * 60 * 60 * 1000));
+          
+          if (parseFloat(savedStakedRlo) > 0) {
+            migratedPositions.push({
+              id: `legacy-rlo-${now}`,
+              amount: savedStakedRlo,
+              token: 'RLO',
+              lockStart: savedLockStart,
+              lockEnd: savedLockEnd,
+              timestamp: now
+            });
+          }
+          if (parseFloat(savedStakedEth) > 0) {
+            migratedPositions.push({
+              id: `legacy-eth-${now + 1}`,
+              amount: savedStakedEth,
+              token: 'ETH',
+              lockStart: savedLockStart,
+              lockEnd: savedLockEnd,
+              timestamp: now
+            });
+          }
+          setStakingPositions(migratedPositions);
+        }
         
         creditsInitializedForAddress.current = address;
       }
     } else if (!address) {
       setTickingCredits(0);
+      setRwaPortfolio(0);
+      setRloYield(0);
       setStakedBalance('0');
       setStakedEthBalance('0');
+      setLockEnd(0);
+      setLockStart(0);
+      setAiAccessExpiry(0);
+      setStakingPositions([]);
       setTickingRewards(0);
       creditsInitializedForAddress.current = null;
     }
   }, [address]);
 
-  // GLOBAL TICKER: Real-time Credit Generation
+  // GLOBAL TICKER: Real-time Credit Generation (DISABLED by user request)
+  /*
   useEffect(() => {
     const rloVal = parseFloat(stakedBalance);
     const ethVal = parseFloat(stakedEthBalance);
@@ -179,6 +232,7 @@ export function WalletProvider({ children }) {
       return () => clearInterval(tickInterval);
     }
   }, [address, stakedBalance, stakedEthBalance]);
+  */
 
   // GLOBAL TICKER: Real-time Reward Ticking
   useEffect(() => {
@@ -218,6 +272,10 @@ export function WalletProvider({ children }) {
     if (address) {
       localStorage.setItem(`rialo_staked_rlo_${address}`, stakedBalance);
       localStorage.setItem(`rialo_staked_eth_${address}`, stakedEthBalance);
+      if (lockEnd > 0) localStorage.setItem(`rialo_lock_end_${address}`, lockEnd.toString());
+      if (lockStart > 0) localStorage.setItem(`rialo_lock_start_${address}`, lockStart.toString());
+      localStorage.setItem(`rialo_ai_access_expiry_${address}`, aiAccessExpiry.toString());
+      localStorage.setItem(`rialo_staking_positions_${address}`, JSON.stringify(stakingPositions));
     }
     // Note: aiPrivateKey is no longer persisted as we moved to ephemeral Session Keys
     // Session Persistence
@@ -230,7 +288,7 @@ export function WalletProvider({ children }) {
       localStorage.removeItem('rialo_session_expiry');
       localStorage.removeItem('rialo_session_key');
     }
-  }, [transactions, triggerOrders, scheduledTxs, aiMessages, balances, simulatedDeltas, aiPrivateKey, sessionActive, sessionExpiry, sessionSigner]);
+  }, [transactions, triggerOrders, scheduledTxs, aiMessages, balances, simulatedDeltas, aiPrivateKey, sessionActive, sessionExpiry, sessionSigner, stakingPositions]);
 
   const simplifyError = useCallback((err) => {
     if (!err) return null;
@@ -861,6 +919,79 @@ export function WalletProvider({ children }) {
     }
   }, [address]);
 
+  // Shared addCredits — adds credits earned from staking yield router
+  const addCredits = useCallback(async (amount) => {
+    const addAmt = parseFloat(amount);
+    if (isNaN(addAmt) || addAmt <= 0 || !address) return;
+
+    setTickingCredits(prev => {
+      const next = prev + addAmt;
+      localStorage.setItem(`rialo_credits_${address}`, next.toString());
+      return next;
+    });
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const storedVal = parseFloat(localStorage.getItem(`rialo_credits_${address}`) || '0');
+      await fetch(`${baseUrl}/api/user-staking/${address}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credits: storedVal })
+      });
+    } catch (e) {
+      console.warn('[WalletProvider] Credit addition backend sync failed:', e);
+    }
+  }, [address]);
+
+  // Shared addRwaPortfolio — accumulates RWA yield earned from Payout in RWA staking
+  const addRwaPortfolio = useCallback((amount) => {
+    const addAmt = parseFloat(amount);
+    if (isNaN(addAmt) || addAmt <= 0 || !address) return;
+    setRwaPortfolio(prev => {
+      const next = prev + addAmt;
+      localStorage.setItem(`rialo_rwa_portfolio_${address}`, next.toString());
+      return next;
+    });
+  }, [address]);
+
+  // Shared addRloYield — accumulates RLO yield earned from Payout in RLO staking
+  const addRloYield = useCallback((amount) => {
+    const addAmt = parseFloat(amount);
+    if (isNaN(addAmt) || addAmt <= 0 || !address) return;
+    setRloYield(prev => {
+      const next = prev + addAmt;
+      localStorage.setItem(`rialo_rlo_yield_${address}`, next.toString());
+      return next;
+    });
+  }, [address]);
+
+  // Purchase AI Access — deducts 5 credits for 7 days
+  const purchaseAiAccess = useCallback(async () => {
+    if (!address) throw new Error('Wallet not connected');
+    const cost = 5;
+    if (tickingCredits < cost) {
+      throw new Error(`Insufficient credits. Required: ${cost} ϕ, Available: ${tickingCredits.toFixed(2)} ϕ`);
+    }
+
+    await deductCredits(cost);
+    const duration = 7 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const currentExpiry = aiAccessExpiry > now ? aiAccessExpiry : now;
+    const nextExpiry = currentExpiry + duration;
+
+    setAiAccessExpiry(nextExpiry);
+    localStorage.setItem(`rialo_ai_access_expiry_${address}`, nextExpiry.toString());
+
+    addTransaction({ 
+      type: 'AI Access', 
+      amount: '5 ϕ', 
+      details: '7-Day AI Assistant Unlock', 
+      txHash: null 
+    });
+
+    return nextExpiry;
+  }, [address, tickingCredits, aiAccessExpiry, deductCredits, addTransaction]);
+
   return (
     <WalletContext.Provider
       value={{ 
@@ -875,9 +1006,14 @@ export function WalletProvider({ children }) {
         sessionActive, sessionExpiry, sessionSigner, activateSession, deactivateSession, seedSession, withdrawSessionBalance,
         aiMessages, addAiMessage,
         toast, showToast,
-        tickingCredits, setTickingCredits, deductCredits,
+        tickingCredits, setTickingCredits, deductCredits, addCredits,
+        rwaPortfolio, addRwaPortfolio,
+        rloYield, addRloYield,
         stakedBalance, setStakedBalance, stakedEthBalance, setStakedEthBalance, 
-        tickingRewards, setTickingRewards, rewardRate, setRewardRate, totalStaked, setTotalStaked
+        tickingRewards, setTickingRewards, rewardRate, setRewardRate, totalStaked, setTotalStaked,
+        lockEnd, setLockEnd, lockStart, setLockStart,
+        stakingPositions, setStakingPositions,
+        aiAccessExpiry, purchaseAiAccess
       }}
     >
       {children}

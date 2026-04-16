@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 
 
 export default function AiAgent() {
-  const { isConnected, address, balances, transactions, provider, executeAiTransaction, addTriggerOrder, globalRates, scheduledTxs, addScheduledTx, removeScheduledTx, toast, showToast, sessionActive, sessionExpiry, sessionSigner, activateSession, deactivateSession, seedSession, withdrawSessionBalance, aiMessages: messages, addAiMessage, tickingCredits } = useWallet();
+  const { isConnected, address, balances, transactions, provider, executeAiTransaction, addTriggerOrder, globalRates, scheduledTxs, addScheduledTx, removeScheduledTx, toast, showToast, sessionActive, sessionExpiry, sessionSigner, activateSession, deactivateSession, seedSession, withdrawSessionBalance, aiMessages: messages, addAiMessage, tickingCredits, aiAccessExpiry, purchaseAiAccess } = useWallet();
   const { stakedBalance, stakedEthBalance } = useStaking();
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
@@ -22,10 +22,11 @@ export default function AiAgent() {
     fromToken: 'USDC', 
     toToken: 'RIALO', 
     timeVal: '5', 
-    timeUnit: 'minutes',
-    gasType: 'ETH' 
+    timeUnit: 'minutes'
   });
   const [loading, setLoading] = useState(false);
+  const [isUnlocking, setIsUnlocking] = useState(false);
+  const [accessTimeLeft, setAccessTimeLeft] = useState('');
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -35,6 +36,35 @@ export default function AiAgent() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, scheduledTxs.map(tx => tx.id).join(',')]); 
+
+  // Access Countdown Logic
+  useEffect(() => {
+    if (!aiAccessExpiry || aiAccessExpiry <= Date.now()) {
+      setAccessTimeLeft('');
+      return;
+    }
+
+    const update = () => {
+      const diff = aiAccessExpiry - Date.now();
+      if (diff <= 0) {
+        setAccessTimeLeft('');
+        return;
+      }
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      let str = "";
+      if (days > 0) str += `${days}d `;
+      str += `${hours}h ${mins}m`;
+      setAccessTimeLeft(str);
+    };
+
+    update();
+    const timer = setInterval(update, 60000); // Update every minute
+    return () => clearInterval(timer);
+  }, [aiAccessExpiry]);
 
   // PERSISTENT BALANCE TRACKING
   useEffect(() => {
@@ -160,14 +190,26 @@ export default function AiAgent() {
     e.preventDefault();
     let cmd = "";
     if (schedData.type === 'Swap') {
-      cmd = `swap ${schedData.amount} ${schedData.fromToken} to ${schedData.toToken} in ${schedData.timeVal} ${schedData.timeUnit} using ${schedData.gasType} gas`;
+      cmd = `swap ${schedData.amount} ${schedData.fromToken} to ${schedData.toToken} in ${schedData.timeVal} ${schedData.timeUnit}`;
     } else if (schedData.type === 'Bridge') {
-      cmd = `bridge ${schedData.amount} ETH to RIALO in ${schedData.timeVal} ${schedData.timeUnit} using ${schedData.gasType} gas`;
+      cmd = `bridge ${schedData.amount} ETH to RIALO in ${schedData.timeVal} ${schedData.timeUnit}`;
     } else {
-      cmd = `stake ${schedData.amount} ${schedData.fromToken} in ${schedData.timeVal} ${schedData.timeUnit} using ${schedData.gasType} gas`;
+      cmd = `stake ${schedData.amount} ${schedData.fromToken} in ${schedData.timeVal} ${schedData.timeUnit}`;
     }
     setInput(cmd);
     setShowSchedulePanel(false);
+  };
+
+  const handleUnlockAi = async () => {
+    setIsUnlocking(true);
+    try {
+      await purchaseAiAccess();
+      showToast({ message: "AI Assistant Unlocked!", detail: "7-day premium access granted." });
+    } catch (e) {
+      showToast({ message: "Unlock Failed", detail: e.message, type: 'error' });
+    } finally {
+      setIsUnlocking(false);
+    }
   };
 
   return (
@@ -179,6 +221,12 @@ export default function AiAgent() {
             <div className="ai-title">
               <span className="ai-status-dot"></span>
               Rialo AI Assistant
+              {accessTimeLeft && (
+                <div className="ai-access-badge">
+                  <span className="material-symbols-outlined" style={{ fontSize: '10px' }}>timer</span>
+                  {accessTimeLeft}
+                </div>
+              )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div className={`automation-badge ${sessionActive ? 'active' : ''}`}>
@@ -197,8 +245,52 @@ export default function AiAgent() {
             </div>
           </div>
           
-          <div className="ai-body">
-            {messages.map((m, i) => (
+           {(!aiAccessExpiry || aiAccessExpiry <= Date.now()) ? (
+            <div className="ai-body relative">
+              <div className="ai-locked-overlay">
+                <div className="ai-locked-content">
+                  <div className="ai-locked-icon-wrapper">
+                    <span className="material-symbols-outlined ai-locked-icon">lock</span>
+                  </div>
+                  <h3 className="ai-locked-title">AI Assistant Locked</h3>
+                  <p className="ai-locked-text">
+                    Unlock premium AI capabilities for smart transactions, 
+                    yield optimization, and automated strategies.
+                  </p>
+                  
+                  <div className="ai-unlock-pricing">
+                    <div className="pricing-badge">
+                      <span className="pricing-value">5.00 ϕ</span>
+                      <span className="pricing-label">Credits</span>
+                    </div>
+                    <div className="pricing-duration">/ 7 Days Access</div>
+                  </div>
+
+                  <button 
+                    className="ai-unlock-btn"
+                    disabled={isUnlocking}
+                    onClick={handleUnlockAi}
+                  >
+                    {isUnlocking ? (
+                      <span className="flex items-center gap-2">
+                        <span className="animate-spin text-sm">↻</span>
+                        Processing...
+                      </span>
+                    ) : (
+                      "Unlock AI Assistant"
+                    )}
+                  </button>
+                  
+                  <div className="ai-unlock-balance">
+                    Available: {tickingCredits.toFixed(2)} Credits
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+              <>
+              <div className="ai-body relative">
+                {messages.map((m, i) => (
               <div key={i} className={`ai-msg ${m.role}`}>
                 {m.role === 'user' ? (
                   m.content.raw
@@ -353,23 +445,7 @@ export default function AiAgent() {
                     </div>
                   </div>
 
-                  <div className="gas-sep"></div>
-                  <div className="gas-row">
-                    <div className="gas-label-group">
-                      <span className="gas-main-label">Gas Fee</span>
-                      <span className={`gas-selection-text ${schedData.gasType === 'CREDIT' ? 'credit' : ''}`}>
-                        {schedData.gasType === 'ETH' ? 'ETH (Normal)' : 'Service Credits (ϕ)'}
-                      </span>
-                    </div>
-                    <label className="switch-box">
-                      <input 
-                        type="checkbox" 
-                        checked={schedData.gasType === 'CREDIT'}
-                        onChange={(e) => setSchedData({...schedData, gasType: e.target.checked ? 'CREDIT' : 'ETH'})}
-                      />
-                      <span className="slider"></span>
-                    </label>
-                  </div>
+
 
                   <button type="submit" className="ai-sched-btn">Generate Command</button>
                 </form>
@@ -536,17 +612,19 @@ export default function AiAgent() {
               </button>
               <button onClick={() => setInput("swap 1 ETH to USDC at 2500")} className="ai-command-chip">Auto Buy/Sell</button>
             </div>
-            <form className="ai-form" onSubmit={handleSend}>
-              <input 
-                type="text" 
-                className="ai-input" 
-                placeholder="Ask about swaps, bridging, or staking..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-              />
-              <button type="submit" className="ai-send">Send</button>
-            </form>
-          </div>
+                <form className="ai-form" onSubmit={handleSend}>
+                  <input 
+                    type="text" 
+                    className="ai-input" 
+                    placeholder="Ask about swaps, bridging, or staking..."
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                  />
+                  <button type="submit" className="ai-send">Send</button>
+                </form>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </>

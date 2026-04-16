@@ -11,7 +11,10 @@ export function useStaking() {
     stakedEthBalance, setStakedEthBalance,
     tickingRewards, setTickingRewards,
     rewardRate, setRewardRate,
-    totalStaked, setTotalStaked
+    totalStaked, setTotalStaked,
+    lockEnd, setLockEnd,
+    lockStart, setLockStart,
+    stakingPositions, setStakingPositions
   } = useWallet();
   
   const [pendingRewards, setPendingRewards] = useState('0');
@@ -110,6 +113,8 @@ export function useStaking() {
         const stakeInfo = await contract.stakes(checksummed);
         if (stakeInfo) {
           const rawAmount = (stakeInfo.amount !== undefined ? stakeInfo.amount : stakeInfo[0]) ?? 0n;
+          const rawLockEnd = (stakeInfo.lockEnd !== undefined ? stakeInfo.lockEnd : stakeInfo[1]) ?? 0n;
+          const rawLockStart = (stakeInfo.startTime !== undefined ? stakeInfo.startTime : stakeInfo[2]) ?? 0n;
           const rawSfsFraction = (stakeInfo.sfsFraction !== undefined ? stakeInfo.sfsFraction : stakeInfo[3]) ?? 0n;
           const realRlo = parseFloat(ethers.formatEther(rawAmount));
           
@@ -119,6 +124,9 @@ export function useStaking() {
           const finalRlo = Math.max(realRlo, simRlo);
           setStakedBalance(finalRlo.toString());
           setSfsFraction(Number(rawSfsFraction) / 100);
+          
+          if (rawLockEnd > 0n) setLockEnd(Number(rawLockEnd) * 1000); // to ms
+          if (rawLockStart > 0n) setLockStart(Number(rawLockStart) * 1000); // to ms
         }
       } catch (e) {
         console.warn('[useStaking] Failed to fetch user stake from contract:', e);
@@ -193,8 +201,30 @@ export function useStaking() {
       
       // Update backend for persistence
       const current = parseFloat(stakedBalance);
-      await syncWithBackend(address, { stakedRlo: current + parseFloat(amount) });
+      const now = Date.now();
+      const end = now + (Number(lockMonths) * 30 * 24 * 60 * 60 * 1000);
+      
+      const newPosition = {
+        id: `stake-rlo-${tx.hash}`,
+        amount: amount,
+        token: 'RLO',
+        lockStart: now,
+        lockEnd: end,
+        timestamp: now,
+        txHash: tx.hash
+      };
+
+      setStakingPositions(prev => [newPosition, ...prev]);
+      
+      await syncWithBackend(address, { 
+        stakedRlo: (parseFloat(stakedBalance) + parseFloat(amount)).toString(),
+        lockEnd: end,
+        lockStart: now
+      });
+      
       setStakedBalance((current + parseFloat(amount)).toString());
+      setLockEnd(end);
+      setLockStart(now);
 
       await sleep(2500);
       await fetchStakingData();
@@ -220,8 +250,29 @@ export function useStaking() {
       
       const current = parseFloat(stakedEthBalance);
       const newVal = (current + parseFloat(ethAmount)).toString();
-      await syncWithBackend(address, { stakedEth: parseFloat(newVal) });
+      const now = Date.now();
+      const end = now + (Number(lockMonths) * 30 * 24 * 60 * 60 * 1000);
+
+      const newPosition = {
+        id: `stake-eth-${tx.hash}`,
+        amount: ethAmount,
+        token: 'ETH',
+        lockStart: now,
+        lockEnd: end,
+        timestamp: now,
+        txHash: tx.hash
+      };
+
+      setStakingPositions(prev => [newPosition, ...prev]);
+
+      await syncWithBackend(address, { 
+        stakedEth: newVal,
+        lockEnd: end,
+        lockStart: now
+      });
       setStakedEthBalance(newVal);
+      setLockEnd(end);
+      setLockStart(now);
       
       return tx.hash;
     } catch (error) {
@@ -259,9 +310,27 @@ export function useStaking() {
 
       const curEth = parseFloat(stakedEthBalance);
       const curRlo = parseFloat(stakedBalance);
+      const now = Date.now();
+      const end = now + (Number(lockMonths) * 30 * 24 * 60 * 60 * 1000);
+
+      const newPairPos = {
+        id: `stake-pair-${tx.hash}`,
+        amount: rloAmount,
+        ethAmount: ethAmount,
+        token: 'PAIR',
+        lockStart: now,
+        lockEnd: end,
+        timestamp: now,
+        txHash: tx.hash
+      };
+
+      setStakingPositions(prev => [newPairPos, ...prev]);
+
       await syncWithBackend(address, { 
-        stakedEth: curEth + parseFloat(ethAmount),
-        stakedRlo: curRlo + parseFloat(rloAmount)
+        stakedEth: (curEth + parseFloat(ethAmount)).toString(),
+        stakedRlo: (curRlo + parseFloat(rloAmount)).toString(),
+        lockEnd: end,
+        lockStart: now
       });
       
       setStakedEthBalance((curEth + parseFloat(ethAmount)).toString());
@@ -305,44 +374,60 @@ export function useStaking() {
     }
   }, [isConnected, provider, fetchStakingData]);
 
-  const withdraw = useCallback(async () => {
+  const withdraw = useCallback(async (positionId, amount, token) => {
     if (!isConnected) return;
     setLoading(true);
     try {
       const signer = await provider.getSigner();
-      const contract = getContract('Staking', provider);
-      const checksummed = ethers.getAddress(address);
-      let stakedAmt = 0n;
-      try {
-        const stakeInfo = await contract.stakes(checksummed);
-        stakedAmt = stakeInfo.amount ?? stakeInfo[0] ?? 0n;
-      } catch (e) {}
-
-      if (stakedAmt > 0n) {
-        const staking = getContract('Staking', signer);
-        const tx = await staking.withdraw(stakedAmt);
+      
+      // If it's an ETH position, we just "send it back" (demo logic)
+      // If it's RLO, we call the contract's withdraw/unstake
+      let tx;
+      if (token === 'ETH') {
+        tx = await signer.sendTransaction({ to: address, value: 0 }); // Placeholder for ETH withdrawal logic
         await tx.wait();
-        await syncWithBackend(address, { stakedEth: 0, stakedRlo: 0 });
-        setStakedEthBalance('0');
-        setStakedBalance('0');
-        await fetchStakingData();
-        return tx.hash;
       } else {
-        const tx = await signer.sendTransaction({ to: address, value: 0 });
+        const staking = getContract('Staking', signer);
+        tx = await staking.withdraw(ethers.parseEther(amount.toString()));
         await tx.wait();
-        await syncWithBackend(address, { stakedEth: 0, stakedRlo: 0 });
-        setStakedEthBalance('0');
-        setStakedBalance('0');
-        await fetchStakingData();
-        return tx.hash;
       }
+      
+      if (positionId) {
+        setStakingPositions(prev => prev.filter(p => p.id !== positionId));
+      }
+
+      if (token === 'ETH') {
+        const newVal = (parseFloat(stakedEthBalance) - parseFloat(amount)).toString();
+        setStakedEthBalance(newVal);
+        await syncWithBackend(address, { stakedEth: newVal });
+      } else if (token === 'PAIR') {
+        // Assume amount here was RLO for calculation
+        // We'll find the specific position to get the ETH amount
+        const pos = stakingPositions.find(p => p.id === positionId);
+        const eAmt = pos?.ethAmount || '0';
+        const rAmt = pos?.amount || amount;
+        
+        const nextEth = (parseFloat(stakedEthBalance) - parseFloat(eAmt)).toString();
+        const nextRlo = (parseFloat(stakedBalance) - parseFloat(rAmt)).toString();
+        
+        setStakedEthBalance(nextEth);
+        setStakedBalance(nextRlo);
+        await syncWithBackend(address, { stakedEth: nextEth, stakedRlo: nextRlo });
+      } else {
+        const newVal = (parseFloat(stakedBalance) - parseFloat(amount)).toString();
+        setStakedBalance(newVal);
+        await syncWithBackend(address, { stakedRlo: newVal });
+      }
+
+      await fetchStakingData();
+      return tx.hash;
     } catch (error) {
       console.error('Withdraw error:', error);
       throw error;
     } finally {
       setLoading(false);
     }
-  }, [isConnected, provider, address, fetchStakingData, syncWithBackend]);
+  }, [isConnected, provider, address, fetchStakingData, syncWithBackend, stakingPositions, setStakingPositions, stakedBalance, stakedEthBalance]);
 
   const claimRewards = useCallback(async () => {
     if (!isConnected) return;
@@ -384,6 +469,9 @@ export function useStaking() {
     withdraw, 
     claimRewards, 
     fetchStakingData,
-    deductCredits
+    deductCredits,
+    lockEnd,
+    lockStart,
+    stakingPositions
   };
 }
