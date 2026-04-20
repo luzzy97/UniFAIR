@@ -107,7 +107,7 @@ export default function Rewards() {
   };
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white font-body antialiased selection:bg-primary/30 flex flex-col relative">
+    <main className="min-h-screen bg-white text-slate-900 font-body antialiased selection:bg-primary/30 flex flex-col relative">
 
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
 
@@ -117,8 +117,8 @@ export default function Rewards() {
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
 
           <div className="text-center mb-16">
-            <h1 className="text-5xl font-headline font-extrabold mb-4 tracking-tighter text-white">Ecosystem Rewards</h1>
-            <p className="text-white/40 max-w-xl mx-auto font-medium">Manage and claim your generated yield and SfS Service Credits.</p>
+            <h1 className="text-5xl font-headline font-extrabold mb-4 tracking-tighter text-slate-900">Ecosystem Rewards</h1>
+            <p className="text-slate-500 max-w-xl mx-auto font-medium">Manage and claim your generated yield and SfS Service Credits.</p>
           </div>
 
           {/* Top Cards Grid: 3 Columns \u2014 order: Yield | RWA | Credits */}
@@ -239,7 +239,7 @@ export default function Rewards() {
             </div>
           </div>
 
-          <p className="text-center text-white/20 text-xs font-bold uppercase tracking-[0.2em] py-20">
+          <p className="text-center text-slate-400 text-xs font-bold uppercase tracking-[0.2em] py-20">
             Note: All yield is calculated in real-time on Sepolia Testnet. Payouts are subject to staking tiers and selected lock-ups.
           </p>
 
