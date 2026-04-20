@@ -114,12 +114,7 @@ export default function Home() {
     }
   }, [assetType]);
 
-  // Keamanan Upfront Payout: paksa RLO jika Flexible (no lock)
-  useEffect(() => {
-    if (lockDuration === 0) {
-      setPayoutType('rlo');
-    }
-  }, [lockDuration]);
+  // Flexible stakes can also use RWA payout
 
   // Interactive States
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
@@ -593,12 +588,12 @@ export default function Home() {
                             </div>
                           </button>
                           <button
-                            disabled={lockDuration === 0}
+                            disabled={assetType === 'solo_eth'}
                             onClick={() => {
-                              if (assetType !== 'solo_eth' && lockDuration > 0) setPayoutType('rwa');
+                              if (assetType !== 'solo_eth') setPayoutType('rwa');
                             }}
                             className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${
-                              lockDuration === 0
+                              assetType === 'solo_eth'
                                 ? 'opacity-40 cursor-not-allowed border-white/5 bg-transparent'
                                 : payoutType === 'rwa' && assetType !== 'solo_eth'
                                   ? 'bg-[#161616] border-white/20 shadow-inner'
@@ -611,14 +606,7 @@ export default function Home() {
                             </div>
                           </button>
                         </div>
-                        {lockDuration === 0 && (
-                          <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <p className="text-[11px] text-amber-400/70 flex items-start gap-1.5 leading-snug font-medium bg-amber-500/5 p-2.5 rounded-lg border border-amber-500/20">
-                              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-400" />
-                              Upfront RWA Payout is only available for locked stakes (min. 1 month) to ensure protocol stability.
-                            </p>
-                          </div>
-                        )}
+
                         {payoutType === 'rwa' && assetType !== 'solo_eth' && lockDuration > 0 && (
                           <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
                             <p className="text-[11px] text-white/80 flex items-start gap-1.5 leading-snug font-medium bg-white/5 p-2.5 rounded-lg border border-white/10">
