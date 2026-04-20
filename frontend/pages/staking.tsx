@@ -455,28 +455,28 @@ export default function Home() {
                           {/* Card 1 */}
                           <button
                             onClick={() => setAssetType('solo_rlo')}
-                            className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${assetType === 'solo_rlo' ? 'bg-[#161616] border-white/20 shadow-inner' : 'bg-transparent border-white/5 hover:border-white/10'}`}
+                            className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 ${assetType === 'solo_rlo' ? 'bg-[#161616] border-white/20 shadow-inner' : 'bg-transparent border-white/5 hover:border-white/10'}`}
                           >
-                            <span className={`font-bold text-sm ${assetType === 'solo_rlo' ? 'text-white' : 'text-white/40'}`}>Single RLO</span>
-                            <span className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Max Yield</span>
+                            <span className={`font-bold text-xs ${assetType === 'solo_rlo' ? 'text-white' : 'text-white/40'}`}>Single RLO</span>
+                            <span className="text-[9px] text-white/20 font-bold uppercase tracking-wider">Max Yield</span>
                           </button>
 
                           {/* Card 2 */}
                           <button
                             onClick={() => setAssetType('pair')}
-                            className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${assetType === 'pair' ? 'bg-[#161616] border-white/20 shadow-inner' : 'bg-transparent border-white/5 hover:border-white/10'}`}
+                            className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 ${assetType === 'pair' ? 'bg-[#161616] border-white/20 shadow-inner' : 'bg-transparent border-white/5 hover:border-white/10'}`}
                           >
-                            <span className={`font-bold text-sm ${assetType === 'pair' ? 'text-white' : 'text-white/40'}`}>Pair (RLO+ETH)</span>
-                            <span className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Balanced</span>
+                            <span className={`font-bold text-xs ${assetType === 'pair' ? 'text-white' : 'text-white/40'}`}>Pair (RLO+ETH)</span>
+                            <span className="text-[9px] text-white/20 font-bold uppercase tracking-wider">Balanced</span>
                           </button>
 
                           {/* Card 3 */}
                           <button
                             onClick={() => setAssetType('solo_eth')}
-                            className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${assetType === 'solo_eth' ? 'bg-[#161616] border-white/20 shadow-inner' : 'bg-transparent border-white/5 hover:border-white/10'}`}
+                            className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 ${assetType === 'solo_eth' ? 'bg-[#161616] border-white/20 shadow-inner' : 'bg-transparent border-white/5 hover:border-white/10'}`}
                           >
-                            <span className={`font-bold text-sm ${assetType === 'solo_eth' ? 'text-white' : 'text-white/40'}`}>Single ETH</span>
-                            <span className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Base Tier</span>
+                            <span className={`font-bold text-xs ${assetType === 'solo_eth' ? 'text-white' : 'text-white/40'}`}>Single ETH</span>
+                            <span className="text-[9px] text-white/20 font-bold uppercase tracking-wider">Base Tier</span>
                           </button>
                         </div>
                       </div>
@@ -484,7 +484,7 @@ export default function Home() {
                       {/* Amount Inputs */}
                       <div className={`grid gap-3 mb-4 ${assetType === 'pair' ? 'grid-cols-2' : 'grid-cols-1'}`}>
                         {assetType !== 'solo_eth' && (
-                          <div className="bg-[#161616] rounded-2xl p-5 border border-white/5 shadow-inner transition-all">
+                          <div className="bg-[#161616] rounded-2xl p-4 border border-white/5 shadow-inner transition-all">
                             <div className="flex justify-between items-center mb-3">
                               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 font-label">RLO Amount</span>
                               <span className="text-[10px] font-medium text-slate-300 uppercase tracking-wider">Balance: {parseFloat(rloBal || '0').toLocaleString('en-US')}</span>
@@ -495,7 +495,7 @@ export default function Home() {
                                   type="number"
                                   value={rloAmount}
                                   onChange={(e) => handleRloInput(e.target.value)}
-                                  className="bg-transparent text-2xl md:text-3xl font-bold text-white outline-none w-full placeholder-slate-700"
+                                  className="bg-transparent text-2xl font-bold text-white outline-none w-full placeholder-slate-700"
                                   placeholder="0.0"
                                 />
                                 <div className="text-[11px] text-white/50 font-medium mt-1">≈ ${((parseFloat(rloAmount) || 0) * 1).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
@@ -519,7 +519,7 @@ export default function Home() {
                         )}
 
                         {assetType !== 'solo_rlo' && (
-                          <div className="bg-[#161616] rounded-2xl p-5 border border-white/5 shadow-inner transition-all">
+                          <div className="bg-[#161616] rounded-2xl p-4 border border-white/5 shadow-inner transition-all">
                             <div className="flex justify-between items-center mb-3">
                               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 font-label">ETH Amount</span>
                               <span className="text-[10px] font-medium text-slate-300 uppercase tracking-wider">Balance: {walletBalances['ETH']?.toFixed(2) || '0.00'}</span>
@@ -530,7 +530,7 @@ export default function Home() {
                                   type="number"
                                   value={ethAmount}
                                   onChange={(e) => handleEthInput(e.target.value)}
-                                  className="bg-transparent text-3xl font-headline font-bold text-white outline-none w-full placeholder:text-white/5"
+                                  className="bg-transparent text-2xl font-headline font-bold text-white outline-none w-full placeholder:text-white/5"
                                   placeholder="0.0"
                                 />
                                 <div className="text-[10px] text-white/20 font-bold uppercase tracking-wider mt-1">≈ ${((parseFloat(ethAmount) || 0) * liveEthPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
@@ -547,7 +547,7 @@ export default function Home() {
                       </div>
 
                       {/* Lock Duration Slider */}
-                      <div className="bg-[#161616] rounded-2xl p-5 mb-4 border border-white/5 shadow-inner relative overflow-hidden group">
+                      <div className="bg-[#161616] rounded-2xl p-4 mb-4 border border-white/5 shadow-inner relative overflow-hidden group">
                         <div className="flex justify-between items-center mb-4 relative z-10">
                           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 font-label">
                             Lock Duration (Multiplier)
@@ -579,26 +579,26 @@ export default function Home() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 relative">
                           <button
                             onClick={() => setPayoutType('rlo')}
-                            className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${payoutType === 'rlo' && assetType !== 'solo_eth' ? 'bg-[#161616] border-white/20 shadow-inner' : 'bg-transparent border-white/5 hover:border-white/10'}`}
+                            className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 ${payoutType === 'rlo' && assetType !== 'solo_eth' ? 'bg-[#161616] border-white/20 shadow-inner' : 'bg-transparent border-white/5 hover:border-white/10'}`}
                           >
                             <div className="flex justify-between items-center w-full">
-                              <span className="font-bold text-white text-sm">Payout in RLO</span>
-                              <span className="text-white text-[10px] font-bold bg-white/10 border border-white/20 px-2 py-0.5 rounded uppercase tracking-wider">High APY</span>
+                              <span className="font-bold text-white text-xs">Payout in RLO</span>
+                              <span className="text-white text-[9px] font-bold bg-white/10 border border-white/20 px-1.5 py-0.5 rounded uppercase tracking-wider">High APY</span>
                             </div>
                           </button>
                           <button
                             onClick={() => {
                               if (assetType !== 'solo_eth') setPayoutType('rwa');
                             }}
-                            className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${
+                            className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 ${
                               payoutType === 'rwa' && assetType !== 'solo_eth'
                                 ? 'bg-[#161616] border-white/20 shadow-inner'
                                 : 'bg-transparent border-white/5 hover:border-white/10'
                             }`}
                           >
                             <div className="flex justify-between items-center w-full">
-                              <span className="font-bold text-white text-sm">Payout in RWA</span>
-                              <span className="text-white text-[10px] font-bold bg-white/10 border border-white/20 px-2 py-0.5 rounded uppercase tracking-wider">Stable</span>
+                              <span className="font-bold text-white text-xs">Payout in RWA</span>
+                              <span className="text-white text-[9px] font-bold bg-white/10 border border-white/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Stable</span>
                             </div>
                           </button>
                         </div>
@@ -617,7 +617,7 @@ export default function Home() {
                         <button
                           onClick={handleStake}
                           disabled={isSimulating}
-                          className="w-full bg-white text-black py-5 rounded-2xl font-headline font-extrabold text-lg tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl disabled:opacity-50"
+                          className="w-full bg-white text-black py-4 rounded-xl font-headline font-extrabold text-base tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl disabled:opacity-50"
                         >
                           {isSimulating ? (
                             <span className="flex items-center justify-center gap-2">
@@ -632,7 +632,7 @@ export default function Home() {
                       </div>
 
 
-                      <div className="bg-[#161616] rounded-2xl p-5 mb-5 border border-white/5 shadow-inner relative overflow-hidden group">
+                      <div className="bg-[#161616] rounded-2xl p-4 mb-4 border border-white/5 shadow-inner relative overflow-hidden group">
                         <div className="flex justify-between items-center mb-4 relative z-10">
                           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 font-label">
                             SfS Routing Fraction
