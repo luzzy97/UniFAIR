@@ -788,14 +788,7 @@ export default function Home() {
                     </h3>
 
                     <div className="space-y-0 bg-[#161616] rounded-2xl border border-white/5 shadow-inner flex flex-col">
-                      <div className="flex items-center justify-between text-sm p-5 border-b border-white/5">
-                        <span className="text-slate-300 font-medium">Basic Swap & Stake</span>
-                        <span className="font-headline font-bold text-white/40 text-[11px]">~0.05 Credits</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm p-5 border-b border-white/5">
-                        <span className="text-slate-300 font-medium">RWA Allocation</span>
-                        <span className="font-headline font-bold text-white/40 text-[11px]">~0.50 Credits</span>
-                      </div>
+
                       <div className="flex items-center justify-between text-sm p-5">
                         <span className="text-slate-300 font-medium">AI Agent Pass</span>
                         <span className="font-headline font-bold text-white text-[11px]">5.00 Credits/mo</span>
