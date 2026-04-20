@@ -573,6 +573,32 @@ export default function Home() {
                         </div>
                       </div>
 
+                      <div className="bg-[#161616] rounded-2xl p-4 mb-3 border border-white/5 shadow-inner relative overflow-hidden group transition-all">
+                        <div className="flex justify-between items-center mb-4 relative z-10">
+                          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 font-label">
+                            SfS Routing Fraction
+                          </span>
+                          <span className="font-headline font-bold text-white bg-white/10 border border-white/20 px-2.5 py-1 rounded-md text-xs">
+                            {sfsFraction}%
+                          </span>
+                        </div>
+
+                        <div className="relative z-10 px-1">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={sfsFraction}
+                            onChange={(e) => setSfsFraction(Number(e.target.value))}
+                            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white focus:outline-none"
+                          />
+                          <div className="flex justify-between text-[10px] text-slate-300 mt-3 font-bold uppercase tracking-wider">
+                            <span>0%</span>
+                            <span>100%</span>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Yield Payout Selection */}
                       <div className="mb-3">
                         <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 font-label mb-3 block">Yield Payout Preference</label>
@@ -629,33 +655,6 @@ export default function Home() {
                             "Bridge Assets to Staking"
                           )}
                         </button>
-                      </div>
-
-
-                      <div className="bg-[#161616] rounded-2xl p-4 mb-4 border border-white/5 shadow-inner relative overflow-hidden group">
-                        <div className="flex justify-between items-center mb-4 relative z-10">
-                          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 font-label">
-                            SfS Routing Fraction
-                          </span>
-                          <span className="font-headline font-bold text-white bg-white/10 border border-white/20 px-2.5 py-1 rounded-md text-xs">
-                            {sfsFraction}%
-                          </span>
-                        </div>
-
-                        <div className="relative z-10 px-1">
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={sfsFraction}
-                            onChange={(e) => setSfsFraction(Number(e.target.value))}
-                            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white focus:outline-none"
-                          />
-                          <div className="flex justify-between text-[10px] text-slate-300 mt-3 font-bold uppercase tracking-wider">
-                            <span>0%</span>
-                            <span>100%</span>
-                          </div>
-                        </div>
                       </div>
 
                       <div className="space-y-2 text-sm px-1.5">
