@@ -7,7 +7,7 @@ import Toast from '../components/Toast';
 import { useWallet } from '../hooks/useWallet';
 import { useStaking } from '../hooks/useStaking';
 import { useRouter } from 'next/router';
-import { Droplet, Activity, Loader2, CheckCircle2, AlertCircle, Route, Flame } from "lucide-react";
+import { Droplet, Activity, Loader2, CheckCircle2, AlertCircle, Route, Flame, X } from "lucide-react";
 
 export default function Rewards() {
   const router = useRouter();
@@ -18,10 +18,14 @@ export default function Rewards() {
     claimRewards: claimAction,
     fetchStakingData,
     globalRwaYieldUsd,
+    setGlobalRwaYieldUsd,
   } = useStaking();
 
   const [toast, setToast] = useState(null);
   const [claimingUSDC, setClaimingUSDC] = useState(false);
+  const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
+  const [redeemAmount, setRedeemAmount] = useState('');
+  const [isRedeeming, setIsRedeeming] = useState(false);
   const realPendingRewards = parseFloat(pendingRewStr || '0');
 
   useEffect(() => {
@@ -67,6 +71,38 @@ export default function Rewards() {
       }
     } finally {
       setClaimingUSDC(false);
+    }
+  };
+
+  const handleRedeemSubmit = async (e) => {
+    e.preventDefault();
+    if (!isConnected || isRedeeming || !redeemAmount) return;
+
+    setIsRedeeming(true);
+    try {
+      // Simulasi Web3 burn transaction
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const usdcReceived = (parseFloat(redeemAmount) * 2340.50).toFixed(2);
+      
+      addTransaction({ 
+        type: 'Redeem', 
+        amount: `${redeemAmount} XAUt`, 
+        details: `Burned XAUt for $${usdcReceived} USDC`,
+        txHash: '0x' + Math.random().toString(16).slice(2, 42) 
+      });
+
+      setToast({ message: "Successfully burned XAUt and claimed USDC!", type: "success" });
+      
+      // Reset global state (simulation of full redemption)
+      setGlobalRwaYieldUsd(0);
+      
+      setIsRedeemModalOpen(false);
+      setRedeemAmount('');
+    } catch (e) {
+      setToast({ message: "Redemption failed. Please try again.", type: "error" });
+    } finally {
+      setIsRedeeming(false);
     }
   };
 
@@ -131,18 +167,26 @@ export default function Rewards() {
                 </div>
               </div>
 
-              {/* Single Claim button */}
-              <button
-                onClick={handleClaimUSDC}
-                disabled={claimingUSDC || globalRwaYieldUsd <= 0}
-                className={`w-full mt-auto py-5 rounded-2xl font-headline font-extrabold text-lg tracking-tight active:scale-[0.98] transition-all shadow-2xl ${
-                  globalRwaYieldUsd > 0
-                    ? 'bg-white text-black hover:bg-white/90'
-                    : 'bg-white/20 text-white/40 cursor-not-allowed'
-                } disabled:opacity-50`}
-              >
-                {claimingUSDC ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Claim to Wallet'}
-              </button>
+              {/* Double button footer */}
+              <div className="flex gap-3 mt-auto">
+                <button
+                  onClick={() => router.push('/staking')}
+                  className="flex-1 bg-white text-black py-4 rounded-xl font-headline font-extrabold text-sm tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all"
+                >
+                  Stake More
+                </button>
+                <button
+                  onClick={() => setIsRedeemModalOpen(true)}
+                  disabled={globalRwaYieldUsd <= 0}
+                  className={`flex-1 border py-4 rounded-xl font-headline font-extrabold text-sm tracking-tight active:scale-[0.98] transition-all ${
+                    globalRwaYieldUsd > 0
+                      ? 'border-white/20 text-white hover:bg-white/5'
+                      : 'border-white/5 text-white/20 cursor-not-allowed'
+                  }`}
+                >
+                  Redeem XAUt
+                </button>
+              </div>
             </div>
 
             {/* Card 3: Accumulated Credits */}
@@ -203,6 +247,78 @@ export default function Rewards() {
       </div>
 
       <Footer />
+
+      {/* Redeem XAUt Modal */}
+      {isRedeemModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          {/* Overlay */}
+          <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300" 
+            onClick={() => !isRedeeming && setIsRedeemModalOpen(false)}
+          />
+          
+          {/* Modal Container */}
+          <div className="bg-[#0c0c0c] border border-white/10 rounded-2xl p-6 w-full max-w-md relative z-10 animate-in zoom-in-95 duration-300 shadow-2xl">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl font-headline font-extrabold tracking-tighter">Redeem XAUt to USDC</h2>
+              <button 
+                onClick={() => setIsRedeemModalOpen(false)}
+                className="text-white/40 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <p className="text-white/40 text-[11px] font-bold uppercase tracking-widest mb-4">
+                  Current Rate: 1 XAUt = $2,340.50 USDC
+                </p>
+                
+                <div className="relative group">
+                  <input
+                    type="number"
+                    value={redeemAmount}
+                    onChange={(e) => setRedeemAmount(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full bg-[#161616] border border-white/5 rounded-xl px-4 py-4 text-2xl font-bold text-white placeholder:text-white/5 outline-none focus:border-white/20 transition-all"
+                  />
+                  <button 
+                    onClick={() => setRedeemAmount((globalRwaYieldUsd / 2340.5).toString())}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white/60 hover:text-white px-2 py-1 rounded text-[10px] font-bold transition-all uppercase tracking-widest"
+                  >
+                    MAX
+                  </button>
+                </div>
+
+                {redeemAmount && (
+                  <div className="mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <p className="text-white/40 text-xs font-medium">
+                      You will receive: <span className="text-emerald-400">~${(parseFloat(redeemAmount) * 2340.50).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC</span>
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={handleRedeemSubmit}
+                disabled={isRedeeming || !redeemAmount || parseFloat(redeemAmount) <= 0}
+                className="w-full bg-white text-black py-4 rounded-xl font-headline font-extrabold text-lg tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+              >
+                {isRedeeming ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /> Processing...</>
+                ) : (
+                  'Burn XAUt & Claim USDC'
+                )}
+              </button>
+
+              <p className="text-[10px] text-white/20 text-center font-medium leading-relaxed">
+                By redeeming, your yield tokens will be permanently burned from the ecosystem in exchange for USDC liquidity.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
