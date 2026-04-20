@@ -813,37 +813,38 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* RWA Banner Section */}
-            <div className="mt-12 mb-24 max-w-7xl mx-auto px-4 md:px-0">
-              <div className="bg-[#0c0c0c] rounded-2xl p-8 md:p-12 shadow-2xl border border-white/5 relative overflow-hidden group text-white">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 blur-[100px] opacity-50"></div>
+                {/* RWA Banner Section inside Column */}
+                <div className="mt-6">
+                  <div className="bg-[#0c0c0c] rounded-2xl p-8 shadow-2xl border border-white/5 relative overflow-hidden group text-white">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 blur-[100px] opacity-50"></div>
 
-                <div className="flex flex-col md:flex-row items-center justify-between gap-8 w-full relative z-10">
-                  <div className="flex-1 space-y-4 text-center md:text-left">
-                    <h2 className="text-3xl md:text-4xl font-headline font-extrabold tracking-tighter text-white leading-tight">
-                      RWA Hub \uD83C\uDF0D
-                    </h2>
-                    <p className="text-white/40 text-sm md:text-base font-medium max-w-2xl">
-                      Diversify your remaining RLO staking yield into Real-World Assets. Zero exposure to crypto volatility with institutional-grade stability.
-                    </p>
-                  </div>
+                    <div className="flex flex-col items-center gap-6 w-full relative z-10">
+                      <div className="space-y-3 text-center">
+                        <h2 className="text-2xl font-headline font-extrabold tracking-tighter text-white leading-tight">
+                          RWA Hub \uD83C\uDF0D
+                        </h2>
+                        <p className="text-white/40 text-xs font-medium max-w-sm mx-auto">
+                          Diversify your yield into Real-World Assets with institutional-grade stability.
+                        </p>
+                      </div>
 
-                  {/* Minimal Bridge CTA */}
-                  <div className="w-full md:w-auto shrink-0">
-                    <button
-                      onClick={handleExploreRwa}
-                      disabled={isExploringRwa}
-                      className="bg-white text-black px-10 py-5 rounded-2xl font-headline font-extrabold text-lg tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl disabled:opacity-50"
-                    >
-                      {isExploringRwa ? <Loader2 className="w-5 h-5 animate-spin" /> : "Explore RWA"}
-                    </button>
+                      <div className="w-full">
+                        <button
+                          onClick={handleExploreRwa}
+                          disabled={isExploringRwa}
+                          className="w-full bg-white text-black py-4 rounded-xl font-headline font-extrabold text-sm tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl disabled:opacity-50"
+                        >
+                          {isExploringRwa ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Explore RWA"}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+
+
           </>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
