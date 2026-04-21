@@ -13,11 +13,12 @@ export default function Toast({ message, type = 'success', txHash, onClose }) {
 
   if (!visible) return null;
 
-  const icons = { success: 'check_circle', error: 'error', loading: 'hourglass_top' };
+  const icons = { success: 'check_circle', error: 'error', loading: 'hourglass_empty', info: 'info' };
   const colors = {
     success: 'bg-primary text-on-primary',
     error: 'bg-[#ba1a1a] text-white',
     loading: 'bg-surface-container text-on-surface',
+    info: 'bg-primary/20 text-white',
   };
 
   return (

@@ -12,11 +12,11 @@ import { Droplet, Info, Route, Plus, Activity, Loader2, CheckCircle2, AlertCircl
 import { ethers } from "ethers";
 import deployedContracts from '../lib/contracts/deployedContracts.json';
 
-// ── XAUt Contract Config (from deployedContracts.json) ─────────────────────────
+// ── XAUt Contract Config (from deployedContracts.json) ────────────────────────â”€
 const XAUT_ADDRESS: string = deployedContracts.address.XAUt;
 const XAUT_ABI = deployedContracts.abi.XAUt;
 
-// ── Mock live gold price (1 troy oz in USD) — replace with Chainlink feed on mainnet ──
+// ── Mock live gold price (1 troy oz in USD) â€” replace with Chainlink feed on mainnet ──
 const LIVE_GOLD_PRICE_USD = 2340.50;
 
 type Path = {
@@ -27,9 +27,21 @@ type Path = {
 type AssetType = 'solo_rlo' | 'pair' | 'solo_eth';
 type PayoutType = 'rlo' | 'rwa';
 
+interface StakingPosition {
+  id: string;
+  assetType: AssetType;
+  amountRlo: number;
+  amountEth: number;
+  startTime: number;
+  lockDuration: number;
+  lockEnd: number;
+  txHash: string | null;
+}
+
+
 export default function Home() {
   const router = useRouter();
-  const { isConnected, address, provider, connect, balances: walletBalances, addTransaction, fetchEthBalance, updateBalance } = useWallet();
+  const { isConnected, address, provider, connect, balances: walletBalances, addTransaction, fetchEthBalance, updateBalance, addCredits, addPendingCredits } = useWallet();
   const { balance: rloBal, fetchBalance: fetchRloBalance } = useRLO();
   const {
     stakedBalance: stakedBalStr,
@@ -146,9 +158,51 @@ export default function Home() {
   const [isSigning, setIsSigning] = useState<boolean>(false);
 
   // Toast
-  const [toast, setToast] = useState(null);
+  const [toast, setToast] = useState<{ message: string; detail?: string; type: 'success' | 'error' | 'loading' | 'info'; txHash: string | null } | null>(null);
 
-  // Clear toast after 3s
+  // --- Staking History & Countdown Logic ---
+  const [stakingHistory, setStakingHistory] = useState<StakingPosition[]>([]);
+  const [currentTime, setCurrentTime] = useState<number>(Date.now());
+
+  // Update ticker every second
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Load and Migrate History
+  useEffect(() => {
+    if (typeof window !== 'undefined' && address) {
+      const historyKey = `rialo_staking_history_${address}`;
+      const saved = localStorage.getItem(historyKey);
+      
+      if (saved) {
+        setStakingHistory(JSON.parse(saved));
+      } else {
+        // Migration: If no history exists but we have total balances, create a legacy record
+        const oldRlo = parseFloat(localStorage.getItem('rialo_staked_rlo') || '0');
+        const oldEth = parseFloat(localStorage.getItem('rialo_staked_eth') || '0');
+        const oldLockEnd = parseInt(localStorage.getItem(`rialo_lock_end_${address}`) || '0');
+
+        if (oldRlo > 0 || oldEth > 0) {
+          const legacyRecord: StakingPosition = {
+            id: 'legacy-' + Date.now(),
+            assetType: oldRlo > 0 && oldEth > 0 ? 'pair' : (oldEth > 0 ? 'solo_eth' : 'solo_rlo'),
+            amountRlo: oldRlo,
+            amountEth: oldEth,
+            startTime: Date.now() - (oldLockEnd ? 30 * 24 * 60 * 60 * 1000 : 0),
+            lockDuration: 1, // Assume 1 month for legacy
+            lockEnd: oldLockEnd || Date.now(),
+            txHash: null
+          };
+          const newHistory = [legacyRecord];
+          setStakingHistory(newHistory);
+          localStorage.setItem(historyKey, JSON.stringify(newHistory));
+        }
+      }
+    }
+  }, [address]);
+
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(null), 3000);
@@ -162,22 +216,56 @@ export default function Home() {
     setIsSimulating(true);
     try {
       if (isStaking) {
+        let lastTxHash = null;
         if (assetType === 'solo_rlo') {
-          if (numRlo < 10) { setToast({ message: "Min 10 RLO", type: "error" }); setIsSimulating(false); return; }
-          const hash = await stakeRlo(numRlo.toString(), lockDuration);
-          addTransaction({ type: 'Stake', amount: `${numRlo.toLocaleString('en-US')} RLO`, details: 'Staked RLO (Solo)', txHash: hash });
-          setToast({ message: `Successfully staked ${numRlo.toLocaleString('en-US')} RLO!`, type: "success", txHash: hash });
+          if (numRlo < 10) { setToast({ message: "Min 10 RLO", type: "error", txHash: null }); setIsSimulating(false); return; }
+          lastTxHash = await stakeRlo(numRlo.toString(), lockDuration);
+          addTransaction({ type: 'Stake', amount: `${numRlo.toLocaleString('en-US')} RLO`, details: 'Staked RLO (Solo)', txHash: lastTxHash });
         } else if (assetType === 'solo_eth') {
-          if (numEth <= 0) { setToast({ message: "Invalid ETH Amount", type: "error" }); setIsSimulating(false); return; }
-          const hash = await stakeEth(numEth.toString(), lockDuration);
-          addTransaction({ type: 'Stake', amount: `${numEth} ETH`, details: 'Staked ETH (Solo)', txHash: hash });
-          setToast({ message: `Successfully staked ${numEth} ETH!`, type: "success", txHash: hash });
+          if (numEth <= 0) { setToast({ message: "Invalid ETH Amount", type: "error", txHash: null }); setIsSimulating(false); return; }
+          lastTxHash = await stakeEth(numEth.toString(), lockDuration);
+          addTransaction({ type: 'Stake', amount: `${numEth} ETH`, details: 'Staked ETH (Solo)', txHash: lastTxHash });
         } else if (assetType === 'pair') {
-          if (numRlo < 10 || numEth <= 0) { setToast({ message: "Invalid Pair Amount", type: "error" }); setIsSimulating(false); return; }
-          const hash = await stakePair(numRlo.toString(), numEth.toString(), lockDuration);
-          addTransaction({ type: 'Stake', amount: 'LP Pair', details: `Staked ${numRlo} RLO + ${numEth} ETH`, txHash: hash });
-          setToast({ message: `Successfully staked Pair!`, type: "success", txHash: hash });
+          if (numRlo < 10 || numEth <= 0) { setToast({ message: "Invalid Pair Amount", type: "error", txHash: null }); setIsSimulating(false); return; }
+          lastTxHash = await stakePair(numRlo.toString(), numEth.toString(), lockDuration);
+          addTransaction({ type: 'Stake', amount: 'LP Pair', details: `Staked ${numRlo} RLO + ${numEth} ETH`, txHash: lastTxHash });
         }
+        
+        const creditsToAward = Math.floor(rawYieldToServiceCredits);
+        if (creditsToAward > 0) {
+          addPendingCredits(creditsToAward);
+          addTransaction({
+            type: 'Credits',
+            amount: `+${creditsToAward.toLocaleString('en-US')} Credits`,
+            details: `Pending AI Credit Allocation (${sfsFraction}% of yield × 1000)`,
+            txHash: null
+          });
+          setToast({ 
+            message: `✅ ${creditsToAward.toLocaleString('en-US')} Credits are now available to claim in Rewards!`, 
+            type: 'success',
+            txHash: lastTxHash 
+          });
+        } else {
+          setToast({ message: `Successfully staked assets!`, type: "success", txHash: lastTxHash });
+        }
+
+        const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+        const lockMs = lockDuration * 30 * 24 * 60 * 60 * 1000;
+        const newPosition: StakingPosition = {
+          id: 'stake-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+          assetType,
+          amountRlo: assetType === 'solo_eth' ? 0 : parseFloat(rloAmount || '0'),
+          amountEth: assetType === 'solo_rlo' ? 0 : parseFloat(ethAmount || '0'),
+          startTime: Date.now(),
+          lockDuration,
+          lockEnd: Date.now() + (lockDuration === 0 ? thirtyDays : lockMs),
+          txHash: lastTxHash
+        };
+
+        const updatedHistory = [...stakingHistory, newPosition];
+        setStakingHistory(updatedHistory);
+        if (address) localStorage.setItem(`rialo_staking_history_${address}`, JSON.stringify(updatedHistory));
+
         if (payoutType === 'rwa') {
           setRemainingPortfolio(estimatedRwaYieldUsd);
           setActiveView('rwa');
@@ -186,13 +274,29 @@ export default function Home() {
         setEthAmount("0");
       } else {
         if (realStakedBalance <= 0 && realStakedEthBalance <= 0) {
-          setToast({ message: "No assets staked", type: "error" });
+          setToast({ message: "No balanced staked to unstake.", type: "error", txHash: null });
           setIsSimulating(false);
           return;
         }
+
+        const storedLockEnd = parseInt(localStorage.getItem(`rialo_lock_end_${address}`) || '0');
+        const now = Date.now();
+        if (now < storedLockEnd) {
+          const diff = storedLockEnd - now;
+          const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+          setToast({
+            message: `Locked! Assets mature in ${days} days.`,
+            detail: "Use individual Unstake buttons in Staking History for granular withdrawal.",
+            type: "error",
+            txHash: null
+          });
+          setIsSimulating(false);
+          return;
+        }
+
         const hash = await withdraw();
-        addTransaction({ type: 'Unstake', amount: 'All Assets', details: 'Unstaked RLO/ETH', txHash: hash });
-        setToast({ message: `Successfully unstaked!`, type: "success", txHash: hash });
+        addTransaction({ type: 'Unstake', amount: 'All Assets', details: 'Unstaked RLO/ETH + Cash Yield distributed', txHash: hash });
+        setToast({ message: `Success! Principal and final Cash Yield have been returned to your wallet.`, type: "success", txHash: hash });
       }
 
       if (address && provider) {
@@ -203,10 +307,39 @@ export default function Home() {
     } catch (e: any) {
       const msg = e.message || "";
       if (msg.includes('user rejected') || msg.includes('4001')) {
-        setToast({ message: "Transaction rejected in MetaMask.", type: "error" });
+        setToast({ message: "Transaction rejected in MetaMask.", type: "error", txHash: null });
       } else {
-        setToast({ message: `${isStaking ? 'Staking' : 'Unstaking'} failed. ${msg.slice(0, 60)}${msg.length > 60 ? '...' : ''}`, type: "error" });
+        setToast({ message: `${isStaking ? 'Staking' : 'Unstaking'} failed. ${msg.slice(0, 60)}${msg.length > 60 ? '...' : ''}`, type: "error", txHash: null });
       }
+    } finally {
+      setIsSimulating(false);
+    }
+  };
+
+  const handleUnstakePosition = async (positionId: string) => {
+    if (!isConnected) { connect(); return; }
+    
+    const position = stakingHistory.find(p => p.id === positionId);
+    if (!position) return;
+
+    setIsSimulating(true);
+    try {
+      const hash = await withdraw();
+      
+      addTransaction({ 
+        type: 'Unstake', 
+        amount: position.assetType === 'pair' ? 'RLO + ETH Pair' : (position.amountRlo > 0 ? `${position.amountRlo} RLO` : `${position.amountEth} ETH`), 
+        details: 'Position Mature - Principal & Yield unlocked', 
+        txHash: hash 
+      });
+
+      const updatedHistory = stakingHistory.filter(p => p.id !== positionId);
+      setStakingHistory(updatedHistory);
+      if (address) localStorage.setItem(`rialo_staking_history_${address}`, JSON.stringify(updatedHistory));
+
+      setToast({ message: `Successfully unstaked position!`, detail: "Principal and yield distributed.", type: "success", txHash: hash });
+    } catch (e: any) {
+      setToast({ message: "Unstake failed", detail: e.message, type: "error", txHash: null });
     } finally {
       setIsSimulating(false);
     }
@@ -217,10 +350,10 @@ export default function Home() {
     setIsSavingRoute(true);
     try {
       await updateRwaAllocation(rwaTarget, rwaRouter / 100);
-      setToast({ message: `RWA Yield routing saved!`, type: "success" });
+      setToast({ message: `RWA Yield routing saved!`, type: "success", txHash: null });
       setRouteSaved(true);
     } catch (e) {
-      setToast({ message: `Failed to save RWA route.`, type: "error" });
+      setToast({ message: `Failed to save RWA route.`, type: "error", txHash: null });
     } finally {
       setIsSavingRoute(false);
     }
@@ -229,7 +362,7 @@ export default function Home() {
   const handleClaim = async () => {
     if (!isConnected) { connect(); return; }
     if (realPendingRewards <= 0) {
-      setToast({ message: "No rewards to claim", type: "error" });
+      setToast({ message: "No rewards to claim", type: "error", txHash: null });
       return;
     }
     try {
@@ -241,18 +374,18 @@ export default function Home() {
         fetchStakingData();
       }
     } catch (e) {
-      setToast({ message: "Claim failed", type: "error" });
+      setToast({ message: "Claim failed", type: "error", txHash: null });
     }
   };
 
   const handleConfigureAI = async () => {
     if (!isConnected) { connect(); return; }
     try {
-      setToast({ message: "Activating AI Session...", type: "info" });
-      await activateSession(24); // 24 hour session
-      setToast({ message: "AI Agent Session Active!", type: "success" });
+      setToast({ message: "Activating AI Session...", type: "info", txHash: null });
+      await activateSession(24);
+      setToast({ message: "AI Agent Session Active!", type: "success", txHash: null });
     } catch (e) {
-      setToast({ message: "Failed to activate AI session", type: "error" });
+      setToast({ message: "Failed to activate AI session", type: "error", txHash: null });
     }
   };
 
@@ -266,7 +399,6 @@ export default function Home() {
     realEstate: 'Real Estate',
     gold: 'Tokenized Gold',
   };
-
 
   const handleRloInput = (val: string) => {
     setRloAmount(val);
@@ -301,49 +433,39 @@ export default function Home() {
   else if (assetType === 'pair') { assetMultiplier = 0.75; creditsMultiplier = 0.6; }
   else if (assetType === 'solo_eth') { assetMultiplier = 0.3; creditsMultiplier = 0.2; }
 
-  // Flexible: flat 3% APY. Locked: rumus progresif hingga +10% boost di 48 bulan.
   const networkApy = lockDuration === 0
     ? 0.03 * assetMultiplier
     : (baseApy + ((lockDuration - 1) / 47) * 0.10) * assetMultiplier;
-  // Flexible menggunakan proyeksi 1 bulan; locked menggunakan durasi penuh.
   const timeMultiplier = lockDuration === 0 ? (1 / 12) : (lockDuration / 12);
   const totalYield = (effectivePrincipal * networkApy) * timeMultiplier;
 
   const yieldAllocatedToSfS = totalYield * (sfsFraction / 100) * creditsMultiplier;
-  const rawYieldToServiceCredits = yieldAllocatedToSfS * 10;
+  const rawYieldToServiceCredits = yieldAllocatedToSfS * 1000;
   const yieldToWallet = totalYield - yieldAllocatedToSfS;
   const availableServiceCredits = Math.max(0, rawYieldToServiceCredits);
-  // RWA yield hanya relevan saat payoutType === 'rwa'
   const estimatedRwaYieldUsd = payoutType === 'rwa' ? yieldToWallet : 0;
 
   const [allocationPercent, setAllocationPercent] = useState<number>(100);
   const [remainingPortfolio, setRemainingPortfolio] = useState<number>(0);
 
-
-
-  // Sync estimatedRwaYieldUsd ke global state agar bisa dibaca halaman Rewards
   useEffect(() => {
     setGlobalRwaYieldUsd(estimatedRwaYieldUsd);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [Math.round(estimatedRwaYieldUsd * 100)]);
 
-  // Partial allocation calculation — depends on remainingPortfolio & allocationPercent
   const allocatedUsd = (remainingPortfolio * allocationPercent) / 100;
 
   const handleConfirmAllocation = async () => {
     if (!isConnected) { connect(); return; }
     if (!provider) {
-      setToast({ message: 'No wallet provider found. Please reconnect.', type: 'error' });
+      setToast({ message: 'No wallet provider found. Please reconnect.', type: 'error', txHash: null });
       return;
     }
     if (remainingPortfolio <= 0) {
-      setToast({ message: 'No portfolio balance remaining to allocate.', type: 'error' });
+      setToast({ message: 'No portfolio balance remaining to allocate.', type: 'error', txHash: null });
       return;
     }
-
-    // Coming Soon guard — only Gold is active
     if (selectedRwaTarget !== 'gold') {
-      setToast({ message: 'This vault is Coming Soon. Only Tokenized Gold (XAUt) is available now.', type: 'error' });
+      setToast({ message: 'This vault is Coming Soon. Only Tokenized Gold (XAUt) is available now.', type: 'error', txHash: null });
       return;
     }
 
@@ -351,25 +473,16 @@ export default function Home() {
     try {
       const signer = await provider.getSigner();
       const recipientAddress = await signer.getAddress();
-
-      // ── Calculate XAUt amount based on USD allocation ──
-      const xautAmount = allocatedUsd / LIVE_GOLD_PRICE_USD;           // in oz (float)
-      // Convert to 18-decimal wei-equivalent. Use toFixed(18) to avoid scientific notation.
+      const xautAmount = allocatedUsd / LIVE_GOLD_PRICE_USD;
       const xautAmountWei = ethers.parseUnits(xautAmount.toFixed(18), 18);
-
-      // ── Instantiate deployed RialoGold contract ──
       const xautContract = new ethers.Contract(XAUT_ADDRESS, XAUT_ABI, signer);
 
-      setToast({ message: 'Confirm the mint transaction in MetaMask...', type: 'success' });
+      setToast({ message: 'Confirm the mint transaction in MetaMask...', type: 'success', txHash: null });
+      const mintTx = await xautContract.mintAllocation(recipientAddress, xautAmountWei);
+      setToast({ message: 'Minting XAUt Token... Waiting for confirmation 🧭', type: 'success', txHash: null });
+      const receipt = await mintTx.wait();
+      const txHash: string = receipt.hash || (mintTx ? mintTx.hash : '');
 
-      // ── Call mintAllocation on-chain ──
-      const tx = await xautContract.mintAllocation(recipientAddress, xautAmountWei);
-      setToast({ message: 'Minting XAUt Token... Waiting for confirmation \u26CF', type: 'success' });
-
-      const receipt = await tx.wait();
-      const txHash: string = receipt.hash ?? tx.hash;
-
-      // ── Record in transaction history ──
       addTransaction({
         type: 'RWA Allocation',
         amount: `${xautAmount.toFixed(6)} XAUt (~$${allocatedUsd.toFixed(2)})`,
@@ -378,20 +491,18 @@ export default function Home() {
       });
 
       setToast({
-        message: `\u2705 ${xautAmount.toFixed(6)} XAUt minted to your wallet!`,
+        message: `✅ ${xautAmount.toFixed(6)} XAUt minted to your wallet!`,
         type: 'success',
         txHash,
       });
 
-      // Reduce remaining portfolio by the amount just allocated
       setRemainingPortfolio(prev => Math.max(0, prev - allocatedUsd));
-
     } catch (e: any) {
       const msg = e.message || '';
       if (msg.includes('user rejected') || msg.includes('4001') || e?.code === 'ACTION_REJECTED') {
-        setToast({ message: 'Transaction rejected in MetaMask.', type: 'error' });
+        setToast({ message: 'Transaction rejected in MetaMask.', type: 'error', txHash: null });
       } else {
-        setToast({ message: `Mint failed. ${msg.slice(0, 80)}${msg.length > 80 ? '...' : ''}`, type: 'error' });
+        setToast({ message: `Mint failed. ${msg.slice(0, 80)}${msg.length > 80 ? '...' : ''}`, type: 'error', txHash: null });
       }
     } finally {
       setIsSigning(false);
@@ -720,42 +831,118 @@ export default function Home() {
                       </div>
                     </div>
                   ) : (
-                    <div className="py-12 text-center animate-in zoom-in-95 duration-300 flex flex-col items-center justify-center min-h-[500px]">
-                      <div className="flex items-center justify-center gap-3 mb-3">
-                        <p className="text-white/60 font-medium">Your Locked Balance</p>
+                    <div className="py-6 animate-in fade-in slide-in-from-bottom-2 duration-300 h-full flex flex-col">
+                      <div className="flex items-center justify-between mb-8 px-2">
+                        <div className="flex flex-col">
+                          <h3 className="text-white font-headline font-extrabold text-xl tracking-tight">Active Positions</h3>
+                          <p className="text-white/40 text-[11px] font-medium uppercase tracking-widest mt-1">Staking History</p>
+                        </div>
                         <button
                           onClick={() => fetchStakingData()}
-                          title="Refresh balance"
-                          className="text-white/30 hover:text-white transition-colors"
+                          className="p-2.5 rounded-xl bg-white/5 border border-white/5 text-white/40 hover:text-white transition-all"
                         >
-                          <Loader2 className={`w-4 h-4 ${stakingLoading ? 'animate-spin text-white' : ''}`} />
+                          <Loader2 className={`w-4 h-4 ${stakingLoading ? 'animate-spin text-primary' : ''}`} />
                         </button>
                       </div>
-                      <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-2 drop-shadow-sm tracking-tight">
-                        {realStakedBalance.toLocaleString('en-US')} <span className="text-xl text-white/50 font-bold ml-1">RLO</span>
-                      </h2>
-                      <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-8 drop-shadow-sm tracking-tight">
-                        {realStakedEthBalance.toLocaleString('en-US')} <span className="text-xl text-white/50 font-bold ml-1">ETH</span>
-                      </h2>
 
-                      <div className="inline-flex items-center gap-2 bg-[#161616] border border-white/10 px-5 py-2.5 rounded-xl mb-12 shadow-inner">
-                        <AlertCircle className="w-4 h-4 text-white/60" />
-                        <span className="text-sm font-semibold text-white/60">
-                          Unlock Status: Check Smart Contract Lock End
-                        </span>
-                      </div>
+                      {stakingHistory.length === 0 ? (
+                        <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50 space-y-4">
+                          <div className="w-16 h-16 rounded-full border border-dashed border-white/20 flex items-center justify-center">
+                            <Activity className="w-8 h-8 text-white/20" />
+                          </div>
+                          <p className="text-sm font-medium text-white/40">No active staking positions found.</p>
+                        </div>
+                      ) : (
+                        <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar max-h-[500px]">
+                          {stakingHistory.map((pos) => {
+                            const timeLeft = Math.max(0, pos.lockEnd - currentTime);
+                            const isMature = timeLeft === 0;
+                            
+                            // Calculate progress
+                            const totalDuration = pos.lockEnd - pos.startTime;
+                            const elapsed = currentTime - pos.startTime;
+                            const progress = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
 
-                      <div className="w-full mt-auto">
-                        <button
-                          onClick={handleStake}
-                          disabled={isSimulating}
-                          className="w-full font-bold py-4 rounded-2xl transition-all border border-transparent shadow-[0_4px_14px_0_rgba(249,115,22,0.39)] text-[1.05rem] flex justify-center items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white hover:shadow-[0_6px_20px_rgba(249,115,22,0.23)] hover:-translate-y-0.5 active:translate-y-0"
-                        >
-                          {isSimulating ? <Loader2 className="w-5 h-5 animate-spin" /> : "Initiate Unstaking"}
-                        </button>
-                        <p className="text-center text-[11.5px] font-medium text-white/70 mt-3 animate-in fade-in">
-                          Note: Withdrawals revert if lock duration has not ended.
-                        </p>
+                            // Duration helper
+                            const d = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                            const h = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+                            const m = Math.floor((timeLeft / (1000 * 60)) % 60);
+                            const s = Math.floor((timeLeft / 1000) % 60);
+
+                            return (
+                              <div key={pos.id} className="bg-[#161616] border border-white/5 rounded-2xl p-5 relative overflow-hidden group transition-all hover:border-white/10 shadow-inner">
+                                {/* Background glow for mature assets */}
+                                {isMature && <div className="absolute inset-0 bg-primary/5 animate-pulse"></div>}
+                                
+                                <div className="flex justify-between items-start mb-4 relative z-10">
+                                  <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] font-extrabold uppercase tracking-widest text-primary/80 bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
+                                        {pos.assetType === 'pair' ? 'LP PAIR' : pos.assetType.replace('solo_', '').toUpperCase()}
+                                      </span>
+                                      {isMature && (
+                                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20 animate-bounce">
+                                          Mature
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex flex-col mt-2">
+                                      {pos.amountRlo > 0 && (
+                                        <span className="text-xl font-extrabold text-white leading-tight">
+                                          {pos.amountRlo.toLocaleString()} <span className="text-xs text-white/40 font-bold ml-0.5">RLO</span>
+                                        </span>
+                                      )}
+                                      {pos.amountEth > 0 && (
+                                        <span className="text-xl font-extrabold text-white leading-tight">
+                                          {pos.amountEth.toLocaleString()} <span className="text-xs text-white/40 font-bold ml-0.5">ETH</span>
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="text-right">
+                                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-1">Ends In</p>
+                                    <p className={`font-mono font-bold text-sm ${isMature ? 'text-emerald-400' : 'text-white'}`}>
+                                      {isMature ? '00:00:00:00' : `${d}d ${h}h ${m}m ${s}s`}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Progress Bar */}
+                                <div className="w-full bg-white/5 h-1 rounded-full mb-6 relative overflow-hidden">
+                                  <div 
+                                    className={`h-full transition-all duration-1000 ease-linear ${isMature ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-primary'}`}
+                                    style={{ width: `${progress}%` }}
+                                  ></div>
+                                </div>
+
+                                <button
+                                  onClick={() => handleUnstakePosition(pos.id)}
+                                  disabled={!isMature || isSimulating}
+                                  className={`w-full py-3.5 rounded-xl font-headline font-extrabold text-xs uppercase tracking-widest transition-all ${
+                                    isMature 
+                                      ? 'bg-white text-black hover:bg-white/90 shadow-[0_0_20px_rgba(255,255,255,0.1)] active:scale-[0.98]' 
+                                      : 'bg-[#1a1a1a] text-white/20 border border-white/5 cursor-not-allowed'
+                                  }`}
+                                >
+                                  {isMature ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                      Unstake Assets <ArrowRight className="w-3 h-3" />
+                                    </span>
+                                  ) : (
+                                    <span className="flex items-center justify-center gap-2">
+                                      <AlertCircle className="w-3 h-3" /> Still Locked
+                                    </span>
+                                  )}
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      <div className="mt-8 pt-4 border-t border-white/5 text-[11px] font-medium text-white/30 text-center uppercase tracking-[0.15em]">
+                        Auto-Compounding Enabled \u2022 Total Value Secured
                       </div>
                     </div>
                   )}
@@ -789,9 +976,17 @@ export default function Home() {
 
                     <div className="space-y-0 bg-[#161616] rounded-2xl border border-white/5 shadow-inner flex flex-col">
 
+                      <div className="flex items-center justify-between text-sm p-5 border-b border-white/5">
+                        <span className="text-slate-300 font-medium">AI Chat (per message)</span>
+                        <span className="font-headline font-bold text-white text-[11px]">5 Credits</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm p-5 border-b border-white/5">
+                        <span className="text-slate-300 font-medium">AI Access Unlock</span>
+                        <span className="font-headline font-bold text-white text-[11px]">5 Credits / 7 days</span>
+                      </div>
                       <div className="flex items-center justify-between text-sm p-5">
-                        <span className="text-slate-300 font-medium">AI Agent Pass</span>
-                        <span className="font-headline font-bold text-white text-[11px]">5.00 Credits/mo</span>
+                        <span className="text-slate-300 font-medium">Rate: 1 USDT</span>
+                        <span className="font-headline font-bold text-emerald-400 text-[11px]">= 1,000 Credits</span>
                       </div>
                     </div>
 
@@ -802,6 +997,28 @@ export default function Home() {
                       >
                         {sessionActive ? 'AI Session Active \u2713' : 'Configure AI Agent'}
                       </button>
+
+                      {/* Debug: Simulate 30 Days (Sepolia Testing) */}
+                      {isConnected && (stakingHistory.length > 0) && (
+                        <button
+                          onClick={() => {
+                             const past = Date.now() - (31 * 24 * 60 * 60 * 1000);
+                             // Update legacy fallback
+                             localStorage.setItem(`rialo_lock_end_${address}`, past.toString());
+                             
+                             // Update all history positions
+                             const newHistory = stakingHistory.map(p => ({ ...p, lockEnd: past }));
+                             setStakingHistory(newHistory);
+                             if (address) localStorage.setItem(`rialo_staking_history_${address}`, JSON.stringify(newHistory));
+
+                             setToast({ message: "Time Simulation: 31 Days Passed", detail: "All positions mature. You can now unstake and collect yield.", type: 'success', txHash: null });
+                             fetchStakingData();
+                          }}
+                          className="w-full py-4 mt-2 border border-dashed border-white/5 rounded-xl text-[9px] uppercase tracking-[0.2em] text-white/20 hover:text-white/40 transition-all font-bold"
+                        >
+                          Simulate Maturity (All Positions Under 30 Days)
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -861,7 +1078,7 @@ export default function Home() {
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 font-label mb-3">Total Portfolio Value</span>
                   <div className="text-5xl md:text-6xl font-headline font-extrabold text-white tracking-tighter">
-                    ${remainingPortfolio.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${remainingPortfolio.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
 
@@ -958,7 +1175,7 @@ export default function Home() {
                   ) : remainingPortfolio <= 0 || allocationPercent === 0 ? (
                     'Portfolio Fully Allocated'
                   ) : (
-                    `Confirm Allocation of $${allocatedUsd.toFixed(2)} to ${rwaNameMap[selectedRwaTarget] ?? selectedRwaTarget}`
+                    `Confirm Allocation of $${allocatedUsd.toFixed(2)} to ${rwaNameMap[selectedRwaTarget] || selectedRwaTarget}`
                   )}
                 </button>
               </div>
@@ -970,3 +1187,4 @@ export default function Home() {
     </main>
   );
 }
+

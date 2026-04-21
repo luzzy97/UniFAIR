@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 
 
 export default function AiAgent() {
-  const { isConnected, address, balances, transactions, provider, executeAiTransaction, addTriggerOrder, globalRates, scheduledTxs, addScheduledTx, removeScheduledTx, toast, showToast, sessionActive, sessionExpiry, sessionSigner, activateSession, deactivateSession, seedSession, withdrawSessionBalance, aiMessages: messages, addAiMessage, tickingCredits, aiAccessExpiry, purchaseAiAccess } = useWallet();
+  const { isConnected, address, balances, transactions, provider, executeAiTransaction, addTriggerOrder, globalRates, scheduledTxs, addScheduledTx, removeScheduledTx, toast, showToast, sessionActive, sessionExpiry, sessionSigner, activateSession, deactivateSession, seedSession, withdrawSessionBalance, aiMessages: messages, addAiMessage, tickingCredits, deductCredits, aiAccessExpiry, purchaseAiAccess } = useWallet();
   const { stakedBalance, stakedEthBalance } = useStaking();
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
@@ -87,10 +87,24 @@ export default function AiAgent() {
     e.preventDefault();
     if (!input.trim()) return;
 
+    // --- Credit Check: 5 Credits per interaction ---
+    const CREDITS_PER_CHAT = 5;
+    if (tickingCredits < CREDITS_PER_CHAT) {
+      showToast({ 
+        message: "Insufficient Credits", 
+        detail: `You need ${CREDITS_PER_CHAT} Credits per message. Top up by staking more or waiting for next cycle.`,
+        type: 'error'
+      });
+      return;
+    }
+
     const userMsg = input.trim();
     addAiMessage({ role: 'user', content: { raw: userMsg } });
     setInput('');
     setIsThinking(true);
+
+    // Deduct 5 credits immediately for this interaction (persists to localStorage + backend)
+    deductCredits(5);
 
     try {
       // Collect current wallet/ecosystem context for the AI
@@ -185,6 +199,7 @@ export default function AiAgent() {
       setIsThinking(false);
     }
   };
+
 
   const submitScheduledForm = (e) => {
     e.preventDefault();
@@ -612,15 +627,39 @@ export default function AiAgent() {
               </button>
               <button onClick={() => setInput("swap 1 ETH to USDC at 2500")} className="ai-command-chip">Auto Buy/Sell</button>
             </div>
+              {/* Zero Balance Warning */}
+          {tickingCredits < 5 && aiAccessExpiry > Date.now() && (
+            <div style={{
+              background: 'rgba(239,68,68,0.08)',
+              border: '1px solid rgba(239,68,68,0.2)',
+              borderRadius: '12px',
+              padding: '10px 14px',
+              marginBottom: '8px',
+              fontSize: '11px',
+              color: 'rgba(239,68,68,0.8)',
+              fontWeight: '700',
+              textAlign: 'center'
+            }}>
+              ⚡ {Math.floor(tickingCredits)} Credits remaining · 5 Credits per message<br/>
+              <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: '500' }}>Top up by staking more USDT or wait for next cycle</span>
+            </div>
+          )}
                 <form className="ai-form" onSubmit={handleSend}>
                   <input 
                     type="text" 
                     className="ai-input" 
-                    placeholder="Ask about swaps, bridging, or staking..."
+                    placeholder={tickingCredits < 5 ? "Insufficient credits – top up to chat" : "Ask about swaps, bridging, or staking..."}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
+                    disabled={tickingCredits < 5}
+                    style={tickingCredits < 5 ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
                   />
-                  <button type="submit" className="ai-send">Send</button>
+                  <button 
+                    type="submit" 
+                    className="ai-send"
+                    disabled={tickingCredits < 5}
+                    style={tickingCredits < 5 ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+                  >Send</button>
                 </form>
               </div>
             </>

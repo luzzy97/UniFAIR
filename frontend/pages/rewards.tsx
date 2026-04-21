@@ -11,7 +11,7 @@ import { Droplet, Activity, Loader2, CheckCircle2, AlertCircle, Route, Flame, X 
 
 export default function Rewards() {
   const router = useRouter();
-  const { isConnected, address, provider, connect, addTransaction } = useWallet();
+  const { isConnected, address, provider, connect, addTransaction, tickingCredits, pendingCredits, claimCredits } = useWallet();
   const {
     pendingRewards: pendingRewStr,
     loading: stakingLoading,
@@ -26,6 +26,8 @@ export default function Rewards() {
   const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
   const [redeemAmount, setRedeemAmount] = useState('');
   const [isRedeeming, setIsRedeeming] = useState(false);
+  const [isFueling, setIsFueling] = useState(false);
+  const [fuelingProgress, setFuelingProgress] = useState(0);
   const realPendingRewards = parseFloat(pendingRewStr || '0');
 
   useEffect(() => {
@@ -58,7 +60,7 @@ export default function Rewards() {
     setClaimingUSDC(true);
     try {
       const signer = await provider.getSigner();
-      const rwaAmount = globalRwaYieldUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const rwaAmount = globalRwaYieldUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       const message = `Sign to claim $${rwaAmount} USDC to your wallet.`;
       const signature = await signer.signMessage(message);
       addTransaction({ type: 'Claim', amount: `${rwaAmount} USDC`, details: 'Claimed RWA Upfront Payout', txHash: signature.slice(0, 66) });
@@ -72,6 +74,40 @@ export default function Rewards() {
     } finally {
       setClaimingUSDC(false);
     }
+  };
+
+  const handleClaimCredits = async () => {
+    if (!isConnected || pendingCredits <= 0 || isFueling) return;
+
+    setIsFueling(true);
+    setFuelingProgress(0);
+
+    // Animation loop for "Fueling"
+    const duration = 2000; // 2 seconds
+    const start = Date.now();
+    
+    const animate = () => {
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      setFuelingProgress(progress * 100);
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setTimeout(async () => {
+          const awarded = await claimCredits();
+          setToast({ 
+            message: `Fueling Complete! ⚡`,
+            detail: `${awarded} Credits added to your AI Agent.`,
+            type: 'success'
+          });
+          setIsFueling(false);
+          setFuelingProgress(0);
+        }, 300);
+      }
+    };
+    
+    requestAnimationFrame(animate);
   };
 
   const handleRedeemSubmit = async (e) => {
@@ -159,7 +195,7 @@ export default function Rewards() {
               {/* Main number */}
               <div className="flex flex-col mt-auto mb-8">
                 <div className="text-5xl md:text-6xl font-headline font-extrabold text-white leading-none tracking-tighter">
-                  ${globalRwaYieldUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ${globalRwaYieldUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   <span className="text-xl md:text-2xl text-white/20 font-bold ml-1">USD</span>
                 </div>
                 <div className="text-emerald-500/40 font-bold uppercase tracking-widest text-[10px] mt-4">
@@ -190,22 +226,66 @@ export default function Rewards() {
             </div>
 
             {/* Card 3: Accumulated Credits */}
-            <div className="bg-[#0c0c0c] rounded-2xl p-8 shadow-2xl border border-white/5 relative overflow-hidden group transition-all duration-500 flex flex-col h-full min-h-[260px]">
+            <div className={`bg-[#0c0c0c] rounded-2xl p-8 shadow-2xl border transition-all duration-500 flex flex-col h-full min-h-[260px] relative overflow-hidden group ${isFueling ? 'border-primary/50' : 'border-white/5'}`}>
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-50"></div>
+              
+              {isFueling && (
+                <div className="absolute inset-0 bg-primary/5 animate-pulse pointer-events-none"></div>
+              )}
+
               <h3 className="text-white/30 text-[10px] font-bold uppercase tracking-[0.2em] font-label mb-6">
                 Accumulated Credits
               </h3>
-              <div className="flex flex-col mt-auto mb-8">
+
+              <div className="flex flex-col mt-auto mb-6">
                 <div className="text-5xl md:text-6xl font-headline font-extrabold text-white leading-none tracking-tighter">
-                  1,250.00 <span className="text-xl md:text-2xl text-white/20 font-bold ml-1">\u03D5</span>
+                  {Math.floor(tickingCredits).toLocaleString('en-US')} <span className="text-xl md:text-2xl text-white/20 font-bold ml-1">Credits</span>
                 </div>
+                
+                {pendingCredits > 0 && !isFueling && (
+                  <div className="mt-2 flex items-center gap-2 animate-in fade-in slide-in-from-left-2 transition-all">
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                    <span className="text-primary text-[10px] font-extrabold uppercase tracking-widest">+ {Math.floor(pendingCredits)} Credits Pending</span>
+                  </div>
+                )}
+                
                 <div className="text-white/20 font-bold uppercase tracking-widest text-[10px] mt-4">
-                  Ready for Zero-Gas Transactions
+                  1 USDT = 1,000 Credits
                 </div>
               </div>
-              <button className="w-full mt-auto bg-[#161616] hover:bg-[#1a1a1a] border border-white/10 text-white/40 hover:text-white py-5 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all shadow-sm">
-                Fund Paymaster
-              </button>
+
+              {pendingCredits > 0 || isFueling ? (
+                <div className="mt-auto space-y-4">
+                  {isFueling && (
+                    <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)] transition-all duration-75 ease-linear"
+                        style={{ width: `${fuelingProgress}%` }}
+                      ></div>
+                    </div>
+                  )}
+                  
+                  <button 
+                    onClick={handleClaimCredits}
+                    disabled={isFueling}
+                    className={`w-full py-5 rounded-2xl font-headline font-extrabold text-lg tracking-tight transition-all shadow-2xl flex items-center justify-center gap-3 ${
+                      isFueling 
+                        ? 'bg-primary text-black scale-[1.02] cursor-not-allowed shadow-primary/20' 
+                        : 'bg-primary hover:bg-primary/90 text-black active:scale-[0.98]'
+                    }`}
+                  >
+                    {isFueling ? (
+                      <><Flame className="w-5 h-5 animate-bounce" /> Fueling AI Agent...</>
+                    ) : (
+                      'Claim Credits'
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <button className="w-full mt-auto bg-[#161616] hover:bg-[#1a1a1a] border border-white/10 text-white/40 hover:text-white py-5 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all shadow-sm">
+                  Fund Paymaster
+                </button>
+              )}
             </div>
 
           </div>
@@ -229,7 +309,7 @@ export default function Rewards() {
 
               <div className="flex items-center justify-between p-6 hover:bg-white/3 transition-colors">
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 font-label">Upfront RWA Payout</span>
-                <span className="font-headline font-extrabold text-lg text-emerald-400">+${globalRwaYieldUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+                <span className="font-headline font-extrabold text-lg text-emerald-400">+${globalRwaYieldUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
               </div>
 
               <div className="flex items-center justify-between p-6 hover:bg-white/3 transition-colors">
@@ -294,7 +374,7 @@ export default function Rewards() {
                 {redeemAmount && (
                   <div className="mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
                     <p className="text-white/40 text-xs font-medium">
-                      You will receive: <span className="text-emerald-400">~${(parseFloat(redeemAmount) * 2340.50).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC</span>
+                      You will receive: <span className="text-emerald-400">~${(parseFloat(redeemAmount) * 2340.50).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC</span>
                     </p>
                   </div>
                 )}
@@ -322,3 +402,4 @@ export default function Rewards() {
     </main>
   );
 }
+

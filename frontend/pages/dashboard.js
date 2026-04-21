@@ -8,7 +8,7 @@ import { useStaking } from '../hooks/useStaking';
 import ActivityWidget from '../components/ActivityWidget';
 
 export default function DashboardPage() {
-const { isConnected, address, balances, transactions, connect, toast, showToast } = useWallet();
+const { isConnected, address, balances, transactions, connect, toast, showToast, pendingCredits } = useWallet();
 const { balance: rialoBalance } = useRLO();
 const { stakedBalance: stakedBalStr, fetchStakingData } = useStaking();
 
@@ -47,6 +47,32 @@ return (
           A comprehensive overview of your position within the Rialo ecosystem. Monitor your assets, yield, and network participation.
         </p>
       </header>
+      
+      {/* Pending Credits Alert */}
+      {isConnected && pendingCredits > 0 && (
+        <div 
+          onClick={() => window.location.href = '/rewards'}
+          className="mb-8 p-6 bg-[#0c0c0c] border border-primary/20 rounded-3xl relative overflow-hidden group cursor-pointer hover:border-primary/40 transition-all duration-300 animate-in fade-in slide-in-from-top-4"
+        >
+          <div className="absolute inset-0 bg-primary/5 animate-pulse group-hover:bg-primary/10 transition-colors"></div>
+          <div className="relative z-10 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                <span className="material-symbols-outlined font-bold">bolt</span>
+              </div>
+              <div>
+                <h4 className="text-white font-headline font-extrabold text-lg tracking-tight">AI Credits Available</h4>
+                <p className="text-white/40 text-xs font-medium uppercase tracking-widest leading-none mt-1">
+                  You have <span className="text-primary">{Math.floor(pendingCredits).toLocaleString('en-US')} Credits</span> ready to claim in the Rewards hub.
+                </p>
+              </div>
+            </div>
+            <div className="hidden md:flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+              Claim Now <span className="material-symbols-outlined text-sm">arrow_forward</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats and Activity Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
@@ -126,6 +152,7 @@ return (
                     'Unstake': { icon: 'lock_open', bg: 'bg-orange-500/10', text: 'text-orange-400', badge: 'bg-orange-500/20 text-orange-300 border-orange-500/20' },
                     'Faucet':  { icon: 'water_drop', bg: 'bg-cyan-500/10', text: 'text-cyan-400', badge: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/20' },
                     'Claim':   { icon: 'redeem', bg: 'bg-yellow-500/10', text: 'text-yellow-400', badge: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/20' },
+                    'Credits': { icon: 'bolt', bg: 'bg-primary/10', text: 'text-primary', badge: 'bg-primary/20 text-primary border-primary/20' },
                   };
                   const cfg = typeConfig[tx.type] || { icon: 'receipt_long', bg: 'bg-white/5', text: 'text-white/40', badge: 'bg-white/10 text-white/40 border-white/10' };
                   const shortHash = tx.txHash && !tx.txHash.startsWith('local-') ? `${tx.txHash.slice(0, 6)}...${tx.txHash.slice(-4)}` : null;

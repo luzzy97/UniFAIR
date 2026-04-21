@@ -88,6 +88,7 @@ export function WalletProvider({ children }) {
 
   // SHARED credits state — single source of truth across all pages
   const [tickingCredits, setTickingCredits] = useState(0);
+  const [pendingCredits, setPendingCredits] = useState(0);
   const [rwaPortfolio, setRwaPortfolio] = useState(0);
   const [rloYield, setRloYield] = useState(0);
   const [stakedBalance, setStakedBalance] = useState('0');
@@ -146,12 +147,14 @@ export function WalletProvider({ children }) {
     if (address && typeof window !== 'undefined') {
       if (creditsInitializedForAddress.current !== address) {
         const savedCredits = parseFloat(localStorage.getItem(`rialo_credits_${address}`) || '0');
+        const savedPendingCredits = parseFloat(localStorage.getItem(`rialo_pending_credits_${address}`) || '0');
         const savedRwa = parseFloat(localStorage.getItem(`rialo_rwa_portfolio_${address}`) || '0');
         const savedRloYield = parseFloat(localStorage.getItem(`rialo_rlo_yield_${address}`) || '0');
         const savedStakedRlo = localStorage.getItem(`rialo_staked_rlo_${address}`) || '0';
         const savedStakedEth = localStorage.getItem(`rialo_staked_eth_${address}`) || '0';
         
         setTickingCredits(savedCredits);
+        setPendingCredits(savedPendingCredits);
         setRwaPortfolio(savedRwa);
         setRloYield(savedRloYield);
         setStakedBalance(savedStakedRlo);
@@ -196,6 +199,7 @@ export function WalletProvider({ children }) {
       }
     } else if (!address) {
       setTickingCredits(0);
+      setPendingCredits(0);
       setRwaPortfolio(0);
       setRloYield(0);
       setStakedBalance('0');
@@ -627,9 +631,16 @@ export function WalletProvider({ children }) {
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.ethereum) return;
-    window.ethereum.request({ method: 'eth_accounts' }).then((accounts) => {
-      if (accounts.length > 0) connect();
-    });
+    // Silently check if already authorized — MetaMask can throw if locked/unavailable
+    window.ethereum.request({ method: 'eth_accounts' })
+      .then((accounts) => {
+        if (accounts.length > 0) connect();
+      })
+      .catch((err) => {
+        // Swallow MetaMask extension errors (e.g. "Failed to connect to MetaMask")
+        // so they don't surface as unhandled runtime errors in the Next.js overlay
+        console.warn('[useWallet] Auto-connect skipped:', err?.message || err);
+      });
   }, []);
 
   const executeAiTransaction = useCallback(async (txType, userMsg, actionDetail, isAuto = false, gasType = 'ETH') => {
@@ -656,10 +667,10 @@ export function WalletProvider({ children }) {
       // Handling Credit Gas Logic
       let paidWithCredits = false;
       if (gasType === 'CREDIT') {
-         const creditCost = 0.05; // Flat fee per swap
+         const creditCost = 5; // 5 Credits per AI action
          const currentCredits = parseFloat(localStorage.getItem(`rialo_credits_${address}`) || '0');
          if (currentCredits < creditCost) {
-            throw new Error(`Insufficient Service Credits. Required: ${creditCost} ϕ, Available: ${currentCredits.toFixed(2)} ϕ`);
+            throw new Error(`Insufficient Service Credits. Required: ${creditCost} Credits, Available: ${Math.floor(currentCredits)} Credits`);
          }
          await deductCredits(creditCost);
          paidWithCredits = true;
@@ -943,6 +954,31 @@ export function WalletProvider({ children }) {
     }
   }, [address]);
 
+  const addPendingCredits = useCallback((amount) => {
+    const addAmt = parseFloat(amount);
+    if (isNaN(addAmt) || addAmt <= 0 || !address) return;
+
+    setPendingCredits(prev => {
+      const next = prev + addAmt;
+      localStorage.setItem(`rialo_pending_credits_${address}`, next.toString());
+      return next;
+    });
+  }, [address]);
+
+  const claimCredits = useCallback(async () => {
+    if (!address || pendingCredits <= 0) return;
+
+    const amount = pendingCredits;
+    // Reset pending immediately for UI snappiness
+    setPendingCredits(0);
+    localStorage.removeItem(`rialo_pending_credits_${address}`);
+
+    // Add to main balance
+    await addCredits(amount);
+    
+    return amount;
+  }, [address, pendingCredits, addCredits]);
+
   // Shared addRwaPortfolio — accumulates RWA yield earned from Payout in RWA staking
   const addRwaPortfolio = useCallback((amount) => {
     const addAmt = parseFloat(amount);
@@ -1006,7 +1042,12 @@ export function WalletProvider({ children }) {
         sessionActive, sessionExpiry, sessionSigner, activateSession, deactivateSession, seedSession, withdrawSessionBalance,
         aiMessages, addAiMessage,
         toast, showToast,
-        tickingCredits, setTickingCredits, deductCredits, addCredits,
+        tickingCredits, setTickingCredits,
+        pendingCredits,
+        addCredits,
+        addPendingCredits,
+        claimCredits,
+        deductCredits,
         rwaPortfolio, addRwaPortfolio,
         rloYield, addRloYield,
         stakedBalance, setStakedBalance, stakedEthBalance, setStakedEthBalance, 
