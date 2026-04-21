@@ -1,8 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useWallet } from '../hooks/useWallet';
 
 export default function GlobalToast() {
   const { toast, showToast } = useWallet();
+
+  // Auto-dismiss after 6 seconds
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => showToast(null), 6000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   if (!toast) return null;
 

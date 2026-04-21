@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import Toast from '../components/Toast';
 import { useWallet } from '../hooks/useWallet';
 import { useRLO } from '../hooks/useRLO';
 import { useStaking } from '../hooks/useStaking';
@@ -157,8 +156,6 @@ export default function Home() {
   const [isExploringRwa, setIsExploringRwa] = useState<boolean>(false);
   const [isSigning, setIsSigning] = useState<boolean>(false);
 
-  // Toast
-  const [toast, setToast] = useState<{ message: string; detail?: string; type: 'success' | 'error' | 'loading' | 'info'; txHash: string | null } | null>(null);
 
   // --- Staking History & Countdown Logic ---
   const [stakingHistory, setStakingHistory] = useState<StakingPosition[]>([]);
@@ -203,12 +200,6 @@ export default function Home() {
     }
   }, [address]);
 
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
 
   const handleStake = async () => {
     if (!isConnected) { connect(); return; }
@@ -218,15 +209,15 @@ export default function Home() {
       if (isStaking) {
         let lastTxHash = null;
         if (assetType === 'solo_rlo') {
-          if (numRlo < 10) { setToast({ message: "Min 10 RLO", type: "error", txHash: null }); setIsSimulating(false); return; }
+          if (numRlo < 10) { walletToast({ message: "Min 10 RLO", type: "error" }); setIsSimulating(false); return; }
           lastTxHash = await stakeRlo(numRlo.toString(), lockDuration);
           addTransaction({ type: 'Stake', amount: `${numRlo.toLocaleString('en-US')} RLO`, details: 'Staked RLO (Solo)', txHash: lastTxHash });
         } else if (assetType === 'solo_eth') {
-          if (numEth <= 0) { setToast({ message: "Invalid ETH Amount", type: "error", txHash: null }); setIsSimulating(false); return; }
+          if (numEth <= 0) { walletToast({ message: "Invalid ETH Amount", type: "error" }); setIsSimulating(false); return; }
           lastTxHash = await stakeEth(numEth.toString(), lockDuration);
           addTransaction({ type: 'Stake', amount: `${numEth} ETH`, details: 'Staked ETH (Solo)', txHash: lastTxHash });
         } else if (assetType === 'pair') {
-          if (numRlo < 10 || numEth <= 0) { setToast({ message: "Invalid Pair Amount", type: "error", txHash: null }); setIsSimulating(false); return; }
+          if (numRlo < 10 || numEth <= 0) { walletToast({ message: "Invalid Pair Amount", type: "error" }); setIsSimulating(false); return; }
           lastTxHash = await stakePair(numRlo.toString(), numEth.toString(), lockDuration);
           addTransaction({ type: 'Stake', amount: 'LP Pair', details: `Staked ${numRlo} RLO + ${numEth} ETH`, txHash: lastTxHash });
         }
@@ -240,13 +231,13 @@ export default function Home() {
             details: `Pending AI Credit Allocation (${sfsFraction}% of yield × 1000)`,
             txHash: null
           });
-          setToast({ 
+          walletToast({ 
             message: `✅ ${creditsToAward.toLocaleString('en-US')} Credits are now available to claim in Rewards!`, 
             type: 'success',
             txHash: lastTxHash 
           });
         } else {
-          setToast({ message: `Successfully staked assets!`, type: "success", txHash: lastTxHash });
+          walletToast({ message: `Successfully staked assets!`, type: "success", txHash: lastTxHash });
         }
 
         const thirtyDays = 30 * 24 * 60 * 60 * 1000;
@@ -274,7 +265,7 @@ export default function Home() {
         setEthAmount("0");
       } else {
         if (realStakedBalance <= 0 && realStakedEthBalance <= 0) {
-          setToast({ message: "No balanced staked to unstake.", type: "error", txHash: null });
+          walletToast({ message: "No balanced staked to unstake.", type: "error" });
           setIsSimulating(false);
           return;
         }
@@ -284,11 +275,10 @@ export default function Home() {
         if (now < storedLockEnd) {
           const diff = storedLockEnd - now;
           const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-          setToast({
+          walletToast({
             message: `Locked! Assets mature in ${days} days.`,
             detail: "Use individual Unstake buttons in Staking History for granular withdrawal.",
-            type: "error",
-            txHash: null
+            type: "error"
           });
           setIsSimulating(false);
           return;
@@ -296,7 +286,7 @@ export default function Home() {
 
         const hash = await withdraw();
         addTransaction({ type: 'Unstake', amount: 'All Assets', details: 'Unstaked RLO/ETH + Cash Yield distributed', txHash: hash });
-        setToast({ message: `Success! Principal and final Cash Yield have been returned to your wallet.`, type: "success", txHash: hash });
+        walletToast({ message: `Success! Principal and final Cash Yield have been returned to your wallet.`, type: "success", txHash: hash });
       }
 
       if (address && provider) {
@@ -307,9 +297,9 @@ export default function Home() {
     } catch (e: any) {
       const msg = e.message || "";
       if (msg.includes('user rejected') || msg.includes('4001')) {
-        setToast({ message: "Transaction rejected in MetaMask.", type: "error", txHash: null });
+        walletToast({ message: "Transaction rejected in MetaMask.", type: "error" });
       } else {
-        setToast({ message: `${isStaking ? 'Staking' : 'Unstaking'} failed. ${msg.slice(0, 60)}${msg.length > 60 ? '...' : ''}`, type: "error", txHash: null });
+        walletToast({ message: `${isStaking ? 'Staking' : 'Unstaking'} failed. ${msg.slice(0, 60)}${msg.length > 60 ? '...' : ''}`, type: "error" });
       }
     } finally {
       setIsSimulating(false);
@@ -337,9 +327,9 @@ export default function Home() {
       setStakingHistory(updatedHistory);
       if (address) localStorage.setItem(`rialo_staking_history_${address}`, JSON.stringify(updatedHistory));
 
-      setToast({ message: `Successfully unstaked position!`, detail: "Principal and yield distributed.", type: "success", txHash: hash });
+      walletToast({ message: `Successfully unstaked position!`, detail: "Principal and yield distributed.", type: "success", txHash: hash });
     } catch (e: any) {
-      setToast({ message: "Unstake failed", detail: e.message, type: "error", txHash: null });
+      walletToast({ message: "Unstake failed", detail: e.message, type: "error" });
     } finally {
       setIsSimulating(false);
     }
@@ -350,10 +340,10 @@ export default function Home() {
     setIsSavingRoute(true);
     try {
       await updateRwaAllocation(rwaTarget, rwaRouter / 100);
-      setToast({ message: `RWA Yield routing saved!`, type: "success", txHash: null });
+      walletToast({ message: `RWA Yield routing saved!`, type: "success" });
       setRouteSaved(true);
     } catch (e) {
-      setToast({ message: `Failed to save RWA route.`, type: "error", txHash: null });
+      walletToast({ message: `Failed to save RWA route.`, type: "error" });
     } finally {
       setIsSavingRoute(false);
     }
@@ -362,30 +352,30 @@ export default function Home() {
   const handleClaim = async () => {
     if (!isConnected) { connect(); return; }
     if (realPendingRewards <= 0) {
-      setToast({ message: "No rewards to claim", type: "error", txHash: null });
+      walletToast({ message: "No rewards to claim", type: "error" });
       return;
     }
     try {
       const hash = await claimAction();
-      setToast({ message: "Rewards claimed successfully!", type: "success", txHash: hash });
+      walletToast({ message: "Rewards claimed successfully!", type: "success", txHash: hash });
       if (address && provider) {
         fetchEthBalance(address, provider);
         fetchRloBalance();
         fetchStakingData();
       }
     } catch (e) {
-      setToast({ message: "Claim failed", type: "error", txHash: null });
+      walletToast({ message: "Claim failed", type: "error" });
     }
   };
 
   const handleConfigureAI = async () => {
     if (!isConnected) { connect(); return; }
     try {
-      setToast({ message: "Activating AI Session...", type: "info", txHash: null });
+      walletToast({ message: "Activating AI Session...", type: "info" });
       await activateSession(24);
-      setToast({ message: "AI Agent Session Active!", type: "success", txHash: null });
+      walletToast({ message: "AI Agent Session Active!", type: "success" });
     } catch (e) {
-      setToast({ message: "Failed to activate AI session", type: "error", txHash: null });
+      walletToast({ message: "Failed to activate AI session", type: "error" });
     }
   };
 
@@ -461,15 +451,15 @@ export default function Home() {
   const handleConfirmAllocation = async () => {
     if (!isConnected) { connect(); return; }
     if (!provider) {
-      setToast({ message: 'No wallet provider found. Please reconnect.', type: 'error', txHash: null });
+      walletToast({ message: 'No wallet provider found. Please reconnect.', type: 'error' });
       return;
     }
     if (remainingPortfolio <= 0) {
-      setToast({ message: 'No portfolio balance remaining to allocate.', type: 'error', txHash: null });
+      walletToast({ message: 'No portfolio balance remaining to allocate.', type: 'error' });
       return;
     }
     if (selectedRwaTarget !== 'gold') {
-      setToast({ message: 'This vault is Coming Soon. Only Tokenized Gold (XAUt) is available now.', type: 'error', txHash: null });
+      walletToast({ message: 'This vault is Coming Soon. Only Tokenized Gold (XAUt) is available now.', type: 'error' });
       return;
     }
 
@@ -481,9 +471,9 @@ export default function Home() {
       const xautAmountWei = ethers.parseUnits(xautAmount.toFixed(18), 18);
       const xautContract = new ethers.Contract(XAUT_ADDRESS, XAUT_ABI, signer);
 
-      setToast({ message: 'Confirm the mint transaction in MetaMask...', type: 'success', txHash: null });
+      walletToast({ message: 'Confirm the mint transaction in MetaMask...', type: 'success' });
       const mintTx = await xautContract.mintAllocation(recipientAddress, xautAmountWei);
-      setToast({ message: 'Minting XAUt Token... Waiting for confirmation 🧭', type: 'success', txHash: null });
+      walletToast({ message: 'Minting XAUt Token... Waiting for confirmation 🧭', type: 'success' });
       const receipt = await mintTx.wait();
       const txHash: string = receipt.hash || (mintTx ? mintTx.hash : '');
 
@@ -494,7 +484,7 @@ export default function Home() {
         txHash,
       });
 
-      setToast({
+      walletToast({
         message: `✅ ${xautAmount.toFixed(6)} XAUt minted to your wallet!`,
         type: 'success',
         txHash,
@@ -504,9 +494,9 @@ export default function Home() {
     } catch (e: any) {
       const msg = e.message || '';
       if (msg.includes('user rejected') || msg.includes('4001') || e?.code === 'ACTION_REJECTED') {
-        setToast({ message: 'Transaction rejected in MetaMask.', type: 'error', txHash: null });
+        walletToast({ message: 'Transaction rejected in MetaMask.', type: 'error' });
       } else {
-        setToast({ message: `Mint failed. ${msg.slice(0, 80)}${msg.length > 80 ? '...' : ''}`, type: 'error', txHash: null });
+        walletToast({ message: `Mint failed. ${msg.slice(0, 80)}${msg.length > 80 ? '...' : ''}`, type: 'error' });
       }
     } finally {
       setIsSigning(false);
@@ -516,7 +506,6 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white text-slate-900 font-body antialiased selection:bg-primary/30 flex flex-col relative">
 
-      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
 
       <Navbar />
 

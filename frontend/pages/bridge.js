@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import Toast from '../components/Toast';
 import { useWallet } from '../hooks/useWallet';
 import { useRLO } from '../hooks/useRLO';
 import { ethers } from 'ethers';
@@ -11,12 +10,11 @@ const CHAINS = [
 ];
 
 export default function BridgePage() {
-  const { isConnected, address, provider, connect, balances: walletBalances, addTransaction, globalRates, fetchEthBalance, updateBalance, updateBalances } = useWallet();
+  const { isConnected, address, provider, connect, balances: walletBalances, addTransaction, globalRates, fetchEthBalance, updateBalance, updateBalances, showToast } = useWallet();
   const { balance: rloBal, fetchBalance: fetchRloBalance } = useRLO();
   const [fromChain, setFromChain] = useState('1');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState(null);
   const [isDeposit, setIsDeposit] = useState(true);
 
   const ethPrice = globalRates['ETH']?.['USDC'] || 3500;
@@ -31,17 +29,17 @@ export default function BridgePage() {
   const handleBridge = async () => {
     if (!isConnected) { connect(); return; }
     if (!amount || parseFloat(amount) <= 0) {
-      setToast({ message: 'Enter an amount greater than 0', type: 'error' });
+      showToast({ message: 'Enter an amount greater than 0', type: 'error' });
       return;
     }
     
     if (parseFloat(amount) > sourceBalance) {
-      setToast({ message: `Insufficient ${isDeposit ? 'ETH' : 'Rialo L1'} balance`, type: 'error' });
+      showToast({ message: `Insufficient ${isDeposit ? 'ETH' : 'Rialo L1'} balance`, type: 'error' });
       return;
     }
 
     setLoading(true);
-    setToast({ message: isDeposit ? 'Initiating bridge (locking ETH)…' : 'Initiating withdraw (burning ETH on Rialo L1)…', type: 'loading' });
+    showToast({ message: isDeposit ? 'Initiating bridge (locking ETH)…' : 'Initiating withdraw (burning ETH on Rialo L1)…', type: 'loading' });
     try {
       const signer = await provider.getSigner();
       let tx;
@@ -60,7 +58,7 @@ export default function BridgePage() {
       const receipt = await tx.wait();
       const hash = receipt.hash;
       
-      setToast({
+      showToast({
         message: isDeposit ? `Bridge initiated! ${amount} ETH locked on Sepolia.` : `Withdraw initiated! ${amount} ETH returning to Sepolia.`,
         type: 'success',
         txHash: hash,
@@ -100,9 +98,9 @@ export default function BridgePage() {
     } catch (err) {
       const msg = err.message || "";
       if (msg.includes('user rejected') || msg.includes('4001')) {
-        setToast({ message: "Transaction rejected in MetaMask.", type: "error" });
+        showToast({ message: "Transaction rejected in MetaMask.", type: "error" });
       } else {
-        setToast({ message: `Bridge failed. ${msg.slice(0, 60)}${msg.length > 60 ? '...' : ''}`, type: 'error' });
+        showToast({ message: `Bridge failed. ${msg.slice(0, 60)}${msg.length > 60 ? '...' : ''}`, type: 'error' });
       }
     } finally {
       setLoading(false);
@@ -274,7 +272,6 @@ export default function BridgePage() {
         </div>
       </main>
       <Footer />
-      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
     </div>
   );
 }

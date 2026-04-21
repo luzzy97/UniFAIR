@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import Toast from '../components/Toast';
 import { useWallet } from '../hooks/useWallet';
 import { useRLO } from '../hooks/useRLO';
 import { useStaking } from '../hooks/useStaking';
@@ -202,7 +201,6 @@ return (
       </section>
     </main>
     <Footer />
-    {toast && <Toast {...toast} onClose={() => showToast(null)} />}
   </div>
 );
 }

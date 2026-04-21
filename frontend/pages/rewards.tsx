@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import Toast from '../components/Toast';
 import { useWallet } from '../hooks/useWallet';
 import { useStaking } from '../hooks/useStaking';
 import { useRouter } from 'next/router';
@@ -11,7 +10,7 @@ import { Droplet, Activity, Loader2, CheckCircle2, AlertCircle, Route, Flame, X 
 
 export default function Rewards() {
   const router = useRouter();
-  const { isConnected, address, provider, connect, addTransaction, tickingCredits, pendingCredits, claimCredits } = useWallet();
+  const { isConnected, address, provider, connect, addTransaction, tickingCredits, pendingCredits, claimCredits, showToast } = useWallet();
   const {
     pendingRewards: pendingRewStr,
     loading: stakingLoading,
@@ -21,7 +20,6 @@ export default function Rewards() {
     setGlobalRwaYieldUsd,
   } = useStaking();
 
-  const [toast, setToast] = useState(null);
   const [claimingUSDC, setClaimingUSDC] = useState(false);
   const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
   const [redeemAmount, setRedeemAmount] = useState('');
@@ -30,28 +28,22 @@ export default function Rewards() {
   const [fuelingProgress, setFuelingProgress] = useState(0);
   const realPendingRewards = parseFloat(pendingRewStr || '0');
 
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
 
   const handleClaim = async () => {
     if (!isConnected) { connect(); return; }
     if (realPendingRewards <= 0) {
-      setToast({ message: "No rewards to claim", type: "error" });
+      showToast({ message: "No rewards to claim", type: "error" });
       return;
     }
     try {
       const hash = await claimAction();
       addTransaction({ type: 'Claim', amount: `${realPendingRewards.toFixed(2)} RLO`, details: 'Claimed Staking Rewards', txHash: hash });
-      setToast({ message: "Rewards claimed successfully!", type: "success", txHash: hash });
+      showToast({ message: "Rewards claimed successfully!", type: "success", txHash: hash });
       if (address && provider) {
         fetchStakingData();
       }
     } catch (e) {
-      setToast({ message: "Claim failed", type: "error" });
+      showToast({ message: "Claim failed", type: "error" });
     }
   };
 
@@ -64,12 +56,12 @@ export default function Rewards() {
       const message = `Sign to claim $${rwaAmount} USDC to your wallet.`;
       const signature = await signer.signMessage(message);
       addTransaction({ type: 'Claim', amount: `${rwaAmount} USDC`, details: 'Claimed RWA Upfront Payout', txHash: signature.slice(0, 66) });
-      setToast({ message: "USDC successfully claimed to wallet!", type: "success" });
+      showToast({ message: "USDC successfully claimed to wallet!", type: "success" });
     } catch (e: any) {
       if (e?.code === 4001 || e?.code === 'ACTION_REJECTED') {
-        setToast({ message: "Signature rejected by user.", type: "error" });
+        showToast({ message: "Signature rejected by user.", type: "error" });
       } else {
-        setToast({ message: "USDC claim failed. Please try again.", type: "error" });
+        showToast({ message: "USDC claim failed. Please try again.", type: "error" });
       }
     } finally {
       setClaimingUSDC(false);
@@ -96,7 +88,7 @@ export default function Rewards() {
       } else {
         setTimeout(async () => {
           const awarded = await claimCredits();
-          setToast({ 
+          showToast({ 
             message: `Fueling Complete! ⚡`,
             detail: `${awarded} Credits added to your AI Agent.`,
             type: 'success'
@@ -128,7 +120,7 @@ export default function Rewards() {
         txHash: '0x' + Math.random().toString(16).slice(2, 42) 
       });
 
-      setToast({ message: "Successfully burned XAUt and claimed USDC!", type: "success" });
+      showToast({ message: "Successfully burned XAUt and claimed USDC!", type: "success" });
       
       // Reset global state (simulation of full redemption)
       setGlobalRwaYieldUsd(0);
@@ -136,7 +128,7 @@ export default function Rewards() {
       setIsRedeemModalOpen(false);
       setRedeemAmount('');
     } catch (e) {
-      setToast({ message: "Redemption failed. Please try again.", type: "error" });
+      showToast({ message: "Redemption failed. Please try again.", type: "error" });
     } finally {
       setIsRedeeming(false);
     }
@@ -145,7 +137,6 @@ export default function Rewards() {
   return (
     <main className="min-h-screen bg-white text-slate-900 font-body antialiased selection:bg-primary/30 flex flex-col relative">
 
-      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
 
       <Navbar />
 

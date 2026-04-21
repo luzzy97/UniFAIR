@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import Toast from '../components/Toast';
 import { useWallet } from '../hooks/useWallet';
 import { useRLO } from '../hooks/useRLO';
 import { useStaking } from '../hooks/useStaking';
@@ -63,14 +62,13 @@ const TokenSelector = ({ value, onChange, show, setShow, excludeToken, walletBal
 );
 
 export default function SwapPage() {
-  const { isConnected, address, provider, connect, balances: walletBalances, updateBalance, updateBalances, addTransaction, globalRates, addTriggerOrder, fetchEthBalance, sessionActive, activateSession, deactivateSession } = useWallet();
+  const { isConnected, address, provider, connect, balances: walletBalances, updateBalance, updateBalances, addTransaction, globalRates, addTriggerOrder, fetchEthBalance, sessionActive, activateSession, deactivateSession, showToast } = useWallet();
   const { balance: rloBal, claimFaucet, loading: faucetLoading, transfer, fetchBalance: fetchRloBalance } = useRLO();
   const { tickingCredits, deductCredits } = useStaking();
   const [fromToken, setFromToken] = useState('ETH');
   const [toToken, setToToken] = useState('RIALO');
   const [amountIn, setAmountIn] = useState('');
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState(null);
   const [showFromTokenList, setShowFromTokenList] = useState(false);
   const [showToTokenList, setShowToTokenList] = useState(false);
 
@@ -113,19 +111,19 @@ export default function SwapPage() {
   const handleAction = async () => {
     if (!isConnected) { connect(); return; }
     if (!amountIn || parseFloat(amountIn) <= 0) {
-      setToast({ message: 'Enter an amount greater than 0', type: 'error' });
+      showToast({ message: 'Enter an amount greater than 0', type: 'error' });
       return;
     }
     const currentBalance = balances[fromToken] || 0;
     if (parseFloat(amountIn) > currentBalance) {
-      setToast({ message: `Insufficient ${fromToken} balance`, type: 'error' });
+      showToast({ message: `Insufficient ${fromToken} balance`, type: 'error' });
       return;
     }
 
     if (orderType === 'limit') {
       const tp = parseFloat(targetPrice || currentRateValue);
       if (tp <= 0) {
-         setToast({ message: 'Enter a valid trigger price', type: 'error' }); return;
+         showToast({ message: 'Enter a valid trigger price', type: 'error' }); return;
       }
       
       const condition = tp >= currentRateValue ? '>=' : '<=';
@@ -149,14 +147,14 @@ export default function SwapPage() {
         source: 'Direct'
       });
       
-      setToast({ message: `Limit order placed: ${amountIn} ${fromToken} at ${tp} ${toToken}`, type: 'success' });
+      showToast({ message: `Limit order placed: ${amountIn} ${fromToken} at ${tp} ${toToken}`, type: 'success' });
       setAmountIn('');
       setTargetPrice('');
       return;
     }
 
     setLoading(true);
-    setToast({ message: 'Confirming actual transaction in MetaMask\u2026', type: 'loading' });
+    showToast({ message: 'Confirming actual transaction in MetaMask\u2026', type: 'loading' });
     
 
 
@@ -187,7 +185,7 @@ export default function SwapPage() {
         hash = tx.hash;
       }
 
-      setToast({ message: `Blockchain operation successful!`, type: 'success', txHash: hash });
+      showToast({ message: `Blockchain operation successful!`, type: 'success', txHash: hash });
       
 
 
@@ -221,9 +219,9 @@ export default function SwapPage() {
     } catch (err) {
       const msg = err.message || "";
       if (msg.includes('user rejected') || msg.includes('4001')) {
-        setToast({ message: "Transaction rejected in MetaMask.", type: "error" });
+        showToast({ message: "Transaction rejected in MetaMask.", type: "error" });
       } else {
-        setToast({ message: `Swap failed. ${msg.slice(0, 60)}${msg.length > 60 ? '...' : ''}`, type: "error" });
+        showToast({ message: `Swap failed. ${msg.slice(0, 60)}${msg.length > 60 ? '...' : ''}`, type: "error" });
       }
     } finally {
       setLoading(false);
@@ -244,9 +242,9 @@ export default function SwapPage() {
               <button 
                 onClick={async () => {
                   try {
-                    setToast({ message: 'Requesting RLO from faucet...', type: 'loading' });
+                    showToast({ message: 'Requesting RLO from faucet...', type: 'loading' });
                     const hash = await claimFaucet();
-                    setToast({ message: '100 RLO claimed successfully!', type: 'success', txHash: hash });
+                    showToast({ message: '100 RLO claimed successfully!', type: 'success', txHash: hash });
                     addTransaction({
                       type: 'Faucet',
                       amount: '100 RIALO',
@@ -256,7 +254,7 @@ export default function SwapPage() {
                     });
                     fetchRloBalance();
                   } catch (e) {
-                    setToast({ message: e.reason || e.message || 'Faucet claim failed', type: 'error' });
+                    showToast({ message: e.reason || e.message || 'Faucet claim failed', type: 'error' });
                   }
                 }}
                 disabled={faucetLoading}
@@ -513,7 +511,6 @@ export default function SwapPage() {
         </div>
       </main>
       <Footer />
-      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
     </div>
   );
 }

@@ -313,6 +313,10 @@ export function WalletProvider({ children }) {
   }, []);
 
   const showToast = useCallback((toastData) => {
+    if (!toastData) {
+      setToast(null);
+      return;
+    }
     const finalDetail = toastData.type === 'error' ? simplifyError(toastData.detail) : toastData.detail;
     setToast({ ...toastData, detail: finalDetail });
   }, [simplifyError]);
