@@ -118,6 +118,13 @@ export default function Home() {
     }
   }, [contractSfsFraction]);
 
+  // Handle direct navigation to RWA Hub via query param
+  useEffect(() => {
+    if (router.isReady && router.query.view === 'rwa') {
+      setActiveView('rwa');
+    }
+  }, [router.isReady, router.query.view]);
+
   // Enforce Solo ETH constraints
   useEffect(() => {
     if (assetType === 'solo_eth') {
@@ -520,7 +527,7 @@ export default function Home() {
 
             {/* Main Staking Card */}
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
-              <div className="bg-[#0c0c0c] rounded-2xl p-5 md:p-6 shadow-2xl border border-white/5 relative overflow-hidden group/card transition-all duration-500 h-full flex flex-col text-white">
+              <div className="bg-[#0c0c0c] rounded-2xl p-4 md:p-5 shadow-2xl border border-white/5 relative overflow-hidden group/card transition-all duration-500 h-full flex flex-col text-white">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-50"></div>
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-white/20 via-white/10 to-transparent opacity-90"></div>
 
@@ -579,7 +586,7 @@ export default function Home() {
                       {/* Amount Inputs */}
                       <div className={`grid gap-2 mb-3 ${assetType === 'pair' ? 'grid-cols-2' : 'grid-cols-1'}`}>
                         {assetType !== 'solo_eth' && (
-                          <div className="bg-[#161616] rounded-2xl p-4 border border-white/5 shadow-inner transition-all">
+                          <div className="bg-[#161616] rounded-xl p-3.5 border border-white/5 shadow-inner transition-all">
                             <div className="flex justify-between items-center mb-3">
                               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 font-label">RLO Amount</span>
                               <span className="text-[10px] font-medium text-slate-300 uppercase tracking-wider">Balance: {parseFloat(rloBal || '0').toLocaleString('en-US')}</span>
@@ -614,7 +621,7 @@ export default function Home() {
                         )}
 
                         {assetType !== 'solo_rlo' && (
-                          <div className="bg-[#161616] rounded-2xl p-4 border border-white/5 shadow-inner transition-all">
+                           <div className="bg-[#161616] rounded-xl p-3.5 border border-white/5 shadow-inner transition-all">
                             <div className="flex justify-between items-center mb-3">
                               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 font-label">ETH Amount</span>
                               <span className="text-[10px] font-medium text-slate-300 uppercase tracking-wider">Balance: {walletBalances['ETH']?.toFixed(2) || '0.00'}</span>
@@ -642,7 +649,7 @@ export default function Home() {
                       </div>
 
                       {/* Lock Duration Slider */}
-                      <div className="bg-[#161616] rounded-2xl p-4 mb-3 border border-white/5 shadow-inner relative overflow-hidden group">
+                       <div className="bg-[#161616] rounded-xl p-3.5 mb-2 border border-white/5 shadow-inner relative overflow-hidden group">
                         <div className="flex justify-between items-center mb-4 relative z-10">
                           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 font-label">
                             Lock Duration (Multiplier)
@@ -668,7 +675,7 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <div className="bg-[#161616] rounded-2xl p-4 mb-3 border border-white/5 shadow-inner relative overflow-hidden group transition-all">
+                       <div className="bg-[#161616] rounded-xl p-3.5 mb-2 border border-white/5 shadow-inner relative overflow-hidden group transition-all">
                         <div className="flex justify-between items-center mb-4 relative z-10">
                           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 font-label">
                             SfS Routing Fraction
@@ -700,7 +707,7 @@ export default function Home() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 relative">
                           <button
                             onClick={() => setPayoutType('rlo')}
-                            className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 ${payoutType === 'rlo' && assetType !== 'solo_eth' ? 'bg-[#161616] border-white/20 shadow-inner' : 'bg-transparent border-white/5 hover:border-white/10'}`}
+                             className={`p-2.5 rounded-xl border transition-all text-left flex flex-col gap-1 ${payoutType === 'rlo' && assetType !== 'solo_eth' ? 'bg-[#161616] border-white/20 shadow-inner' : 'bg-transparent border-white/5 hover:border-white/10'}`}
                           >
                             <div className="flex justify-between items-center w-full">
                               <span className="font-bold text-white text-xs">Payout in RLO</span>
@@ -815,8 +822,8 @@ export default function Home() {
                       </div>
                     </div>
                   ) : (
-                    <div className="py-6 animate-in fade-in slide-in-from-bottom-2 duration-300 h-full flex flex-col">
-                      <div className="flex items-center justify-between mb-8 px-2">
+                    <div className="py-4 animate-in fade-in slide-in-from-bottom-2 duration-300 h-full flex flex-col">
+                      <div className="flex items-center justify-between mb-5 px-2">
                         <div className="flex flex-col">
                           <h3 className="text-white font-headline font-extrabold text-xl tracking-tight">Active Positions</h3>
                           <p className="text-white/40 text-[11px] font-medium uppercase tracking-widest mt-1">Staking History</p>
@@ -865,11 +872,11 @@ export default function Home() {
                             const s = Math.floor((timeLeft / 1000) % 60);
 
                             return (
-                              <div key={pos.id} className="bg-[#161616] border border-white/5 rounded-2xl p-5 relative overflow-hidden group transition-all hover:border-white/10 shadow-inner">
+                              <div key={pos.id} className="bg-[#161616] border border-white/5 rounded-xl p-4 relative overflow-hidden group transition-all hover:border-white/10 shadow-inner">
                                 {/* Background glow for mature assets */}
                                 {isMature && <div className="absolute inset-0 bg-primary/5 animate-pulse"></div>}
                                 
-                                <div className="flex justify-between items-start mb-4 relative z-10">
+                                <div className="flex justify-between items-start mb-3 relative z-10">
                                   <div className="flex flex-col gap-1">
                                     <div className="flex items-center gap-2">
                                       <span className="text-[9px] font-extrabold uppercase tracking-widest text-primary/80 bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
@@ -881,7 +888,7 @@ export default function Home() {
                                         </span>
                                       )}
                                     </div>
-                                    <div className="flex flex-col mt-2">
+                                    <div className="flex flex-col mt-1">
                                       {pos.amountRlo > 0 && (
                                         <span className="text-xl font-extrabold text-white leading-tight">
                                           {pos.amountRlo.toLocaleString()} <span className="text-xs text-white/40 font-bold ml-0.5">RLO</span>
@@ -904,7 +911,7 @@ export default function Home() {
                                 </div>
 
                                 {/* Progress Bar */}
-                                <div className="w-full bg-white/5 h-1 rounded-full mb-6 relative overflow-hidden">
+                                <div className="w-full bg-white/5 h-1 rounded-full mb-4 relative overflow-hidden">
                                   <div 
                                     className={`h-full transition-all duration-1000 ease-linear ${isMature ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-primary'}`}
                                     style={{ width: `${progress}%` }}
@@ -914,7 +921,7 @@ export default function Home() {
                                 <button
                                   onClick={() => handleUnstakePosition(pos.id)}
                                   disabled={!isMature || isSimulating}
-                                  className={`w-full py-3.5 rounded-xl font-headline font-extrabold text-xs uppercase tracking-widest transition-all ${
+                                  className={`w-full py-2.5 rounded-lg font-headline font-extrabold text-[10px] uppercase tracking-widest transition-all ${
                                     isMature 
                                       ? 'bg-white text-black hover:bg-white/90 shadow-[0_0_20px_rgba(255,255,255,0.1)] active:scale-[0.98]' 
                                       : 'bg-[#1a1a1a] text-white/20 border border-white/5 cursor-not-allowed'
@@ -960,7 +967,7 @@ export default function Home() {
             </div>
 
             {/* Portfolio Summary */}
-            <div className="bg-[#0c0c0c] rounded-2xl p-10 shadow-2xl border border-white/5 mb-8 relative overflow-hidden group text-white">
+            <div className="bg-[#0c0c0c] rounded-2xl p-6 md:p-8 shadow-2xl border border-white/5 mb-6 relative overflow-hidden group text-white">
               <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 blur-[100px] opacity-50"></div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">

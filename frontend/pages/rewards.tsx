@@ -297,7 +297,7 @@ export default function Rewards() {
                 </div>
                 
                 <button 
-                  onClick={() => router.push('/staking')}
+                  onClick={() => router.push('/staking?view=rwa')}
                   className="bg-white text-black px-10 py-4 rounded-xl font-headline font-extrabold text-sm tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl"
                 >
                   Explore RWA
