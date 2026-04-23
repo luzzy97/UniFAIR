@@ -5,7 +5,9 @@ const groq = new Groq({
 });
 
 const RIALO_OFFICIAL_KNOWLEDGE = `
-UniFAIR is a high-performance intelligent interface and frontend layer for the Rialo network, a high-throughput Layer-1 blockchain optimized for AI-agentic workflows.
+UniFAIR is the high-performance intelligent interface and ultimate frontend layer for the Rialo network, a high-throughput Layer-1 blockchain optimized for AI-agentic workflows and RWA (Real World Asset) tokenization.
+- Strategic Focus: Zero-gas DeFi, AI-driven yield optimization, and institutional-grade RWA liquidity.
+- Core Builders (Architects of the Void): HAKII (@frhakii), LUZZY (@luzzyzz97), and GOAT (@Mantle57222).
 - Backing: Pantera Capital, Coinbase Ventures, Variant, and Mysten Labs.
 `;
 
@@ -17,20 +19,20 @@ UniFAIR allows users to pay for AI-automated transaction fees on the Rialo netwo
 `;
 
 const RIALO_DAPP_KNOWLEDGE = `
-CURRENT WEB APP STRUCTURE (rialohq.vercel.app):
+CURRENT WEB APP STRUCTURE (unifairlabs.vercel.app):
 - Navigation Routes:
-    * /dashboard: Main hub with real-time balance cards and transaction history.
-    * /swap: Interface for token swaps (RIALO, ETH, USDC, USDT). Supports Service Credits for gas.
-    * /bridge: Native bridge between Ethereum and Rialo L1.
-    * /staking: Dedicated page to stake RIALO and ETH for rewards.
-    * /rewards: Detailed breakdown of accumulated staking yield and ecosystem incentives.
-    * /learn: Educational hub for understanding UniFAIR and Rialo's unique tech stack.
-    * /ai: Full-screen AI Assistant interface (where we are).
+    * /dashboard (Architectural Dashboard): The core hub showing Real-Time Feeds, Ecosystem Balances (RIALO, ETH, USDC, USDT), and your Yield Metrics.
+    * /swap (UniFAIR Swap): Intelligent interface for token swaps. Now supports real on-chain RIALO claim via Faucet.
+    * /bridge: Native bridge for transferring assets between Ethereum Sepolia and Rialo L1.
+    * /staking (Void Staking): Stake RIALO and ETH to earn RWA-backed rewards and Service Credits (ϕ).
+    * /rewards: Dashboard for claiming rewards and tracking ecosystem incentives.
+    * /learn (Intelligence Hub): Documentation and educational resources for the Rialo ecosystem.
+    * /ai: Full-screen dedicated AI Agent interface (where we are).
 - Key App Features:
-    * Ecosystem Balances Dashboard: Located on the dashboard, shows live-updating Staking Rewards (RLO) and Service Credits (ϕ).
-    * Service Credit System: A persistent credit balance used to automate gas fees for users.
-    * Session Keys (EIP-7702): Allows the AI to automate transactions securely with one-time authorization.
-    * Real-time Price Oracle: Integrated with Massive API for live crypto market data.
+    * Service Credit System (ϕ): Persistent credits generated via staking, used to automate gas fees (Zero-Gas transactions).
+    * Secure Session (EIP-7702): One-time authorization allowing the AI to execute multiple transactions without popups.
+    * RWA Portfolio: Direct exposure to Treasuries, Real Estate, and Gold via staking yield.
+    * Real-time Market Oracle: Integrated price feeds for top crypto assets.
 `;
 
 const MASSIVE_API_KEY = 'y3XfNAmNBr9i5z6BqgiqpHwTefrTsuMo';
