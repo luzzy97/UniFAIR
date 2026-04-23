@@ -12,10 +12,13 @@ UniFAIR is the high-performance intelligent interface and ultimate frontend laye
 `;
 
 const RIALO_SERVICE_CREDIT_KNOWLEDGE = `
-SERVICE CREDIT GAS (ϕ):
-UniFAIR allows users to pay for AI-automated transaction fees on the Rialo network using Service Credits instead of ETH.
-- Fee: Flat 0.05 ϕ per transaction (any amount).
-- Priority: If user has enough credits (context.tickingCredits >= 0.05), prioritize using them for a "Zero-Gas" feel by setting gas_type to 'CREDIT'.
+SERVICE CREDIT GAS (ϕ) & ECONOMY:
+UniFAIR replaces traditional gas fees with a predictable Credit system fueled by your staking yield (Stake for Service - SfS).
+- Conversion Rate: $1.00 of staking yield = 1,000 SfS Credits (ϕ).
+- AI Agent Usage Cost: 5 Credits (ϕ) per chat/prompt.
+- Fee Structure: Currently flat 5 ϕ per direct AI action. 
+- Future Roadmap: Credits will evolve into a universal gas substitute for native swaps and bridges across UniFAIR.
+- Management: Users can adjust their "SfS Fraction" in the Staking page to control how much yield is converted to Credits vs liquid RLO.
 `;
 
 const RIALO_DAPP_KNOWLEDGE = `
