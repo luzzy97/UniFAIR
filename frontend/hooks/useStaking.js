@@ -147,7 +147,6 @@ export function useStaking() {
         } catch {
           setSponsorshipPaths([]);
         }
-      }
     } catch (error) {
       console.error('Error fetching staking data:', error);
     }
