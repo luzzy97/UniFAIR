@@ -411,20 +411,6 @@ export default function BridgePage() {
           </button>
         </div>
 
-        {/* Bento Stats */}
-        <div className="max-w-[1200px] w-full mt-32 grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { icon: 'security', title: 'Vault Security',        desc: 'Assets are secured by institutional-grade smart contracts and multi-sig validation.' },
-            { icon: 'bolt',     title: 'Instant Settlement',    desc: 'Cross-chain transfers finalize in under 4 minutes using the Rialo relay network.' },
-            { icon: 'hub',      title: '12 Networks Supported', desc: 'Bridge between all major EVM chains and Layer 2 rollups with unified liquidity.' },
-          ].map(({ icon, title, desc }) => (
-            <div key={title} className="bg-[#0c0c0c] p-8 rounded-2xl border border-white/5 shadow-2xl">
-              <span className="material-symbols-outlined text-white/20 mb-4 block">{icon}</span>
-              <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
-              <p className="text-sm text-white/40">{desc}</p>
-            </div>
-          ))}
-        </div>
       </main>
       <Footer />
 
