@@ -123,10 +123,15 @@ export default function AiAgent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMsg, context: ctx })
       });
-
-      if (!resp.ok) throw new Error('AI Service unavailable');
       
       const response = await resp.json();
+
+      if (!resp.ok) {
+        const error = new Error(response.error || 'AI Service unavailable');
+        (error as any).details = response.details;
+        throw error;
+      }
+      
       addAiMessage({ role: 'ai', content: response });
       setIsThinking(false);
       
@@ -203,7 +208,11 @@ export default function AiAgent() {
       }
     } catch (err) {
       console.error('AI Error:', err);
-      addAiMessage({ role: 'ai', content: { raw: `❌ **Error**: ${err.message}. Please check if your API key is configured.` } });
+      const detail = err.details || err.message || 'Unknown error';
+      addAiMessage({ 
+        role: 'ai', 
+        content: { raw: `❌ **Error**: ${detail}. ${detail.includes('API key') ? 'Please check if your API key is configured in Vercel.' : 'Please try again.'}` } 
+      });
       setIsThinking(false);
     }
   };
