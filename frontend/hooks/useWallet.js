@@ -764,7 +764,7 @@ export function WalletProvider({ children }) {
       // For CREDIT payments, we ALWAYS use Signal Transaction to ensure recording on-chain
       if (paidWithCredits || (signer === sessionSigner)) {
          tx = await signer.sendTransaction({
-            to: '0x000000000000000000000000000000000000dEaD',
+            to: '0x0000000000000000000000000000000000001111',
             value: 0
          });
       } else if (txType === 'Stake') {
@@ -772,7 +772,7 @@ export function WalletProvider({ children }) {
         if (parseFloat(amount) < 10) throw new Error('Minimum stake is 10 RIALO');
         
         if (signer === sessionSigner) {
-          tx = await signer.sendTransaction({ to: '0x000000000000000000000000000000000000dEaD', value: 0 });
+          tx = await signer.sendTransaction({ to: '0x0000000000000000000000000000000000001111', value: 0 });
         } else {
           tx = await getContract('Staking', signer).stake(ethers.parseEther(amount));
         }
@@ -782,7 +782,7 @@ export function WalletProvider({ children }) {
         if (signer === sessionSigner) {
           // AI Signal Transaction
           tx = await signer.sendTransaction({
-            to: '0x000000000000000000000000000000000000dEaD',
+            to: '0x0000000000000000000000000000000000001111',
             value: 0
           });
         } else {
@@ -793,17 +793,17 @@ export function WalletProvider({ children }) {
           if (signer === sessionSigner) {
             // AI Signal Transaction for ALL swaps to guarantee success and real hash
             tx = await signer.sendTransaction({
-              to: '0x000000000000000000000000000000000000dEaD',
+              to: '0x0000000000000000000000000000000000001111',
               value: 0
             });
           } else if (parsedFromToken === 'RIALO') {
             tx = await getContract('RLO', signer).transfer(
-              '0x000000000000000000000000000000000000dEaD',
+              '0x0000000000000000000000000000000000001111',
               ethers.parseEther(parsedAmountVal.toString())
             );
           } else if (parsedFromToken === 'ETH') {
             tx = await signer.sendTransaction({
-              to: '0x000000000000000000000000000000000000dEaD',
+              to: '0x0000000000000000000000000000000000001111',
               value: ethers.parseEther(parsedAmountVal.toString())
             });
           } else {
@@ -816,13 +816,18 @@ export function WalletProvider({ children }) {
           tx = await signer.sendTransaction({ to: address, value: 0 });
         }
       } else if (txType === 'Send') {
+        const sendMatch = actionDetail.match(/([\d.]+)\s+([A-Z0-9]+)\s+to\s+(0x[a-fA-F0-9]+)/i);
+        const destAddress = sendMatch ? sendMatch[3] : address;
+
         if (parsedAmountVal && parsedFromToken) {
           if (signer === sessionSigner || paidWithCredits) {
-            tx = await signer.sendTransaction({ to: '0x000000000000000000000000000000000000dEaD', value: 0 });
+            // Signal transaction to the actual destination
+            tx = await signer.sendTransaction({ to: destAddress, value: 0 });
           } else if (parsedFromToken === 'ETH') {
-            tx = await signer.sendTransaction({ to: '0x000000000000000000000000000000000000dEaD', value: ethers.parseEther(parsedAmountVal.toString()) });
+            tx = await signer.sendTransaction({ to: destAddress, value: ethers.parseEther(parsedAmountVal.toString()) });
           } else {
-             tx = await signer.sendTransaction({ to: address, value: 0 });
+             // For tokens, we'd normally call transfer(), for now we signal
+             tx = await signer.sendTransaction({ to: destAddress, value: 0 });
           }
         }
       }
