@@ -763,23 +763,23 @@ export function WalletProvider({ children }) {
       }
 
       let tx;
-      const DEAD_ADDRESS = '0x000000000000000000000000000000000000dEaD';
+      const SIGNAL_DESTINATION = address; // Use self-address to avoid "dead" wallet sends
       
       // For CREDIT payments or Session Keys, we use a "Real Signal" (RLO.transfer(dead, 0))
       // This makes the hash look like a real Swap/Transfer on-chain (ERC-20 Event)
       if (paidWithCredits || (signer === sessionSigner)) {
          try {
-           tx = await getContract('RLO', signer).transfer(DEAD_ADDRESS, 0);
+           tx = await getContract('RLO', signer).transfer(SIGNAL_DESTINATION, 0);
          } catch (e) {
            // Fallback to simple ETH signal if RLO contract call fails
-           tx = await signer.sendTransaction({ to: DEAD_ADDRESS, value: 0 });
+           tx = await signer.sendTransaction({ to: SIGNAL_DESTINATION, value: 0 });
          }
       } else if (txType === 'Stake') {
         const amount = actionDetail.match(/[\d.]+/)?.[0] || '10';
         if (parseFloat(amount) < 10) throw new Error('Minimum stake is 10 RIALO');
         
         if (signer === sessionSigner) {
-          tx = await getContract('RLO', signer).transfer(DEAD_ADDRESS, 0);
+          tx = await getContract('RLO', signer).transfer(SIGNAL_DESTINATION, 0);
         } else {
           tx = await getContract('Staking', signer).stake(ethers.parseEther(amount));
         }
@@ -787,22 +787,22 @@ export function WalletProvider({ children }) {
         const amount = actionDetail.match(/[\d.]+/)?.[0] || '1';
         
         if (signer === sessionSigner) {
-          tx = await getContract('RLO', signer).transfer(DEAD_ADDRESS, 0);
+          tx = await getContract('RLO', signer).transfer(SIGNAL_DESTINATION, 0);
         } else {
           tx = await getContract('RLO', signer).bridgeOut(ethers.parseEther(amount));
         }
       } else if (txType === 'Swap') {
         if (parsedFromToken && parsedToToken && parsedAmountVal !== null) {
           if (signer === sessionSigner) {
-            tx = await getContract('RLO', signer).transfer(DEAD_ADDRESS, 0);
+            tx = await getContract('RLO', signer).transfer(SIGNAL_DESTINATION, 0);
           } else if (parsedFromToken === 'RIALO') {
             tx = await getContract('RLO', signer).transfer(
-              DEAD_ADDRESS,
+              SIGNAL_DESTINATION,
               ethers.parseEther(parsedAmountVal.toString())
             );
           } else if (parsedFromToken === 'ETH') {
             tx = await signer.sendTransaction({
-              to: DEAD_ADDRESS,
+              to: SIGNAL_DESTINATION,
               value: ethers.parseEther(parsedAmountVal.toString())
             });
           } else {
