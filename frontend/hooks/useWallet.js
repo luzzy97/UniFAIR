@@ -681,7 +681,7 @@ export function WalletProvider({ children }) {
       let parsedFromToken = null, parsedToToken = null, parsedAmountVal = null, parsedAmountOut = null;
       let displayAmount = actionDetail; // Use original by default
       if (txType === 'Swap') {
-        const match = actionDetail.match(/([\d.]+)\s+([A-Z0-9]+)\s+->\s+(?:[\d.]+\s+)?([A-Z0-9]+)/i);
+        const match = actionDetail.match(/([\d.]+)\s+([A-Z0-9]+)\s+(?:->|to)\s+(?:[\d.]+\s+)?([A-Z0-9]+)/i);
         if (match) {
           parsedAmountVal = parseFloat(match[1]);
           parsedFromToken = match[2].toUpperCase();
