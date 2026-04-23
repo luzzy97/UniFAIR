@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-const Spline = dynamic(() => import('@splinetool/react-spline').then(mod => mod.default), { ssr: false });
+const Spline = dynamic(() => import('@splinetool/react-spline'), { ssr: false });
 
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';

@@ -10,7 +10,9 @@ import { Droplet, Activity, Loader2, CheckCircle2, AlertCircle, Route, Flame, X 
 
 export default function Rewards() {
   const router = useRouter();
-  const { isConnected, address, provider, connect, addTransaction, tickingCredits, pendingCredits, claimCredits, showToast } = useWallet();
+  const wallet = useWallet() as any;
+  if (!wallet) return null;
+  const { isConnected, address, provider, connect, addTransaction, tickingCredits, pendingCredits, claimCredits, showToast } = wallet;
   const {
     pendingRewards: pendingRewStr,
     loading: stakingLoading,

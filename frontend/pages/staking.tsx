@@ -40,7 +40,9 @@ interface StakingPosition {
 
 export default function StakingPage() {
   const router = useRouter();
-  const { isConnected, address, provider, connect, balances: walletBalances, addTransaction, fetchEthBalance, updateBalance, addCredits, addPendingCredits } = useWallet();
+  const wallet = useWallet() as any;
+  if (!wallet) return null;
+  const { isConnected, address, provider, connect, balances: walletBalances, addTransaction, fetchEthBalance, updateBalance, addCredits, addPendingCredits } = wallet;
   const { balance: rloBal, fetchBalance: fetchRloBalance } = useRLO();
   const {
     stakedBalance: stakedBalStr,
@@ -63,7 +65,7 @@ export default function StakingPage() {
     setGlobalRwaYieldUsd,
   } = useStaking();
 
-  const { sessionActive, activateSession, seedSession, showToast: walletToast } = useWallet();
+  const { sessionActive, activateSession, seedSession, showToast: walletToast } = wallet;
 
   const [rloAmount, setRloAmount] = useState<string>("");
   const [ethAmount, setEthAmount] = useState<string>("0");
