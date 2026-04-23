@@ -100,7 +100,7 @@ export default function LearnPage() {
                 <span className="font-label text-xs font-bold tracking-[0.2em] uppercase text-white/40 mb-2 block">Introduction to UniFAIR</span>
                 <h2 className="font-headline text-2xl font-bold mb-3 text-white">What is UniFAIR?</h2>
                 <p className="font-body text-white/50 mb-6 max-w-xl leading-relaxed text-sm">Dive into how UniFAIR acts as the ultimate frontend layer for the Rialo network. Learn about our AI Agent integration, ServicePaymaster routing, and RWA accumulation.</p>
-                <a href="https://www.rialo.io/docs" target="_blank" rel="noopener noreferrer" className="inline-flex items-center font-label text-sm font-bold uppercase tracking-wider group/link text-white hover:text-white/80 transition-colors">
+                <a href="https://docs-unifair.vercel.app/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center font-label text-sm font-bold uppercase tracking-wider group/link text-white hover:text-white/80 transition-colors">
                   READ THE DOCS
                   <span className="material-symbols-outlined ml-2 transition-transform group-hover/link:translate-x-1">arrow_forward</span>
                 </a>
