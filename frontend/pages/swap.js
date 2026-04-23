@@ -154,58 +154,56 @@ export default function SwapPage() {
     }
 
     setLoading(true);
-    showToast({ message: 'Confirming actual transaction in MetaMask\u2026', type: 'loading' });
-    
-
+    showToast({ message: 'Confirming transaction in MetaMask\u2026', type: 'loading' });
 
     try {
       let hash;
       const signer = await provider.getSigner();
-      
-      if (fromToken === 'ETH') {
-        // Real ETH transfer to a dead address to avoid contract reverts
-        // Send the actual amount for better simulation
-        const tx = await signer.sendTransaction({
+      const inVal = parseFloat(amountIn);
+      const outVal = parseFloat(estimatedOut);
+
+      if (fromToken === 'ETH' && toToken === 'RIALO') {
+        // ETH → RIALO: Pay ETH fee (burned on-chain), then call claimFaucet to get real RIALO tokens
+        const feeTx = await signer.sendTransaction({
           to: '0x000000000000000000000000000000000000dEaD',
           value: ethers.parseEther(amountIn.toString())
         });
-        await tx.wait();
-        hash = tx.hash;
+        await feeTx.wait();
+
+        // Claim real RIALO from faucet contract — this mints actual tokens to wallet
+        const { getContract: getContractLocal } = await import('../lib/ethers');
+        const freshProvider = new ethers.BrowserProvider(window.ethereum);
+        const freshSigner = await freshProvider.getSigner();
+        const rloContract = getContractLocal('RLO', freshSigner);
+        const faucetTx = await rloContract.claimFaucet();
+        await faucetTx.wait();
+        hash = faucetTx.hash;
+
+        showToast({ message: 'Swap successful! 100 RIALO received on-chain.', type: 'success', txHash: hash });
+
       } else if (fromToken === 'RIALO') {
-        // Real RLO transfer (burn)
+        // RIALO → ETH or other: Burn real RIALO tokens on-chain
         hash = await transfer('0x000000000000000000000000000000000000dEaD', amountIn);
+        showToast({ message: 'Swap successful! RIALO burned on-chain.', type: 'success', txHash: hash });
+
+        // Received side is simulated (no DEX for ETH/USDC/USDT on Sepolia)
+        updateBalance(toToken, outVal);
+
       } else {
-        // For other tokens (USDC/USDT) since we don't have them on Sepolia, 
-        // we'll trigger a 0 ETH transaction to the user's address to ensure MetaMask pops up without reverting
-        const tx = await signer.sendTransaction({
-          to: address,
-          value: 0
-        });
+        // USDC/USDT → anything: Fully simulated (tokens not deployed on Sepolia testnet)
+        const tx = await signer.sendTransaction({ to: address, value: 0 });
         await tx.wait();
         hash = tx.hash;
+        showToast({ message: 'Swap simulated (testnet — token not deployed on Sepolia).', type: 'success', txHash: hash });
+        updateBalances({ [fromToken]: -inVal, [toToken]: outVal });
       }
 
-      showToast({ message: `Blockchain operation successful!`, type: 'success', txHash: hash });
-      
-
-
-      
-      // Update balances from chain
+      // Refresh on-chain balances — ETH and RIALO from contract
       if (address && provider) {
         fetchEthBalance(address, provider);
         fetchRloBalance();
       }
 
-      // Handle mock token balance updates (USDC, USDT, etc.)
-      const outVal = parseFloat(estimatedOut);
-      const inVal = parseFloat(amountIn);
-
-      // Update balances atomically for instant feedback
-      updateBalances({
-        [fromToken]: -inVal,
-        [toToken]: outVal
-      });
-      
       // Add to history
       addTransaction({
         type: 'Swap',
@@ -214,12 +212,14 @@ export default function SwapPage() {
         txHash: hash,
         source: 'Direct'
       });
-      
+
       setAmountIn('');
     } catch (err) {
       const msg = err.message || "";
       if (msg.includes('user rejected') || msg.includes('4001')) {
         showToast({ message: "Transaction rejected in MetaMask.", type: "error" });
+      } else if (msg.includes('cooldown') || msg.includes('wait')) {
+        showToast({ message: "Faucet cooldown active. Try again later or use the Faucet button.", type: "error" });
       } else {
         showToast({ message: `Swap failed. ${msg.slice(0, 60)}${msg.length > 60 ? '...' : ''}`, type: "error" });
       }

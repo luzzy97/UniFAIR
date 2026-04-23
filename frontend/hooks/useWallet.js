@@ -31,7 +31,8 @@ export function WalletProvider({ children }) {
   const fetchPrices = useCallback(async () => {
     try {
       const ids = 'bitcoin,ethereum,binancecoin,solana,ripple,usd-coin,tether,dogecoin,tron,avalanche-2,polkadot';
-      const resp = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+      const cgKey = process.env.NEXT_PUBLIC_COINGECKO_API_KEY || 'CG-vg5m6nnVU6EsxaAwAKy7TQPv';
+      const resp = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&x_cg_demo_api_key=${cgKey}`);
       const data = await resp.json();
       if (data) {
         setBasePrices(prev => ({
