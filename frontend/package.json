@@ -10,6 +10,9 @@
   "dependencies": {
     "@splinetool/react-spline": "latest",
     "@splinetool/runtime": "latest",
+    "wagmi": "^2.9.0",
+    "viem": "2.x",
+    "@tanstack/react-query": "^5.33.0",
     "ethers": "^6.12.1",
     "next": "14.2.3",
     "react": "^18",
