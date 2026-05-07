@@ -16,13 +16,13 @@ const nextConfig = {
     NEXT_PUBLIC_COINGECKO_API_KEY: process.env.COINGECKO_API_KEY || 'CG-vg5m6nnVU6EsxaAwAKy7TQPv',
   },
 
-  // 👇 MANTRA INI HARUS DI DALAM nextConfig (SEBELUM TANDA }; DI BAWAH) 👇
+  // MANTRA SAKTI ANTI-ERROR VERCEL
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true,
   },
-}; // <--- Kurung penutup ini harus di paling bawah
+};
 
 module.exports = nextConfig;
