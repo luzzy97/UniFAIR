@@ -84,7 +84,7 @@ export default function RwaHubTab() {
                     min="0"
                     max="100"
                     value={allocation}
-                    onChange={(e) => setAllocation(e.target.value)}
+                    onChange={(e) => setAllocation(parseInt(e.target.value))}
                     className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-white"
                 />
                 <div className="flex justify-between mt-4 text-[10px] text-white/20 font-bold">
