@@ -16,7 +16,6 @@ const nextConfig = {
     NEXT_PUBLIC_COINGECKO_API_KEY: process.env.COINGECKO_API_KEY || 'CG-vg5m6nnVU6EsxaAwAKy7TQPv',
   },
 
-  // 👇 MANTRA SAKTI ANTI-ERROR VERCEL 👇
   eslint: {
     ignoreDuringBuilds: true,
   },
