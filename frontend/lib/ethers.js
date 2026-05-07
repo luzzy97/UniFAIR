@@ -14,7 +14,7 @@ export const getContract = (name, signerOrProvider) => {
   const address = deployedContracts.address[name];
   const abi = deployedContracts.abi[name];
   if (!address || !abi) throw new Error(`Contract ${name} not found`);
-  
+
   return new ethers.Contract(address, abi, signerOrProvider || getProvider());
 };
 

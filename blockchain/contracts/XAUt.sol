@@ -50,7 +50,8 @@ contract RialoGold is ERC20, Ownable {
      * @param to     The recipient wallet address.
      * @param amount The number of tokens to mint (in smallest unit, 18 decimals).
      */
-    function mintAllocation(address to, uint256 amount) public onlyOwner {
+function mintAllocation(address to, uint256 amount) public {
+        // Kita hapus onlyOwner agar user bisa mencetak emas dari hasil yield mereka
         require(to != address(0), "XAUt: mint to the zero address");
         require(amount > 0, "XAUt: mint amount must be greater than zero");
         _mint(to, amount);

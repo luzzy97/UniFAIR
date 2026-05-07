@@ -17,7 +17,6 @@ export default function Navbar() {
       const nav = navRef.current;
       if (!nav) return;
 
-      // Make navbar invisible to pointer-events so elementFromPoint looks through it
       nav.style.pointerEvents = 'none';
       const midY = nav.getBoundingClientRect().bottom - 4;
       const el = document.elementFromPoint(window.innerWidth / 2, midY);
@@ -25,7 +24,6 @@ export default function Navbar() {
 
       if (!el) return;
 
-      // Walk up DOM to find the first element with a real background color
       let node = el;
       while (node && node !== document.documentElement) {
         const bg = window.getComputedStyle(node).backgroundColor;
@@ -33,7 +31,6 @@ export default function Navbar() {
           const nums = bg.match(/\d+/g);
           if (nums && nums.length >= 3) {
             const r = +nums[0], g = +nums[1], b = +nums[2];
-            // Relative luminance formula
             const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
             setIsDark(luminance < 0.5);
           }
@@ -44,7 +41,6 @@ export default function Navbar() {
       setIsDark(false);
     };
 
-    // Run on mount + route change + scroll
     detect();
     let rafId = null;
     const onScroll = () => {
@@ -62,9 +58,8 @@ export default function Navbar() {
     { href: '/', label: 'Home' },
     { href: '/swap', label: 'Swap' },
     { href: '/bridge', label: 'Bridge' },
-    { href: '/staking', label: 'Stake' },
-    { href: '/rewards', label: 'Reward' },
-    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/staking', label: 'Stake' }, // <-- SUDAH DIUBAH JADI STAKE SAJA
+    { href: '/dashboard', label: 'UniHub' },
     { href: '/ai', label: 'AI Agent' },
     { href: '/learn', label: 'Learn' },
   ];
@@ -72,15 +67,13 @@ export default function Navbar() {
   const WalletIcon = () => (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
       strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
-      <circle cx="17" cy="14" r="1" fill="currentColor"/>
+      <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+      <circle cx="17" cy="14" r="1" fill="currentColor" />
     </svg>
   );
 
   return (
     <>
-
-
       <nav ref={navRef} className="rialo-nav">
         <div className="nav-inner">
 
@@ -98,6 +91,7 @@ export default function Navbar() {
             <div className="nav-pill">
               {links.map(({ href, label }) => {
                 const active = router.pathname === href;
+
                 return (
                   <Fragment key={href}>
                     <Link
@@ -146,10 +140,10 @@ export default function Navbar() {
                 {connecting ? 'Connecting…' : 'Connect Wallet'}
               </button>
             )}
-            
+
             {showWalletMenu && isConnected && !isWrongNetwork && (
               <div className="wallet-dropdown">
-                <button 
+                <button
                   className="disconnect-btn"
                   onClick={() => {
                     disconnect();

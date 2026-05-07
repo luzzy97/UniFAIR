@@ -2,11 +2,32 @@ import { useState, useRef, useEffect } from 'react';
 import { useWallet } from '../hooks/useWallet';
 import { useStaking } from '../hooks/useStaking';
 import { ethers } from 'ethers';
+import { useReadContract } from 'wagmi';
 
 
 export default function AiAgent() {
-  const { isConnected, address, balances, transactions, provider, executeAiTransaction, addTriggerOrder, globalRates, scheduledTxs, addScheduledTx, removeScheduledTx, toast, showToast, sessionActive, sessionExpiry, sessionSigner, activateSession, deactivateSession, seedSession, withdrawSessionBalance, aiMessages: messages, addAiMessage, tickingCredits, deductCredits } = useWallet();
+  const { isConnected, address, balances, transactions, provider, executeAiTransaction, addTriggerOrder, globalRates, scheduledTxs, addScheduledTx, removeScheduledTx, toast, showToast, sessionActive, sessionExpiry, sessionSigner, activateSession, deactivateSession, seedSession, withdrawSessionBalance, aiMessages: messages, addAiMessage, deductCredits } = useWallet();
   const { stakedBalance, stakedEthBalance } = useStaking();
+
+  // 👇 JURUS WAGMI DARI DASHBOARD 👇
+  const userCreditsAbi = [{
+    name: 'userCredits', type: 'function', stateMutability: 'view',
+    inputs: [{ name: '', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+  }];
+
+  const { data: rawCredits } = useReadContract({
+    address: '0x72c6abd9c48c9511e8c0d660091a974f6422d782',
+    abi: userCreditsAbi,
+    functionName: 'userCredits',
+    args: address ? [address] : undefined,
+    chainId: 11155111,
+    query: { enabled: !!address, refetchInterval: 5000 },
+  });
+
+  const tickingCredits = rawCredits ? Number(rawCredits) : 0;
+  // 👆 SAMPAI SINI 👆
+
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [showSchedulePanel, setShowSchedulePanel] = useState(false);
@@ -16,18 +37,18 @@ export default function AiAgent() {
   const [sessionDuration, setSessionDuration] = useState(1);
   const [isSeeding, setIsSeeding] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
-  const [schedData, setSchedData] = useState({ 
-    type: 'Stake', 
-    amount: '100', 
-    fromToken: 'RIALO', 
-    toToken: 'ETH', 
+  const [schedData, setSchedData] = useState({
+    type: 'Stake',
+    amount: '100',
+    fromToken: 'RIALO',
+    toToken: 'ETH',
     bridgeToken: 'RIALO',
     fromNetwork: 'Ethereum Sepolia',
     toNetwork: 'Arbitrum Sepolia',
     stakingAssetType: 'Solo RLO',
     payoutType: 'RLO',
     toAddress: '',
-    timeVal: '7', 
+    timeVal: '7',
     timeUnit: 'minutes',
     lockMonths: '1',
     sfsFraction: '20'
@@ -41,7 +62,7 @@ export default function AiAgent() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, scheduledTxs.map(tx => tx.id).join(',')]); 
+  }, [messages, scheduledTxs.map(tx => tx.id).join(',')]);
 
   // Reset fromToken/toToken if they become invalid for the current action type
   useEffect(() => {
@@ -86,9 +107,9 @@ export default function AiAgent() {
     const requiredCredits = isAutomationIntent ? CREDITS_AUTO : CREDITS_CHAT;
 
     if (tickingCredits < requiredCredits) {
-      showToast({ 
-        message: "Insufficient Credits", 
-        detail: isAutomationIntent 
+      showToast({
+        message: "Insufficient Credits",
+        detail: isAutomationIntent
           ? `You need at least 10 Credits for Automation strategies.`
           : `You need at least 5 Credits for AI Chat.`,
         type: 'error'
@@ -123,10 +144,10 @@ export default function AiAgent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMsg, context: ctx })
       });
-      
+
       const contentType = resp.headers.get('content-type');
       let response;
-      
+
       if (contentType && contentType.includes('application/json')) {
         response = await resp.json();
       } else {
@@ -139,10 +160,10 @@ export default function AiAgent() {
         error.details = response.details;
         throw error;
       }
-      
+
       addAiMessage({ role: 'ai', content: response });
       setIsThinking(false);
-      
+
       // If successful transaction, trigger toast or schedule
       if (response.action?.includes('successful') || response.action?.includes('active') || response.action?.includes('Scheduled') || response.action?.includes('Trigger Order Placed')) {
         let type = "Swap";
@@ -150,10 +171,10 @@ export default function AiAgent() {
         if (userMsg.toLowerCase().includes('stake')) type = "Stake";
         if (userMsg.toLowerCase().includes('send')) type = "Send";
         if (response.action?.includes('Trigger Order')) type = "Trigger";
-        
+
         // Extract symbols or just show successful
         const detail = response.action.replace('Transaction successful. ', '').replace(' has been completed.', '').replace(' is now active.', '').replace('Scheduled: ', '').replace('Scheduled Stake: ', '').replace('Trigger Order Placed: ', '');
-        
+
         if (type === "Trigger") {
           const currentRate = globalRates[response.fromToken]?.[response.toToken] || 1;
           const condition = response.targetPrice >= currentRate ? '>=' : '<=';
@@ -187,9 +208,9 @@ export default function AiAgent() {
           });
         } else {
           if (!sessionActive) {
-            addAiMessage({ 
-              role: 'ai', 
-              content: { raw: `⚠️ **Session Inactive**: To automate this **${type}** without constant popups, please activate a **Secure Session** first. I've opened the Session Control panel for you below.` } 
+            addAiMessage({
+              role: 'ai',
+              content: { raw: `⚠️ **Session Inactive**: To automate this **${type}** without constant popups, please activate a **Secure Session** first. I've opened the Session Control panel for you below.` }
             });
             setShowAiWalletPanel(true);
             setIsThinking(false);
@@ -205,7 +226,7 @@ export default function AiAgent() {
               detail: `${type}: ${res.detail}`,
               txHash: res.hash
             });
-             addAiMessage({ role: 'ai', content: { raw: `✅ **${type}** execution successful!`, hash: res.hash } });
+            addAiMessage({ role: 'ai', content: { raw: `✅ **${type}** execution successful!`, hash: res.hash } });
           }).catch(err => {
             const errorMsg = err.reason || err.message || 'Transaction failed';
             showToast({ message: `${type} failed`, detail: errorMsg, type: 'error' });
@@ -216,9 +237,9 @@ export default function AiAgent() {
     } catch (err) {
       console.error('AI Error:', err);
       const detail = err.details || err.message || 'Unknown error';
-      addAiMessage({ 
-        role: 'ai', 
-        content: { raw: `❌ **Error**: ${detail}. ${detail.includes('API key') ? 'Please check if your API key is configured in Vercel.' : 'Please try again.'}` } 
+      addAiMessage({
+        role: 'ai',
+        content: { raw: `❌ **Error**: ${detail}. ${detail.includes('API key') ? 'Please check if your API key is configured in Vercel.' : 'Please try again.'}` }
       });
       setIsThinking(false);
     }
@@ -262,7 +283,7 @@ export default function AiAgent() {
                 </span>
                 AUTO APPROVAL
               </div>
-              <button 
+              <button
                 className="ai-settings-btn"
                 onClick={() => setShowAiWalletPanel(!showAiWalletPanel)}
                 title="Session Control"
@@ -271,9 +292,9 @@ export default function AiAgent() {
               </button>
             </div>
           </div>
-          
-            <div className="ai-body relative">
-                {messages.map((m, i) => (
+
+          <div className="ai-body relative">
+            {messages.map((m, i) => (
               <div key={i} className={`ai-msg ${m.role}`}>
                 {m.role === 'user' ? (
                   m.content.raw
@@ -281,10 +302,10 @@ export default function AiAgent() {
                   <div className="ai-raw">
                     <div>{m.content.raw}</div>
                     {m.content.hash && (
-                      <a 
-                        href={`https://sepolia.etherscan.io/tx/${m.content.hash}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
+                      <a
+                        href={`https://sepolia.etherscan.io/tx/${m.content.hash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="ai-tx-button"
                       >
                         SCAN <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>open_in_new</span>
@@ -331,13 +352,13 @@ export default function AiAgent() {
                 {scheduledTxs.map(tx => (
                   <div key={tx.id} className="ai-scheduled-item">
                     <div className="ai-scheduled-timer">
-                      {tx.remainingSec > 60 ? `${Math.ceil(tx.remainingSec/60)}m` : `${tx.remainingSec}s`}
+                      {tx.remainingSec > 60 ? `${Math.ceil(tx.remainingSec / 60)}m` : `${tx.remainingSec}s`}
                     </div>
                     <div className="ai-scheduled-info">
                       <div className="ai-scheduled-title">Scheduled {tx.type}</div>
                       <div className="ai-scheduled-detail">{tx.detail}</div>
                     </div>
-                    <button 
+                    <button
                       onClick={() => removeScheduledTx(tx.id)}
                       className="text-white/20 hover:text-red-400 transition-colors"
                     >
@@ -358,7 +379,7 @@ export default function AiAgent() {
                 </div>
               </div>
             )}
-            
+
             <div ref={messagesEndRef} />
           </div>
 
@@ -375,10 +396,10 @@ export default function AiAgent() {
                   <div className="ai-sched-grid">
                     <div className="ai-sched-field">
                       <label className="ai-sched-label">Action</label>
-                      <select 
+                      <select
                         className="ai-sched-select"
                         value={schedData.type}
-                        onChange={e => setSchedData({...schedData, type: e.target.value})}
+                        onChange={e => setSchedData({ ...schedData, type: e.target.value })}
                       >
                         <option value="Swap">Swap</option>
                         <option value="Bridge">Bridge</option>
@@ -388,20 +409,20 @@ export default function AiAgent() {
                     </div>
                     <div className="ai-sched-field">
                       <label className="ai-sched-label">Amount</label>
-                      <input 
-                        type="number" 
-                        className="ai-sched-input" 
+                      <input
+                        type="number"
+                        className="ai-sched-input"
                         value={schedData.amount}
-                        onChange={e => setSchedData({...schedData, amount: e.target.value})}
+                        onChange={e => setSchedData({ ...schedData, amount: e.target.value })}
                       />
                     </div>
                     {schedData.type === 'Bridge' && (
                       <div className="ai-sched-field">
                         <label className="ai-sched-label">Bridge Token</label>
-                        <select 
+                        <select
                           className="ai-sched-select"
                           value={schedData.bridgeToken}
-                          onChange={e => setSchedData({...schedData, bridgeToken: e.target.value})}
+                          onChange={e => setSchedData({ ...schedData, bridgeToken: e.target.value })}
                         >
                           <option value="RIALO">RIALO</option>
                           <option value="ETH">ETH</option>
@@ -415,10 +436,10 @@ export default function AiAgent() {
                       <label className="ai-sched-label">
                         {schedData.type === 'Bridge' ? 'From Network' : schedData.type === 'Stake' ? 'Asset Tier' : 'Token'}
                       </label>
-                      <select 
+                      <select
                         className="ai-sched-select"
                         value={schedData.type === 'Bridge' ? schedData.fromNetwork : schedData.type === 'Stake' ? schedData.stakingAssetType : schedData.fromToken}
-                        onChange={e => setSchedData({...schedData, [schedData.type === 'Bridge' ? 'fromNetwork' : schedData.type === 'Stake' ? 'stakingAssetType' : 'fromToken']: e.target.value})}
+                        onChange={e => setSchedData({ ...schedData, [schedData.type === 'Bridge' ? 'fromNetwork' : schedData.type === 'Stake' ? 'stakingAssetType' : 'fromToken']: e.target.value })}
                       >
                         {schedData.type === 'Swap' ? (
                           <>
@@ -457,18 +478,18 @@ export default function AiAgent() {
                         {schedData.type === 'Bridge' ? 'To Network' : schedData.type === 'Stake' ? 'Payout' : 'To Token/Address'}
                       </label>
                       {schedData.type === 'Send' ? (
-                        <input 
-                          type="text" 
-                          className="ai-sched-input" 
+                        <input
+                          type="text"
+                          className="ai-sched-input"
                           placeholder="0x..."
                           value={schedData.toAddress}
-                          onChange={e => setSchedData({...schedData, toAddress: e.target.value})}
+                          onChange={e => setSchedData({ ...schedData, toAddress: e.target.value })}
                         />
                       ) : (
-                        <select 
+                        <select
                           className="ai-sched-select"
                           value={schedData.type === 'Bridge' ? schedData.toNetwork : schedData.type === 'Stake' ? schedData.payoutType : schedData.toToken}
-                          onChange={e => setSchedData({...schedData, [schedData.type === 'Bridge' ? 'toNetwork' : schedData.type === 'Stake' ? 'payoutType' : 'toToken']: e.target.value})}
+                          onChange={e => setSchedData({ ...schedData, [schedData.type === 'Bridge' ? 'toNetwork' : schedData.type === 'Stake' ? 'payoutType' : 'toToken']: e.target.value })}
                         >
                           {schedData.type === 'Bridge' ? (
                             <>
@@ -495,19 +516,19 @@ export default function AiAgent() {
                     </div>
                     <div className="ai-sched-field">
                       <label className="ai-sched-label">Time Value</label>
-                      <input 
-                        type="number" 
-                        className="ai-sched-input" 
+                      <input
+                        type="number"
+                        className="ai-sched-input"
                         value={schedData.timeVal}
-                        onChange={e => setSchedData({...schedData, timeVal: e.target.value})}
+                        onChange={e => setSchedData({ ...schedData, timeVal: e.target.value })}
                       />
                     </div>
                     <div className="ai-sched-field">
                       <label className="ai-sched-label">Unit</label>
-                      <select 
+                      <select
                         className="ai-sched-select"
                         value={schedData.timeUnit}
-                        onChange={e => setSchedData({...schedData, timeUnit: e.target.value})}
+                        onChange={e => setSchedData({ ...schedData, timeUnit: e.target.value })}
                       >
                         <option value="minutes">Minutes</option>
                         <option value="hours">Hours</option>
@@ -517,10 +538,10 @@ export default function AiAgent() {
                       <>
                         <div className="ai-sched-field">
                           <label className="ai-sched-label">Lock Period</label>
-                          <select 
+                          <select
                             className="ai-sched-select"
                             value={schedData.lockMonths}
-                            onChange={e => setSchedData({...schedData, lockMonths: e.target.value})}
+                            onChange={e => setSchedData({ ...schedData, lockMonths: e.target.value })}
                           >
                             <option value="0">Flexible</option>
                             <option value="1">1 Month</option>
@@ -533,11 +554,11 @@ export default function AiAgent() {
                         </div>
                         <div className="ai-sched-field">
                           <label className="ai-sched-label">SFS Routing (%)</label>
-                          <input 
-                            type="number" 
-                            className="ai-sched-input" 
+                          <input
+                            type="number"
+                            className="ai-sched-input"
                             value={schedData.sfsFraction}
-                            onChange={e => setSchedData({...schedData, sfsFraction: e.target.value})}
+                            onChange={e => setSchedData({ ...schedData, sfsFraction: e.target.value })}
                           />
                         </div>
                       </>
@@ -560,12 +581,12 @@ export default function AiAgent() {
                   </button>
                 </div>
                 <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '12px' }}>
-                  {sessionActive 
-                    ? `Your session is ACTIVE. AI can execute swaps, bridges, and stakes without further popups.` 
+                  {sessionActive
+                    ? `Your session is ACTIVE. AI can execute swaps, bridges, and stakes without further popups.`
                     : `Start a temporary session to allow the AI Agent to execute transactions "from the inside." This only requires ONE initial signature.`
                   }
                 </p>
-                
+
                 {sessionActive ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -578,7 +599,7 @@ export default function AiAgent() {
                       <div style={{ padding: '12px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px' }}>
                         <div style={{ fontSize: '10px', color: '#10b981', fontWeight: '800', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
                           Gas Balance
-                          <button 
+                          <button
                             onClick={() => {
                               navigator.clipboard.writeText(sessionSigner?.address || "");
                               showToast({ message: "Address Copied!", detail: (sessionSigner?.address || "").slice(0, 10) + '...' });
@@ -596,7 +617,7 @@ export default function AiAgent() {
                     </div>
 
                     {parseFloat(sessionBalance) < 0.005 && (
-                      <button 
+                      <button
                         className="ai-sched-btn"
                         disabled={isSeeding}
                         onClick={async () => {
@@ -605,8 +626,8 @@ export default function AiAgent() {
                             await seedSession('0.01');
                             showToast({ message: "AI Wallet Seeded!", detail: "0.01 ETH transferred for gas." });
                             if (provider && sessionSigner) {
-                               const bal = await provider.getBalance(sessionSigner.address);
-                               setSessionBalance(parseFloat(ethers.formatEther(bal)).toFixed(4));
+                              const bal = await provider.getBalance(sessionSigner.address);
+                              setSessionBalance(parseFloat(ethers.formatEther(bal)).toFixed(4));
                             }
                           } catch (e) {
                             showToast({ message: "Seeding Failed", detail: e.message, type: 'error' });
@@ -621,8 +642,8 @@ export default function AiAgent() {
                     )}
 
                     {parseFloat(sessionBalance) > 0 && (
-                      <button 
-                        className="ai-sched-btn" 
+                      <button
+                        className="ai-sched-btn"
                         disabled={isWithdrawing}
                         onClick={async () => {
                           setIsWithdrawing(true);
@@ -630,8 +651,8 @@ export default function AiAgent() {
                             await withdrawSessionBalance();
                             showToast({ message: "Withdrawal Complete", detail: "Funds returned to your main wallet." });
                             if (provider && sessionSigner) {
-                               const bal = await provider.getBalance(sessionSigner.address);
-                               setSessionBalance(parseFloat(ethers.formatEther(bal)).toFixed(4));
+                              const bal = await provider.getBalance(sessionSigner.address);
+                              setSessionBalance(parseFloat(ethers.formatEther(bal)).toFixed(4));
                             }
                           } catch (e) {
                             showToast({ message: "Withdrawal Failed", detail: e.message, type: 'error' });
@@ -645,8 +666,8 @@ export default function AiAgent() {
                       </button>
                     )}
 
-                    <button 
-                      className="ai-sched-btn" 
+                    <button
+                      className="ai-sched-btn"
                       style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
                       disabled={isRevoking}
                       onClick={async () => {
@@ -669,10 +690,10 @@ export default function AiAgent() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>Session Duration</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input 
-                          type="range" 
-                          min="1" 
-                          max="24" 
+                        <input
+                          type="range"
+                          min="1"
+                          max="24"
                           value={sessionDuration}
                           onChange={(e) => setSessionDuration(parseInt(e.target.value))}
                           style={{ accentColor: '#10b981', cursor: 'pointer' }}
@@ -680,8 +701,8 @@ export default function AiAgent() {
                         <span style={{ fontSize: '13px', color: '#10b981', fontWeight: '800', minWidth: '45px' }}>{sessionDuration}H</span>
                       </div>
                     </div>
-                    <button 
-                      className="ai-sched-btn" 
+                    <button
+                      className="ai-sched-btn"
                       onClick={async () => {
                         try {
                           await activateSession(sessionDuration);
@@ -701,40 +722,40 @@ export default function AiAgent() {
 
             <div className="ai-quick-commands">
 
-              <button 
-                onClick={() => { setSchedData(prev => ({...prev, type: 'Swap'})); setShowSchedulePanel(true); }} 
+              <button
+                onClick={() => { setSchedData(prev => ({ ...prev, type: 'Swap' })); setShowSchedulePanel(true); }}
                 disabled={!sessionActive}
                 className={`ai-command-chip ${!sessionActive ? 'opacity-40 cursor-not-allowed grayscale' : ''} ${showSchedulePanel && schedData.type === 'Swap' ? 'border-primary text-primary bg-primary/10' : ''}`}
               >
                 <span className="material-symbols-outlined text-[12px] align-middle mr-1">{!sessionActive ? 'lock' : 'swap_horiz'}</span>
                 Swap
               </button>
-              <button 
-                onClick={() => { setSchedData(prev => ({...prev, type: 'Bridge'})); setShowSchedulePanel(true); }} 
+              <button
+                onClick={() => { setSchedData(prev => ({ ...prev, type: 'Bridge' })); setShowSchedulePanel(true); }}
                 disabled={!sessionActive}
                 className={`ai-command-chip ${!sessionActive ? 'opacity-40 cursor-not-allowed grayscale' : ''} ${showSchedulePanel && schedData.type === 'Bridge' ? 'border-primary text-primary bg-primary/10' : ''}`}
               >
                 <span className="material-symbols-outlined text-[12px] align-middle mr-1">{!sessionActive ? 'lock' : 'lan'}</span>
                 Bridge
               </button>
-              <button 
-                onClick={() => { setSchedData(prev => ({...prev, type: 'Stake'})); setShowSchedulePanel(true); }} 
+              <button
+                onClick={() => { setSchedData(prev => ({ ...prev, type: 'Stake' })); setShowSchedulePanel(true); }}
                 disabled={!sessionActive}
                 className={`ai-command-chip ${!sessionActive ? 'opacity-40 cursor-not-allowed grayscale' : ''} ${showSchedulePanel && schedData.type === 'Stake' ? 'border-primary text-primary bg-primary/10' : ''}`}
               >
                 <span className="material-symbols-outlined text-[12px] align-middle mr-1">{!sessionActive ? 'lock' : 'account_balance_wallet'}</span>
                 Staking
               </button>
-              <button 
-                onClick={() => { setSchedData(prev => ({...prev, type: 'Send'})); setShowSchedulePanel(true); }} 
+              <button
+                onClick={() => { setSchedData(prev => ({ ...prev, type: 'Send' })); setShowSchedulePanel(true); }}
                 disabled={!sessionActive}
                 className={`ai-command-chip ${!sessionActive ? 'opacity-40 cursor-not-allowed grayscale' : ''} ${showSchedulePanel && schedData.type === 'Send' ? 'border-primary text-primary bg-primary/10' : ''}`}
               >
                 <span className="material-symbols-outlined text-[12px] align-middle mr-1">{!sessionActive ? 'lock' : 'send'}</span>
                 Send
               </button>
-              <button 
-                onClick={() => setInput("swap 1 ETH to USDC at 2500")} 
+              <button
+                onClick={() => setInput("swap 1 ETH to USDC at 2500")}
                 disabled={!sessionActive}
                 className={`ai-command-chip ${!sessionActive ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
               >
@@ -742,42 +763,42 @@ export default function AiAgent() {
                 Auto Buy/Sell
               </button>
             </div>
-              {/* Zero Balance Warning */}
-          {tickingCredits < 10 && (
-            <div style={{
-              background: 'rgba(239,68,68,0.08)',
-              border: '1px solid rgba(239,68,68,0.2)',
-              borderRadius: '12px',
-              padding: '10px 14px',
-              marginBottom: '8px',
-              fontSize: '11px',
-              color: 'rgba(239,68,68,0.8)',
-              fontWeight: '700',
-              textAlign: 'center'
-            }}>
-              ⚡ {Math.floor(tickingCredits)} Credits remaining · 5 per chat / 10 per automation<br/>
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: '500' }}>Top up by staking more USDT or wait for next cycle</span>
-            </div>
-          )}
-                <form className="ai-form" onSubmit={handleSend}>
-                  <input 
-                    type="text" 
-                    className="ai-input" 
-                    placeholder={tickingCredits < 5 ? "Insufficient credits – top up to chat" : "Ask about swaps, bridging, or staking..."}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    disabled={tickingCredits < 5}
-                    style={tickingCredits < 5 ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
-                  />
-                  <button 
-                    type="submit" 
-                    className="ai-send"
-                    disabled={tickingCredits < 5}
-                    style={tickingCredits < 5 ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
-                  >Send</button>
-                </form>
+            {/* Zero Balance Warning */}
+            {tickingCredits < 10 && (
+              <div style={{
+                background: 'rgba(239,68,68,0.08)',
+                border: '1px solid rgba(239,68,68,0.2)',
+                borderRadius: '12px',
+                padding: '10px 14px',
+                marginBottom: '8px',
+                fontSize: '11px',
+                color: 'rgba(239,68,68,0.8)',
+                fontWeight: '700',
+                textAlign: 'center'
+              }}>
+                ⚡ {Math.floor(tickingCredits)} Credits remaining · 5 per chat / 10 per automation<br />
+                <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: '500' }}>Top up by staking more USDT or wait for next cycle</span>
               </div>
+            )}
+            <form className="ai-form" onSubmit={handleSend}>
+              <input
+                type="text"
+                className="ai-input"
+                placeholder={tickingCredits < 5 ? "Insufficient credits – top up to chat" : "Ask about swaps, bridging, or staking..."}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                disabled={tickingCredits < 5}
+                style={tickingCredits < 5 ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+              />
+              <button
+                type="submit"
+                className="ai-send"
+                disabled={tickingCredits < 5}
+                style={tickingCredits < 5 ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+              >Send</button>
+            </form>
           </div>
+        </div>
       </div>
     </>
   );

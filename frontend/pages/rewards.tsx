@@ -1,12 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useWallet } from '../hooks/useWallet';
 import { useStaking } from '../hooks/useStaking';
 import { useRouter } from 'next/router';
 import { Droplet, Activity, Loader2, CheckCircle2, AlertCircle, Route, Flame, X } from "lucide-react";
+import { ethers } from "ethers";
+
+// Tambahkan Alamat Contract Staking Abang di sini
+const STAKING_ADDRESS = "0xf9833ecccf40bf76e8a6dca5269db0a682fd1b90";
+const STAKING_ABI = [
+  "function calculateRewards(address user) external view returns (uint256)",
+  "function stakes(address user) external view returns (uint256 rloAmount, uint256 ethAmount, uint256 lastUpdate, uint256 lockEnd, uint256 rewardsAccumulated, uint256 sfsFraction, uint256 rwaAllocation)",
+  "function claimRewards() external"
+];
 
 export default function Rewards() {
   const router = useRouter();
@@ -21,7 +30,76 @@ export default function Rewards() {
     globalRwaYieldUsd,
     setGlobalRwaYieldUsd,
   } = useStaking();
+  // --- MULAI LANGKAH 1: STATE MULTI-YIELD ---
+  const [yieldData, setYieldData] = useState({
+    singleRlo: 0,
+    pairRloEth: 0,
+    singleEth: 0,
+    total: 0
+  });
 
+  // Fungsi untuk fetch data on-chain ke 3 pool sekaligus
+  const fetchAllYields = async () => {
+    if (!isConnected || !provider) return;
+
+    try {
+      const signer = await provider.getSigner();
+      const stakingContract = new ethers.Contract(STAKING_ADDRESS, STAKING_ABI, signer);
+      const userAddr = await signer.getAddress();
+
+      // 1. Tarik TOTAL YIELD
+      const totalYieldRaw = await stakingContract.calculateRewards(userAddr);
+      const totalVal = parseFloat(ethers.formatUnits(totalYieldRaw, 18));
+
+      // --- CCTV: Cek di Console F12 ---
+      console.log("CCTV Yield Abang:", totalVal);
+
+      // 2. Tarik data saldo (Kita pakai index [0] dan [1] agar 100% anti-error)
+      const stakeData = await stakingContract.stakes(userAddr);
+      const rloAmt = parseFloat(ethers.formatUnits(stakeData[0], 18)); // [0] = rloAmount
+      const ethAmt = parseFloat(ethers.formatUnits(stakeData[1], 18)); // [1] = ethAmount
+
+      const rloWeight = rloAmt;
+      const ethWeight = ethAmt * 2000;
+      const totalWeight = rloWeight + ethWeight;
+
+      let singleRloYield = 0;
+      let singleEthYield = 0;
+
+      if (totalWeight > 0) {
+        singleRloYield = totalVal * (rloWeight / totalWeight);
+        singleEthYield = totalVal * (ethWeight / totalWeight);
+      }
+
+      setYieldData({
+        singleRlo: singleRloYield,
+        pairRloEth: 0,
+        singleEth: singleEthYield,
+        total: totalVal
+      });
+    } catch (err) {
+      console.error("MESIN ERROR DI SINI:", err);
+    }
+  };
+  // --- AKHIR LANGKAH 1 ---
+
+  // 1. KITA BIKIN STATE-NYA DULU DI SINI (Di Atas)
+  const [mounted, setMounted] = useState(false);
+
+  // 2. BARU KITA JALANKAN MESINNYA
+  // Pemicu otomatis agar angka yield terus berdetak setiap 15 detik
+  useEffect(() => {
+    setMounted(true); // <--- Sekarang aman karena setMounted udah dibuat di atas
+
+    if (isConnected) {
+      fetchAllYields(); // Ambil data pertama kali saat masuk halaman
+
+      const interval = setInterval(fetchAllYields, 15000);
+      return () => clearInterval(interval); // Bersihkan memori saat pindah tab
+    }
+  }, [isConnected, address]);
+
+  // State bawaan Abang yang aslinya ada di bawah
   const [claimingUSDC, setClaimingUSDC] = useState(false);
   const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
   const [redeemAmount, setRedeemAmount] = useState('');
@@ -79,18 +157,18 @@ export default function Rewards() {
     // Animation loop for "Fueling"
     const duration = 2000; // 2 seconds
     const start = Date.now();
-    
+
     const animate = () => {
       const elapsed = Date.now() - start;
       const progress = Math.min(elapsed / duration, 1);
       setFuelingProgress(progress * 100);
-      
+
       if (progress < 1) {
         requestAnimationFrame(animate);
       } else {
         setTimeout(async () => {
           const awarded = await claimCredits();
-          showToast({ 
+          showToast({
             message: `Fueling Complete! ⚡`,
             detail: `${awarded} Credits added to your AI Agent.`,
             type: 'success'
@@ -100,7 +178,7 @@ export default function Rewards() {
         }, 300);
       }
     };
-    
+
     requestAnimationFrame(animate);
   };
 
@@ -114,19 +192,19 @@ export default function Rewards() {
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       const usdcReceived = (parseFloat(redeemAmount) * 2340.50).toFixed(2);
-      
-      addTransaction({ 
-        type: 'Redeem', 
-        amount: `${redeemAmount} XAUt`, 
+
+      addTransaction({
+        type: 'Redeem',
+        amount: `${redeemAmount} XAUt`,
         details: `Burned XAUt for $${usdcReceived} USDC`,
-        txHash: '0x' + Math.random().toString(16).slice(2, 42) 
+        txHash: '0x' + Math.random().toString(16).slice(2, 42)
       });
 
       showToast({ message: "Successfully burned XAUt and claimed USDC!", type: "success" });
-      
+
       // Reset global state (simulation of full redemption)
       setGlobalRwaYieldUsd(0);
-      
+
       setIsRedeemModalOpen(false);
       setRedeemAmount('');
     } catch (e) {
@@ -207,11 +285,10 @@ export default function Rewards() {
                 <button
                   onClick={() => setIsRedeemModalOpen(true)}
                   disabled={globalRwaYieldUsd <= 0}
-                  className={`flex-1 border py-4 rounded-xl font-headline font-extrabold text-sm tracking-tight active:scale-[0.98] transition-all ${
-                    globalRwaYieldUsd > 0
-                      ? 'border-white/20 text-white hover:bg-white/5'
-                      : 'border-white/5 text-white/20 cursor-not-allowed'
-                  }`}
+                  className={`flex-1 border py-4 rounded-xl font-headline font-extrabold text-sm tracking-tight active:scale-[0.98] transition-all ${globalRwaYieldUsd > 0
+                    ? 'border-white/20 text-white hover:bg-white/5'
+                    : 'border-white/5 text-white/20 cursor-not-allowed'
+                    }`}
                 >
                   Redeem XAUt
                 </button>
@@ -221,7 +298,7 @@ export default function Rewards() {
             {/* Card 3: Accumulated Credits */}
             <div className={`bg-[#0c0c0c] rounded-2xl p-8 shadow-2xl border transition-all duration-500 flex flex-col h-full min-h-[260px] relative overflow-hidden group ${isFueling ? 'border-primary/50' : 'border-white/5'}`}>
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-50"></div>
-              
+
               {isFueling && (
                 <div className="absolute inset-0 bg-primary/5 animate-pulse pointer-events-none"></div>
               )}
@@ -234,14 +311,14 @@ export default function Rewards() {
                 <div className="text-5xl md:text-6xl font-headline font-extrabold text-white leading-none tracking-tight flex items-baseline gap-2">
                   {Math.floor(tickingCredits).toLocaleString('en-US')} <span className="text-xl md:text-2xl text-white/20 font-bold ml-3 tracking-normal">Credits</span>
                 </div>
-                
+
                 {pendingCredits > 0 && !isFueling && (
                   <div className="mt-2 flex items-center gap-2 animate-in fade-in slide-in-from-left-2 transition-all">
                     <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
                     <span className="text-primary text-[10px] font-extrabold uppercase tracking-widest">+ {Math.floor(pendingCredits)} Credits Pending</span>
                   </div>
                 )}
-                
+
                 <div className="text-white/20 font-bold uppercase tracking-widest text-[10px] mt-4">
                   1 USDT = 1,000 Credits
                 </div>
@@ -251,21 +328,20 @@ export default function Rewards() {
                 <div className="mt-auto space-y-4">
                   {isFueling && (
                     <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className="h-full bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)] transition-all duration-75 ease-linear"
                         style={{ width: `${fuelingProgress}%` }}
                       ></div>
                     </div>
                   )}
-                  
-                  <button 
+
+                  <button
                     onClick={handleClaimCredits}
                     disabled={isFueling}
-                    className={`w-full py-5 rounded-2xl font-headline font-extrabold text-lg tracking-tight transition-all shadow-2xl flex items-center justify-center gap-3 ${
-                      isFueling 
-                        ? 'bg-primary text-black scale-[1.02] cursor-not-allowed shadow-primary/20' 
-                        : 'bg-primary hover:bg-primary/90 text-black active:scale-[0.98]'
-                    }`}
+                    className={`w-full py-5 rounded-2xl font-headline font-extrabold text-lg tracking-tight transition-all shadow-2xl flex items-center justify-center gap-3 ${isFueling
+                      ? 'bg-primary text-black scale-[1.02] cursor-not-allowed shadow-primary/20'
+                      : 'bg-primary hover:bg-primary/90 text-black active:scale-[0.98]'
+                      }`}
                   >
                     {isFueling ? (
                       <><Flame className="w-5 h-5 animate-bounce" /> Fueling AI Agent...</>
@@ -287,7 +363,7 @@ export default function Rewards() {
           <div className="mt-12">
             <div className="bg-[#0c0c0c] rounded-2xl p-8 shadow-2xl border border-white/5 relative overflow-hidden group text-white">
               <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 blur-[100px] opacity-50"></div>
-              
+
               <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
                 <div className="space-y-4 text-center md:text-left">
                   <h2 className="text-3xl font-headline font-extrabold tracking-tighter text-white">
@@ -297,8 +373,8 @@ export default function Rewards() {
                     Diversify your yield into Real-World Assets with institutional-grade stability. Automatically route your stRLO yield to Treasury Bills, Gold, or Real Estate.
                   </p>
                 </div>
-                
-                <button 
+
+                <button
                   onClick={() => router.push('/staking?view=rwa')}
                   className="bg-white text-black px-10 py-4 rounded-xl font-headline font-extrabold text-sm tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl"
                 >
@@ -318,17 +394,22 @@ export default function Rewards() {
               <div className="flex items-center justify-between p-6 hover:bg-white/3 transition-colors">
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 font-label">Single RLO Stake</span>
                 <span className="font-headline font-extrabold text-lg text-primary">
-                  +{(realPendingRewards * 0.65).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} stRLO
+                  {mounted ? yieldData.singleRlo.toFixed(6) : "0.000000"} stRLO
                 </span>
               </div>
 
               <div className="flex items-center justify-between p-6 hover:bg-white/3 transition-colors">
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 font-label">Pair (RLO + ETH)</span>
                 <span className="font-headline font-extrabold text-lg text-primary">
-                  +{(realPendingRewards * 0.35).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} stRLO
+                  {mounted ? yieldData.pairRloEth.toFixed(2) : "0.00"} stRLO
                 </span>
               </div>
-
+              <div className="flex items-center justify-between p-6 hover:bg-white/3 transition-colors">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 font-label">Single ETH Stake</span>
+                <span className="font-headline font-extrabold text-lg text-primary">
+                  {mounted ? yieldData.singleEth.toFixed(2) : "0.00"} stRLO
+                </span>
+              </div>
               <div className="flex items-center justify-between p-6 hover:bg-white/3 transition-colors">
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 font-label">Upfront RWA Payout</span>
                 <span className="font-headline font-extrabold text-lg text-emerald-400">+${globalRwaYieldUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
@@ -354,16 +435,16 @@ export default function Rewards() {
       {isRedeemModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           {/* Overlay */}
-          <div 
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300" 
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300"
             onClick={() => !isRedeeming && setIsRedeemModalOpen(false)}
           />
-          
+
           {/* Modal Container */}
           <div className="bg-[#0c0c0c] border border-white/10 rounded-2xl p-6 w-full max-w-md relative z-10 animate-in zoom-in-95 duration-300 shadow-2xl">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl font-headline font-extrabold tracking-tighter">Redeem XAUt to USDC</h2>
-              <button 
+              <button
                 onClick={() => setIsRedeemModalOpen(false)}
                 className="text-white/40 hover:text-white transition-colors"
               >
@@ -376,7 +457,7 @@ export default function Rewards() {
                 <p className="text-white/40 text-[11px] font-bold uppercase tracking-widest mb-4">
                   Current Rate: 1 XAUt = $2,340.50 USDC
                 </p>
-                
+
                 <div className="relative group">
                   <input
                     type="number"
@@ -385,7 +466,7 @@ export default function Rewards() {
                     placeholder="0.00"
                     className="w-full bg-[#161616] border border-white/5 rounded-xl px-4 py-4 text-2xl font-bold text-white placeholder:text-white/5 outline-none focus:border-white/20 transition-all"
                   />
-                  <button 
+                  <button
                     onClick={() => setRedeemAmount((globalRwaYieldUsd / 2340.5).toString())}
                     className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white/60 hover:text-white px-2 py-1 rounded text-[10px] font-bold transition-all uppercase tracking-widest"
                   >

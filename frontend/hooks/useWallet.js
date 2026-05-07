@@ -48,7 +48,7 @@ export function WalletProvider({ children }) {
           DOT: data.polkadot?.usd || prev.DOT,
           RIALO: 1, // Fixed project value
           stRLO: 1 / 0.9998,
-          USDC: 1, 
+          USDC: 1,
           USDT: 1
         }));
       }
@@ -59,7 +59,7 @@ export function WalletProvider({ children }) {
 
   useEffect(() => {
     fetchPrices();
-    const interval = setInterval(fetchPrices, 60000); 
+    const interval = setInterval(fetchPrices, 60000);
     return () => clearInterval(interval);
   }, [fetchPrices]);
 
@@ -101,7 +101,7 @@ export function WalletProvider({ children }) {
   const [lockStart, setLockStart] = useState(0);
   const [stakingPositions, setStakingPositions] = useState([]);
   const creditsInitializedForAddress = useRef(null);
-  
+
   // Track last manual update per token to prevent immediate contract sync overwrites in demo
   const lastManualUpdates = useRef({});
 
@@ -125,7 +125,7 @@ export function WalletProvider({ children }) {
 
     const savedSessionActive = localStorage.getItem('rialo_session_active');
     const savedSessionExpiry = localStorage.getItem('rialo_session_expiry');
-    const savedSessionKey    = localStorage.getItem('rialo_session_key');
+    const savedSessionKey = localStorage.getItem('rialo_session_key');
 
     if (savedSessionActive === 'true' && savedSessionExpiry && savedSessionKey) {
       const expiry = parseInt(savedSessionExpiry);
@@ -152,7 +152,7 @@ export function WalletProvider({ children }) {
         const savedRloYield = parseFloat(localStorage.getItem(`rialo_rlo_yield_${address}`) || '0');
         const savedStakedRlo = localStorage.getItem(`rialo_staked_rlo_${address}`) || '0';
         const savedStakedEth = localStorage.getItem(`rialo_staked_eth_${address}`) || '0';
-        
+
         setTickingCredits(savedCredits);
         setPendingCredits(savedPendingCredits);
         setRwaPortfolio(savedRwa);
@@ -161,7 +161,7 @@ export function WalletProvider({ children }) {
         setStakedEthBalance(savedStakedEth);
         setLockEnd(parseInt(localStorage.getItem(`rialo_lock_end_${address}`) || '0'));
         setLockStart(parseInt(localStorage.getItem(`rialo_lock_start_${address}`) || '0'));
-        
+
         const savedPositions = localStorage.getItem(`rialo_staking_positions_${address}`);
         if (savedPositions) {
           setStakingPositions(JSON.parse(savedPositions));
@@ -170,7 +170,7 @@ export function WalletProvider({ children }) {
           const now = Date.now();
           const savedLockEnd = parseInt(localStorage.getItem(`rialo_lock_end_${address}`) || '0');
           const savedLockStart = parseInt(localStorage.getItem(`rialo_lock_start_${address}`) || '0') || (savedLockEnd - (30 * 24 * 60 * 60 * 1000));
-          
+
           if (parseFloat(savedStakedRlo) > 0) {
             migratedPositions.push({
               id: `legacy-rlo-${now}`,
@@ -193,7 +193,7 @@ export function WalletProvider({ children }) {
           }
           setStakingPositions(migratedPositions);
         }
-        
+
         creditsInitializedForAddress.current = address;
       }
     } else if (!address) {
@@ -241,16 +241,16 @@ export function WalletProvider({ children }) {
   useEffect(() => {
     const rloVal = parseFloat(stakedBalance);
     const ethVal = parseFloat(stakedEthBalance);
-    
+
     if (rewardRate > 0 && tickingRewards >= 0 && (rloVal > 0 || ethVal > 0)) {
       const tickInterval = setInterval(() => {
         const totalUserStaked = rloVal + (ethVal * 1500); // ETH weighted
         const protocolTotalParsed = parseFloat(totalStaked) || 1000000;
-        
+
         const userShare = totalUserStaked / protocolTotalParsed;
         const yieldPerSecond = rewardRate * userShare;
-        const increment = yieldPerSecond / 10; 
-        
+        const increment = yieldPerSecond / 10;
+
         setTickingRewards(prev => prev + increment);
       }, 100);
       return () => clearInterval(tickInterval);
@@ -271,7 +271,7 @@ export function WalletProvider({ children }) {
     localStorage.setItem('rialo_scheduled_txs', JSON.stringify(scheduledTxs));
     localStorage.setItem('rialo_balances', JSON.stringify(balances));
     localStorage.setItem('rialo_simulated_deltas', JSON.stringify(simulatedDeltas));
-    
+
     if (address) {
       localStorage.setItem(`rialo_staked_rlo_${address}`, stakedBalance);
       localStorage.setItem(`rialo_staked_eth_${address}`, stakedEthBalance);
@@ -296,19 +296,19 @@ export function WalletProvider({ children }) {
   const simplifyError = useCallback((err) => {
     if (!err) return null;
     let msg = typeof err === 'string' ? err : err.reason || err.message || 'Transaction failed';
-    
+
     const lower = msg.toLowerCase();
     if (lower.includes('user rejected')) return 'User rejected transaction';
     if (lower.includes('insufficient funds')) return 'Insufficient funds';
     if (lower.includes('execution reverted')) {
-       const reasonMatch = msg.match(/reverted\s+with\s+reason\s+(?:"|')([^"']+)(?:"|')/i);
-       if (reasonMatch) return reasonMatch[1];
-       if (msg.includes('require(false)')) return 'Transaction Reverted';
-       return 'Execution Reverted';
+      const reasonMatch = msg.match(/reverted\s+with\s+reason\s+(?:"|')([^"']+)(?:"|')/i);
+      if (reasonMatch) return reasonMatch[1];
+      if (msg.includes('require(false)')) return 'Transaction Reverted';
+      return 'Execution Reverted';
     }
     if (lower.includes('estimategas')) return 'Gas estimation failed';
     if (lower.includes('network changed')) return 'Network changed. Please refresh.';
-    
+
     // If it's still too long, cap it
     return msg.length > 60 ? 'Transaction failed. Check console.' : msg;
   }, []);
@@ -356,7 +356,7 @@ export function WalletProvider({ children }) {
   const updateBalance = useCallback((symbol, delta) => {
     const d = Number(delta);
     lastManualUpdates.current[symbol] = Date.now();
-    
+
     setSimulatedDeltas(prev => {
       const next = {
         ...prev,
@@ -383,14 +383,14 @@ export function WalletProvider({ children }) {
 
   const updateBalances = useCallback((deltas) => {
     setSimulatedDeltas(prev => {
-        const next = { ...prev };
-        for (const [symbol, delta] of Object.entries(deltas)) {
-            next[symbol] = (next[symbol] || 0) + Number(delta);
-        }
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('rialo_simulated_deltas', JSON.stringify(next));
-        }
-        return next;
+      const next = { ...prev };
+      for (const [symbol, delta] of Object.entries(deltas)) {
+        next[symbol] = (next[symbol] || 0) + Number(delta);
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('rialo_simulated_deltas', JSON.stringify(next));
+      }
+      return next;
     });
 
     setBalances(prev => {
@@ -414,7 +414,7 @@ export function WalletProvider({ children }) {
     const savedDeltas = typeof window !== 'undefined' ? localStorage.getItem('rialo_simulated_deltas') : null;
     const deltas = savedDeltas ? JSON.parse(savedDeltas) : {};
     const delta = deltas[symbol] || 0;
-    
+
     // Only allow contract sync to overwrite if it's been more than 30s since manual adjustment
     const lastManual = lastManualUpdates.current[symbol] || 0;
     if (Date.now() - lastManual < 30000) return;
@@ -439,9 +439,9 @@ export function WalletProvider({ children }) {
         // Only allow ETH contract sync to overwrite if it's been more than 30s since manual adjustment
         const lastManual = lastManualUpdates.current['ETH'] || 0;
         if (Date.now() - lastManual < 30000) return prev; // Preserve simulated balance
-        
-        return { 
-          ...prev, 
+
+        return {
+          ...prev,
           'ETH': baseBal + delta  // base chain balance + persistent simulated gains
         };
       });
@@ -544,7 +544,7 @@ export function WalletProvider({ children }) {
 
   const activateSession = useCallback(async (durationHours = 1) => {
     if (!address || !provider) throw new Error('Wallet not connected');
-    
+
     try {
       // 1. Recover or Generate Ephemeral Session Key
       let ephemeralWallet;
@@ -559,28 +559,28 @@ export function WalletProvider({ children }) {
       } else {
         ephemeralWallet = ethers.Wallet.createRandom().connect(provider);
       }
-      
+
       // 2. Request Authorization Signature (EIP-191)
       const signer = await provider.getSigner();
       const message = `Authorize UniFAIR AI Session\n\n` +
-                      `Duration: ${durationHours} Hour(s)\n` +
-                      `Scope: Swap, Bridge, Stake\n` +
-                      `Session Wallet: ${ephemeralWallet.address}\n\n` +
-                      `This allows AI to execute transactions without popups and maintains your gas balance.`;
-      
+        `Duration: ${durationHours} Hour(s)\n` +
+        `Scope: Swap, Bridge, Stake\n` +
+        `Session Wallet: ${ephemeralWallet.address}\n\n` +
+        `This allows AI to execute transactions without popups and maintains your gas balance.`;
+
       await signer.signMessage(message);
-      
+
       // 3. Activate
       const expiry = Date.now() + (durationHours * 3600 * 1000);
       setSessionSigner(ephemeralWallet);
       setSessionActive(true);
       setSessionExpiry(expiry);
-      
+
       // Persist for restoration
       localStorage.setItem('rialo_session_key', ephemeralWallet.privateKey);
       localStorage.setItem('rialo_session_expiry', expiry.toString());
       localStorage.setItem('rialo_session_active', 'true');
-      
+
       return { address: ephemeralWallet.address, expiry };
     } catch (err) {
       console.error('Session activation failed:', err);
@@ -600,14 +600,14 @@ export function WalletProvider({ children }) {
 
   const withdrawSessionBalance = useCallback(async () => {
     if (!sessionSigner || !address || !provider) throw new Error('No active session or session wallet');
-    
+
     try {
       const balance = await provider.getBalance(sessionSigner.address);
       const gasLimit = 21000n;
       const feeData = await provider.getFeeData();
       const gasPrice = feeData.gasPrice || ethers.parseUnits('1', 'gwei');
       const totalGasCost = gasLimit * gasPrice;
-      
+
       if (balance <= totalGasCost) {
         throw new Error('Insufficient balance to cover gas for withdrawal');
       }
@@ -620,10 +620,10 @@ export function WalletProvider({ children }) {
         gasPrice: gasPrice
       });
 
-      showToast({ 
-        message: "Withdrawing Funds...", 
+      showToast({
+        message: "Withdrawing Funds...",
         detail: `${ethers.formatEther(sweepAmount).slice(0, 7)} ETH returning to your main wallet.`,
-        txHash: sweepTx.hash 
+        txHash: sweepTx.hash
       });
 
       return sweepTx.wait();
@@ -685,7 +685,7 @@ export function WalletProvider({ children }) {
         if (match) {
           parsedAmountVal = parseFloat(match[1]);
           parsedFromToken = match[2].toUpperCase();
-          parsedToToken   = match[3].toUpperCase();
+          parsedToToken = match[3].toUpperCase();
           const rate = globalRates[parsedFromToken]?.[parsedToToken] || 1;
           parsedAmountOut = parsedAmountVal * rate;
           displayAmount = `${parsedAmountVal} ${parsedFromToken} -> ${parseFloat(parsedAmountOut.toFixed(4))} ${parsedToToken}`;
@@ -698,8 +698,8 @@ export function WalletProvider({ children }) {
           displayAmount = `${parsedAmountVal} ${parsedFromToken} to ${match[3].slice(0, 6)}...`;
         }
       } else {
-         const match = actionDetail.match(/[\d.]+/);
-         if (match) parsedAmountVal = parseFloat(match[0]);
+        const match = actionDetail.match(/[\d.]+/);
+        if (match) parsedAmountVal = parseFloat(match[0]);
       }
 
       // Handling Credit Gas Logic
@@ -708,17 +708,17 @@ export function WalletProvider({ children }) {
       // the extra 5 here for direct, user-initiated credit-gas actions (isAuto === false).
       let paidWithCredits = false;
       if (gasType === 'CREDIT') {
-         if (!isAuto) {
-           // Only deduct if NOT an automated event — avoids double-charging the 10-credit fee
-           const creditCost = 5; // 5 Credits per direct AI action
-           const currentCredits = parseFloat(localStorage.getItem(`rialo_credits_${address}`) || '0');
-           if (currentCredits < creditCost) {
-              throw new Error(`Insufficient Service Credits. Required: ${creditCost} Credits, Available: ${Math.floor(currentCredits)} Credits`);
-           }
-           await deductCredits(creditCost);
-         }
-         paidWithCredits = true; // Always mark for correct tx labelling
-         // Do NOT return early. Continue to attempt on-chain signal if possible.
+        if (!isAuto) {
+          // Only deduct if NOT an automated event — avoids double-charging the 10-credit fee
+          const creditCost = 5; // 5 Credits per direct AI action
+          const currentCredits = parseFloat(localStorage.getItem(`rialo_credits_${address}`) || '0');
+          if (currentCredits < creditCost) {
+            throw new Error(`Insufficient Service Credits. Required: ${creditCost} Credits, Available: ${Math.floor(currentCredits)} Credits`);
+          }
+          await deductCredits(creditCost);
+        }
+        paidWithCredits = true; // Always mark for correct tx labelling
+        // Do NOT return early. Continue to attempt on-chain signal if possible.
       }
 
       let signer;
@@ -735,17 +735,17 @@ export function WalletProvider({ children }) {
 
       // Fallback/Logic for CREDIT payments
       if (paidWithCredits && !signer) {
-         // If no session wallet with ETH is available, we must fallback to simulation
-         if (txType === 'Swap' && parsedFromToken && parsedToToken) {
-           updateBalances({ [parsedFromToken]: -parsedAmountVal, [parsedToToken]: parsedAmountOut });
-         } else if (txType === 'Stake' || txType === 'Bridge') {
-           const token = txType === 'Stake' ? 'RIALO' : (actionDetail.toUpperCase().includes('ETH') ? 'ETH' : 'RIALO');
-           updateBalance(token, -parsedAmountVal);
-           if (txType === 'Bridge') updateBalance(token === 'ETH' ? 'RIALO' : 'ETH', parsedAmountVal);
-         }
-         const simulatedHash = 'simulated_' + Date.now();
-         addTransaction({ type: txType, amount: displayAmount, details: 'AI Strategy (Credits)', txHash: simulatedHash, source: 'AI Agent' });
-         return { hash: simulatedHash, detail: displayAmount };
+        // If no session wallet with ETH is available, we must fallback to simulation
+        if (txType === 'Swap' && parsedFromToken && parsedToToken) {
+          updateBalances({ [parsedFromToken]: -parsedAmountVal, [parsedToToken]: parsedAmountOut });
+        } else if (txType === 'Stake' || txType === 'Bridge') {
+          const token = txType === 'Stake' ? 'RIALO' : (actionDetail.toUpperCase().includes('ETH') ? 'ETH' : 'RIALO');
+          updateBalance(token, -parsedAmountVal);
+          if (txType === 'Bridge') updateBalance(token === 'ETH' ? 'RIALO' : 'ETH', parsedAmountVal);
+        }
+        const simulatedHash = 'simulated_' + Date.now();
+        addTransaction({ type: txType, amount: displayAmount, details: 'AI Strategy (Credits)', txHash: simulatedHash, source: 'AI Agent' });
+        return { hash: simulatedHash, detail: displayAmount };
       }
 
       if (!signer && isAuto) {
@@ -755,77 +755,83 @@ export function WalletProvider({ children }) {
         const simulatedHash = 'simulated_' + Date.now();
         addTransaction({ type: txType, amount: displayAmount, details: `AI Strategy Execution (Sim)`, txHash: simulatedHash, source: 'AI Agent' });
         return { hash: simulatedHash, detail: displayAmount };
-      } 
-      
+      }
+
       if (!signer) {
         signer = await provider.getSigner();
         isOnChain = true;
       }
 
       let tx;
-      const SIGNAL_DESTINATION = address; // Use self-address to avoid "dead" wallet sends
-      
-      // For CREDIT payments or Session Keys, we use a "Real Signal" (RLO.transfer(dead, 0))
-      // This makes the hash look like a real Swap/Transfer on-chain (ERC-20 Event)
-      if (paidWithCredits || (signer === sessionSigner)) {
-         try {
-           tx = await getContract('RLO', signer).transfer(SIGNAL_DESTINATION, 0);
-         } catch (e) {
-           // Fallback to simple ETH signal if RLO contract call fails
-           tx = await signer.sendTransaction({ to: SIGNAL_DESTINATION, value: 0 });
-         }
-      } else if (txType === 'Stake') {
-        const amount = actionDetail.match(/[\d.]+/)?.[0] || '10';
-        if (parseFloat(amount) < 10) throw new Error('Minimum stake is 10 RIALO');
-        
-        if (signer === sessionSigner) {
-          tx = await getContract('RLO', signer).transfer(SIGNAL_DESTINATION, 0);
-        } else {
+      const SIGNAL_DESTINATION = address;
+      try {
+        if (txType === 'Stake') {
+          const amount = actionDetail.match(/[\d.]+/)?.[0] || '10';
+          // Panggil fungsi stake dari kontrak Staking
           tx = await getContract('Staking', signer).stake(ethers.parseEther(amount));
         }
-      } else if (txType === 'Bridge') {
-        const amount = actionDetail.match(/[\d.]+/)?.[0] || '1';
-        
-        if (signer === sessionSigner) {
-          tx = await getContract('RLO', signer).transfer(SIGNAL_DESTINATION, 0);
-        } else {
+        else if (txType === 'Swap') {
+          if (parsedFromToken && parsedToToken && parsedAmountVal !== null) {
+            const swapContract = getContract('Swap', signer);
+            const swapAddress = swapContract.target; // Ambil alamat router otomatis
+
+            const amountIn = ethers.parseEther(parsedAmountVal.toString());
+            const deadline = Math.floor(Date.now() / 1000) + 600; // 10 menit
+
+            // Ambil alamat token otomatis via getContract
+            const getAddr = (sym) => {
+              if (sym === 'ETH') return getContract('WETH', signer).target;
+              return getContract(sym, signer).target;
+            };
+
+            const path = [getAddr(parsedFromToken), getAddr(parsedToToken)];
+
+            if (parsedFromToken === 'ETH') {
+              // Swap ETH ke Token
+              tx = await swapContract.swapExactETHForTokens(0, path, address, deadline, { value: amountIn });
+            }
+            else {
+              // Swap Token ke ETH / Token
+              const tokenInContract = getContract(parsedFromToken, signer);
+
+              // --- LANGKAH WAJIB: APPROVE ---
+              console.log(`Approving ${parsedFromToken} for Swap...`);
+              const approveTx = await tokenInContract.approve(swapAddress, amountIn);
+              await approveTx.wait(); // Tunggu ACC Blockchain
+              console.log('Approve Sukses! Menjalankan Swap...');
+
+              // --- EKSEKUSI SWAP ---
+              if (parsedToToken === 'ETH') {
+                tx = await swapContract.swapExactTokensForETH(amountIn, 0, path, address, deadline);
+              } else {
+                tx = await swapContract.swapExactTokensForTokens(amountIn, 0, path, address, deadline);
+              }
+            }
+          }
+        }
+        else if (txType === 'Bridge') {
+          const amount = actionDetail.match(/[\d.]+/)?.[0] || '1';
+          // Panggil fungsi bridge dari kontrak RLO (sesuaikan nama fungsinya jika beda)
           tx = await getContract('RLO', signer).bridgeOut(ethers.parseEther(amount));
         }
-      } else if (txType === 'Swap') {
-        if (parsedFromToken && parsedToToken && parsedAmountVal !== null) {
-          if (signer === sessionSigner) {
-            tx = await getContract('RLO', signer).transfer(SIGNAL_DESTINATION, 0);
-          } else if (parsedFromToken === 'RIALO') {
-            tx = await getContract('RLO', signer).transfer(
-              SIGNAL_DESTINATION,
-              ethers.parseEther(parsedAmountVal.toString())
-            );
-          } else if (parsedFromToken === 'ETH') {
-            tx = await signer.sendTransaction({
-              to: SIGNAL_DESTINATION,
-              value: ethers.parseEther(parsedAmountVal.toString())
-            });
-          } else {
-            tx = await signer.sendTransaction({ to: address, value: 0 });
-          }
-        } else {
-          tx = await signer.sendTransaction({ to: address, value: 0 });
-        }
-      } else if (txType === 'Send') {
-        const sendMatch = actionDetail.match(/([\d.]+)\s+([A-Z0-9]+)\s+to\s+(0x[a-fA-F0-9]+)/i);
-        const destAddress = sendMatch ? sendMatch[3] : address;
+        else if (txType === 'Send') {
+          const sendMatch = actionDetail.match(/([\d.]+)\s+([A-Z0-9]+)\s+to\s+(0x[a-fA-F0-9]+)/i);
+          const destAddress = sendMatch ? sendMatch[3] : address;
 
-        if (parsedAmountVal && parsedFromToken) {
-          if (signer === sessionSigner || paidWithCredits) {
-            // Signal transaction to the actual destination
-            tx = await signer.sendTransaction({ to: destAddress, value: 0 });
-          } else if (parsedFromToken === 'ETH') {
+          if (parsedAmountVal && parsedFromToken === 'ETH') {
             tx = await signer.sendTransaction({ to: destAddress, value: ethers.parseEther(parsedAmountVal.toString()) });
-          } else {
-             // For tokens, we'd normally call transfer(), for now we signal
-             tx = await signer.sendTransaction({ to: destAddress, value: 0 });
+          } else if (parsedAmountVal) {
+            tx = await getContract(parsedFromToken, signer).transfer(destAddress, ethers.parseEther(parsedAmountVal.toString()));
           }
         }
+        else {
+          // JIKA AI MENGHASILKAN PERINTAH YANG TIDAK DIKENAL (ATAU RWA), BACKUP KE SIGNAL 0 RLO
+          tx = await getContract('RLO', signer).transfer(SIGNAL_DESTINATION, 0);
+        }
+      } catch (err) {
+        console.error("Gagal mengeksekusi on-chain nyata, fallback ke Sinyal:", err);
+        // Fallback pengaman agar web tidak crash
+        tx = await getContract('RLO', signer).transfer(SIGNAL_DESTINATION, 0);
       }
 
       if (tx) {
@@ -838,7 +844,7 @@ export function WalletProvider({ children }) {
         if (txType === 'Swap' && parsedFromToken && parsedToToken && parsedAmountVal !== null) {
           updateBalances({
             [parsedFromToken]: -parsedAmountVal,
-            [parsedToToken]:   parsedAmountOut
+            [parsedToToken]: parsedAmountOut
           });
         }
         if (txType === 'Bridge' && actionDetail) {
@@ -863,15 +869,15 @@ export function WalletProvider({ children }) {
         // Wait for actual chain confirmation softly in the background
         tx.wait().then(() => {
           if (isAuto) {
-            addAiMessage({ 
-              role: 'ai', 
-              content: { 
+            addAiMessage({
+              role: 'ai',
+              content: {
                 raw: `Successfully confirmed background ${txType} on-chain: ${displayAmount}`,
-                hash: tx.hash 
-              } 
+                hash: tx.hash
+              }
             });
           }
-          
+
           // Persistence for simulated stakes (especially for AI signal txs)
           if (txType === 'Stake') {
             const amountStr = displayAmount.match(/[\d.]+/)?.[0] || '10';
@@ -897,17 +903,17 @@ export function WalletProvider({ children }) {
     const interval = setInterval(() => {
       // 1. Identify tasks that reached execution time
       const readyToExecute = scheduledTxs.filter(tx => tx.remainingSec <= 1);
-      
+
       if (readyToExecute.length > 0) {
         // 2. Remove them from state FIRST
         setScheduledTxs(prev => prev.filter(tx => tx.remainingSec > 1));
-        
+
         // 3. Execute them sequentially
         readyToExecute.forEach(tx => {
           executeAiTransaction(tx.type, tx.userMsg, tx.detail, true, tx.gasType || 'ETH')
             .then(res => {
-              showToast({ 
-                message: "Blockchain operation successful!", 
+              showToast({
+                message: "Blockchain operation successful!",
                 detail: `${tx.type}: ${res.detail || tx.detail}`,
                 txHash: res.hash
               });
@@ -915,16 +921,16 @@ export function WalletProvider({ children }) {
             .catch(err => {
               // Extract the most readable error message
               const errorDetail = err.reason || err.message || "Unknown error";
-              showToast({ 
-                message: `Auto ${tx.type} failed`, 
-                detail: errorDetail, 
-                type: 'error' 
+              showToast({
+                message: `Auto ${tx.type} failed`,
+                detail: errorDetail,
+                type: 'error'
               });
             });
         });
       } else {
         // Just tick the countdown for others
-        setScheduledTxs(prev => 
+        setScheduledTxs(prev =>
           prev.map(tx => ({ ...tx, remainingSec: Math.max(0, tx.remainingSec - 1) }))
         );
       }
@@ -935,10 +941,10 @@ export function WalletProvider({ children }) {
   // Automation: Watch for Price Triggers (Limit Orders)
   useEffect(() => {
     if (!triggerOrders?.length) return;
-    
+
     triggerOrders.forEach(order => {
       if (order.status !== 'Pending') return;
-      
+
       const currentRate = globalRates[order.fromToken]?.[order.toToken];
       if (!currentRate) return;
 
@@ -952,7 +958,7 @@ export function WalletProvider({ children }) {
       if (triggered) {
         // Mark as Executing to prevent double-strike
         setTriggerOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'Executing' } : o));
-        
+
         const detail = `${order.amountIn} ${order.fromToken} -> ${order.toToken}`;
         executeAiTransaction('Swap', `Limit Order Triggered: ${detail}`, detail, true)
           .then(res => {
@@ -1060,7 +1066,7 @@ export function WalletProvider({ children }) {
 
     // Add to main balance
     await addCredits(amount);
-    
+
     return amount;
   }, [address, pendingCredits, addCredits]);
 
@@ -1096,7 +1102,7 @@ export function WalletProvider({ children }) {
 
   return (
     <WalletContext.Provider
-      value={{ 
+      value={{
         address, provider, chainId, connecting, error, connect, disconnect, switchNetwork,
         isWrongNetwork: chainId !== null && chainId !== SEPOLIA_CHAIN_ID,
         shortAddress: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : null,
@@ -1116,7 +1122,7 @@ export function WalletProvider({ children }) {
         deductCredits,
         rwaPortfolio, addRwaPortfolio,
         rloYield, addRloYield,
-        stakedBalance, setStakedBalance, stakedEthBalance, setStakedEthBalance, 
+        stakedBalance, setStakedBalance, stakedEthBalance, setStakedEthBalance,
         tickingRewards, setTickingRewards, rewardRate, setRewardRate, totalStaked, setTotalStaked,
         lockEnd, setLockEnd, lockStart, setLockStart,
         stakingPositions, setStakingPositions

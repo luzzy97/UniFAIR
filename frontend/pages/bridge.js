@@ -4,19 +4,29 @@ import Footer from '../components/Footer';
 import { useWallet } from '../hooks/useWallet';
 import { useRLO } from '../hooks/useRLO';
 import { ethers } from 'ethers';
+import deployedContracts from '../lib/contracts/deployedContracts.json';
 
+/* ─── Custom Token Dropdown ─── */
 const NETWORKS = [
   { id: 'ethereum-sepolia', name: 'Ethereum Sepolia', icon: '/eth-icon-new.png', chainId: 11155111 },
   { id: 'arbitrum-sepolia', name: 'Arbitrum Sepolia', icon: '/arbitrum-icon.jpg', chainId: 421614 },
-  { id: 'rialo-network',    name: 'Rialo Network',    icon: '/rialo-icon-new.png', chainId: 12345 },
+  { id: 'rialo-network', name: 'Rialo Network', icon: '/rialo-icon-new.png', chainId: 12345 },
 ];
 
 const TOKENS = [
   { symbol: 'RIALO', name: 'Rialo Token', icon: '/rialo-icon.png' },
-  { symbol: 'ETH',   name: 'Ethereum',    icon: '/eth-icon.png' },
-  { symbol: 'USDC',  name: 'USD Coin',    icon: '/usdc-icon.webp' },
-  { symbol: 'USDT',  name: 'Tether USD',  icon: '/usdt-icon.png' },
+  { symbol: 'ETH', name: 'Ethereum', icon: '/eth-icon.png' },
+  { symbol: 'USDC', name: 'USD Coin', icon: '/usdc-icon.webp' },
+  { symbol: 'USDT', name: 'Tether USD', icon: '/usdt-icon.png' },
 ];
+
+// ─── ACCENT HELPERS (DARI UNIHUB) ──────────────────────────────────
+const accent = '#a9ddd3';
+const bgDark = '#010101';
+const cardStyle = { backgroundColor: bgDark, boxShadow: '0 20px 60px rgba(0,0,0,0.25), 0 8px 20px rgba(0,0,0,0.15)' };
+const inputBg = '#060606';
+const accentText = { color: accent };
+// ─────────────────────────────────────────────────────────────────
 
 /* ─── Custom Token Dropdown ─── */
 function TokenDropdown({ value, onChange }) {
@@ -32,46 +42,45 @@ function TokenDropdown({ value, onChange }) {
 
   return (
     <div ref={ref} className="relative mb-6">
-      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 font-label block mb-3">
-        Send
+      <span className="text-[10px] font-black uppercase tracking-widest block mb-3" style={{ color: 'rgba(169,221,211,0.4)' }}>
+        Asset to Bridge
       </span>
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full bg-[#161616] rounded-2xl px-5 py-4 flex items-center justify-between border border-white/5 hover:border-white/20 transition-all shadow-inner focus:outline-none group"
+        className="w-full rounded-2xl px-6 py-5 flex items-center justify-between border border-white/5 hover:border-white/20 transition-all focus:outline-none group"
+        style={{ backgroundColor: inputBg }}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full overflow-hidden border border-white/10 flex items-center justify-center flex-shrink-0 bg-white/5">
-            <img src={selected.icon} alt={selected.name} className="w-full h-full object-contain p-1" />
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 bg-white/5 border border-white/5">
+            <img src={selected.icon} alt={selected.name} className="w-full h-full object-contain p-1.5" />
           </div>
           <div className="flex flex-col items-start">
-            <span className="text-white font-bold text-base leading-none mb-1">{selected.symbol}</span>
-            <span className="text-white/40 text-[10px] font-medium uppercase tracking-wider">{selected.name}</span>
+            <span className="text-white font-black text-lg uppercase tracking-widest leading-none mb-1">{selected.symbol}</span>
+            <span className="text-white/40 text-[9px] font-black uppercase tracking-widest">{selected.name}</span>
           </div>
         </div>
-        <svg className={`w-4 h-4 text-white/40 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
+        <span className="material-symbols-outlined text-white/40 transition-transform duration-200" style={{ transform: open ? 'rotate(180deg)' : 'none' }}>
+          expand_more
+        </span>
       </button>
 
       {open && (
-        <div className="absolute top-full mt-2 w-full bg-[#111111] border border-white/10 rounded-2xl overflow-hidden shadow-2xl z-50 animate-fadeIn">
+        <div className="absolute top-full mt-2 w-full border border-white/10 rounded-2xl overflow-hidden shadow-2xl z-50 animate-fadeIn" style={{ backgroundColor: bgDark }}>
           {TOKENS.map(token => (
             <button
               key={token.symbol}
               onClick={() => { onChange(token.symbol); setOpen(false); }}
-              className={`w-full flex items-center gap-3 px-5 py-3.5 hover:bg-white/5 transition-colors ${value === token.symbol ? 'bg-white/5' : ''}`}
+              className={`w-full flex items-center gap-4 px-6 py-4 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 ${value === token.symbol ? 'bg-white/5' : ''}`}
             >
-              <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 flex items-center justify-center flex-shrink-0 bg-white/5">
+              <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 bg-white/5 border border-white/5">
                 <img src={token.icon} alt={token.name} className="w-full h-full object-contain p-1" />
               </div>
               <div className="flex flex-col items-start">
-                <span className="text-white font-semibold text-sm leading-none mb-0.5">{token.symbol}</span>
-                <span className="text-white/20 text-[9px] font-medium uppercase tracking-wider">{token.name}</span>
+                <span className="text-white font-black text-sm uppercase tracking-widest leading-none mb-1">{token.symbol}</span>
+                <span className="text-white/20 text-[9px] font-black uppercase tracking-widest">{token.name}</span>
               </div>
               {value === token.symbol && (
-                <svg className="w-4 h-4 text-white/60 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
+                <span className="material-symbols-outlined ml-auto text-sm" style={accentText}>check</span>
               )}
             </button>
           ))}
@@ -86,9 +95,8 @@ function NetworkDropdown({ label, value, onChange, exclude }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const selected = NETWORKS.find(n => n.id === value) || NETWORKS[0];
-  const options  = NETWORKS.filter(n => n.id !== exclude);
+  const options = NETWORKS.filter(n => n.id !== exclude);
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     document.addEventListener('mousedown', handler);
@@ -96,62 +104,40 @@ function NetworkDropdown({ label, value, onChange, exclude }) {
   }, []);
 
   return (
-    <div ref={ref} className="relative">
-      {/* Label */}
-      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 font-label block mb-3">
+    <div ref={ref} className="relative mb-2">
+      <span className="text-[10px] font-black uppercase tracking-widest block mb-3" style={{ color: 'rgba(169,221,211,0.4)' }}>
         {label}
       </span>
-
-      {/* Trigger */}
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full bg-[#161616] rounded-2xl px-5 py-4 flex items-center justify-between border border-white/5 hover:border-white/20 transition-all shadow-inner focus:outline-none group"
+        className="w-full rounded-2xl px-6 py-4 flex items-center justify-between border border-white/5 hover:border-white/20 transition-all focus:outline-none group"
+        style={{ backgroundColor: inputBg }}
       >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-full overflow-hidden border border-white/10 flex items-center justify-center flex-shrink-0 bg-white"
-          >
-            <img
-              src={selected.icon}
-              alt={selected.name}
-              className={`w-full h-full ${selected.id === 'arbitrum' ? 'scale-[1.2] object-cover' : 'object-contain'}`}
-            />
+        <div className="flex items-center gap-4">
+          <div className="w-8 h-8 rounded-full overflow-hidden bg-white flex items-center justify-center flex-shrink-0 border border-white/5">
+            <img src={selected.icon} alt={selected.name} className={`w-full h-full ${selected.id === 'arbitrum-sepolia' ? 'scale-[1.2] object-cover' : 'object-contain'}`} />
           </div>
-          <span className="text-white font-bold text-base">{selected.name}</span>
+          <span className="text-white font-black text-sm uppercase tracking-widest">{selected.name}</span>
         </div>
-        <svg
-          className={`w-4 h-4 text-white/40 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
+        <span className="material-symbols-outlined text-white/40 transition-transform duration-200" style={{ transform: open ? 'rotate(180deg)' : 'none' }}>
+          expand_more
+        </span>
       </button>
 
-      {/* Dropdown Menu */}
       {open && (
-        <div className="absolute top-full mt-2 w-full bg-[#111111] border border-white/10 rounded-2xl overflow-hidden shadow-2xl z-50 animate-fadeIn">
+        <div className="absolute top-full mt-2 w-full border border-white/10 rounded-2xl overflow-hidden shadow-2xl z-50 animate-fadeIn" style={{ backgroundColor: bgDark }}>
           {options.map(network => (
             <button
               key={network.id}
               onClick={() => { onChange(network.id); setOpen(false); }}
-              className={`w-full flex items-center gap-3 px-5 py-3.5 hover:bg-white/5 transition-colors ${
-                value === network.id ? 'bg-white/5' : ''
-              }`}
+              className={`w-full flex items-center gap-4 px-6 py-4 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 ${value === network.id ? 'bg-white/5' : ''}`}
             >
-              <div
-                className="w-8 h-8 rounded-full overflow-hidden border border-white/10 flex items-center justify-center flex-shrink-0 bg-white"
-              >
-                <img
-                  src={network.icon}
-                  alt={network.name}
-                  className={`w-full h-full ${network.id === 'arbitrum' ? 'scale-[1.2] object-cover' : 'object-contain'}`}
-                />
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-white flex items-center justify-center flex-shrink-0 border border-white/5">
+                <img src={network.icon} alt={network.name} className={`w-full h-full ${network.id === 'arbitrum-sepolia' ? 'scale-[1.2] object-cover' : 'object-contain'}`} />
               </div>
-              <span className="text-white font-semibold text-sm">{network.name}</span>
+              <span className="text-white font-black text-xs uppercase tracking-widest">{network.name}</span>
               {value === network.id && (
-                <svg className="w-4 h-4 text-white/60 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
+                <span className="material-symbols-outlined ml-auto text-sm" style={accentText}>check</span>
               )}
             </button>
           ))}
@@ -167,22 +153,55 @@ export default function BridgePage() {
   const { balance: rloBal, fetchBalance: fetchRloBalance } = useRLO();
 
   const [fromNetwork, setFromNetwork] = useState('ethereum-sepolia');
-  const [toNetwork,   setToNetwork]   = useState('arbitrum-sepolia');
-  const [token,       setToken]       = useState('RIALO');
-  const [amount,      setAmount]      = useState('');
-  const [loading,     setLoading]     = useState(false);
+  const [toNetwork, setToNetwork] = useState('arbitrum-sepolia');
+  const [token, setToken] = useState('RIALO');
+  const [amount, setAmount] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const balances = { ...walletBalances, RIALO: parseFloat(rloBal || '0') };
-  const sourceBalance = balances[token] || 0;
-  const receiveAmount = amount || '0.00';
+  const [realBalances, setRealBalances] = useState({
+    ETH: '0', RIALO: '0', USDC: '0', USDT: '0'
+  });
 
-  /* Swap From↔To */
+  useEffect(() => {
+    const fetchAllBalances = async () => {
+      if (!isConnected || !address || !window.ethereum) return;
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const tempBalances = { ...realBalances };
+
+        const ethBal = await provider.getBalance(address);
+        tempBalances.ETH = parseFloat(ethers.formatEther(ethBal)).toString();
+
+        const tokenList = [
+          { sym: 'RIALO', addr: deployedContracts.address.RLO, dec: 18 },
+          { sym: 'USDC', addr: deployedContracts.address.USDC, dec: 6 },
+          { sym: 'USDT', addr: deployedContracts.address.USDT, dec: 6 }
+        ];
+
+        for (const t of tokenList) {
+          if (t.addr) {
+            const contract = new ethers.Contract(t.addr, ["function balanceOf(address) view returns (uint256)"], provider);
+            const bal = await contract.balanceOf(address);
+            tempBalances[t.sym] = parseFloat(ethers.formatUnits(bal, t.dec)).toString();
+          }
+        }
+        setRealBalances(tempBalances);
+      } catch (e) { console.error("Gagal update saldo bridge:", e); }
+    };
+
+    fetchAllBalances();
+    const interval = setInterval(fetchAllBalances, 5000);
+    return () => clearInterval(interval);
+  }, [isConnected, address, fromNetwork]);
+
+  const sourceBalance = realBalances[token] || '0';
+  const receiveAmount = amount ? parseFloat(amount).toString() : '0';
+
   const handleSwapNetworks = () => {
     setFromNetwork(toNetwork);
     setToNetwork(fromNetwork);
   };
 
-  /* Prevent same network on both sides */
   const handleFromChange = (id) => {
     setFromNetwork(id);
     if (id === toNetwork) {
@@ -203,16 +222,17 @@ export default function BridgePage() {
           blockExplorerUrls: ['https://sepolia.arbiscan.io/'],
         });
       } else if (id === 'rialo-network') {
-        switchNetwork(12345, { // Example config for Rialo Network
+        switchNetwork(12345, {
           chainId: '0x3039',
           chainName: 'Rialo Network',
           nativeCurrency: { name: 'Rialo', symbol: 'RLO', decimals: 18 },
-          rpcUrls: ['https://rpc.rialo.network'], // Placeholder
-          blockExplorerUrls: ['https://explorer.rialo.network'], // Placeholder
+          rpcUrls: ['https://rpc.rialo.network'],
+          blockExplorerUrls: ['https://explorer.rialo.network'],
         });
       }
     }
   };
+
   const handleToChange = (id) => {
     setToNetwork(id);
     if (id === fromNetwork) {
@@ -221,196 +241,162 @@ export default function BridgePage() {
   };
 
   const handleBridge = async () => {
-    if (!isConnected) { connect(); return; }
-    if (!amount || parseFloat(amount) <= 0) {
-      showToast({ message: 'Enter an amount greater than 0', type: 'error' });
-      return;
-    }
-    if (parseFloat(amount) > sourceBalance) {
-      showToast({ message: 'Insufficient balance', type: 'error' });
-      return;
-    }
-
+    if (!amount || parseFloat(amount) <= 0) return;
     setLoading(true);
-    let timeLeft = 30;
-    const targetNetName = NETWORKS.find(n=>n.id===toNetwork)?.name || 'Network';
-    showToast({ message: `Bridging to ${targetNetName} in ${timeLeft}s`, type: 'loading' });
-
-    const timer = setInterval(() => {
-      timeLeft -= 5;
-      if (timeLeft > 0) {
-        showToast({ message: `Bridging to ${targetNetName} in ${timeLeft}s`, type: 'loading' });
-      } else {
-        clearInterval(timer);
-      }
-    }, 5000);
-
     try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      let tx;
+
+      const decimals = (token === 'USDC' || token === 'USDT') ? 6 : 18;
+      const parsedAmount = ethers.parseUnits(amount, decimals);
+
+      const targetNetName = NETWORKS.find(n => n.id === toNetwork)?.name || 'Network';
+      showToast({ message: `Initiating ${token} bridge to ${targetNetName}...`, type: 'loading' });
+
       if (token === 'ETH') {
-        tx = await signer.sendTransaction({
-          to: '0x000000000000000000000000000000000000dEaD',
-          value: ethers.parseEther(amount),
+        const tx = await signer.sendTransaction({
+          to: address,
+          value: parsedAmount
         });
+        await tx.wait();
       } else {
-        tx = await signer.sendTransaction({
-          to: '0x000000000000000000000000000000000000dEaD',
-          value: 0,
-        });
+        const tokenKey = token === 'RIALO' ? 'RLO' : token;
+        const tokenAddress = deployedContracts.address[tokenKey];
+
+        if (!tokenAddress) throw new Error(`Contract address for ${token} not found!`);
+        const tokenContract = new ethers.Contract(
+          tokenAddress,
+          ["function transfer(address to, uint256 amount) public returns (bool)"],
+          signer
+        );
+        const tx = await tokenContract.transfer(address, parsedAmount);
+        await tx.wait();
       }
-      const receipt = await tx.wait();
-      clearInterval(timer);
-      const hash = receipt.hash;
 
       showToast({
-        message: `Bridge initiated! ${amount} ${token} → ${targetNetName}`,
-        type: 'success',
-        txHash: hash,
+        message: `Success! ${amount} ${token} bridged to ${targetNetName}.`,
+        type: 'success'
       });
-
-      addTransaction({
-        type: 'Bridge',
-        amount: `${amount} ${token}`,
-        details: `${NETWORKS.find(n=>n.id===fromNetwork)?.name} → ${targetNetName}`,
-        txHash: hash,
-        source: 'Direct',
-      });
-
-      if (address && provider) { fetchEthBalance(address, provider); fetchRloBalance(); }
-      if (updateBalances) {
-        updateBalances({ [token]: -parseFloat(amount) });
-      }
       setAmount('');
-    } catch (err) {
-      clearInterval(timer);
-      const msg = err.message || '';
-      if (msg.includes('user rejected') || msg.includes('4001')) {
-        showToast({ message: 'Transaction rejected in MetaMask.', type: 'error' });
-      } else {
-        showToast({ message: `Bridge failed. ${msg.slice(0, 60)}${msg.length > 60 ? '...' : ''}`, type: 'error' });
-      }
+      if (fetchEthBalance) fetchEthBalance(address, provider);
+      if (fetchRloBalance) fetchRloBalance();
+    } catch (error) {
+      console.error("Bridge Error:", error);
+      showToast({ message: "Transaction failed or cancelled", type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
   const fromNet = NETWORKS.find(n => n.id === fromNetwork);
-  const toNet   = NETWORKS.find(n => n.id === toNetwork);
+  const toNet = NETWORKS.find(n => n.id === toNetwork);
 
   return (
-    <div className="bg-white text-zinc-900 antialiased selection:bg-primary selection:text-white font-body">
+    <div className="min-h-screen font-body antialiased flex flex-col transition-colors duration-500" style={{ backgroundColor: '#f8f9fa', color: '#1a1a1a' }}>
       <Navbar />
-      <main className="min-h-[819px] flex flex-col items-center justify-center px-6 py-20">
+      <main className="min-h-[calc(100vh-250px)] flex items-center justify-center px-4 py-20">
+        <div className="w-full max-w-[560px]">
 
-        {/* Hero */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl text-black mb-4">Bridge Assets</h1>
-          <p className="text-zinc-500 max-w-md mx-auto font-medium">
-            Seamlessly move your assets across networks. A simplified bridging experience designed to remove complexity.
-          </p>
-        </div>
-
-        {/* Bridge Card */}
-        <div className="w-full max-w-[520px] bg-[#0c0c0c] rounded-2xl p-8 shadow-2xl border border-white/5 relative overflow-visible">
-          {/* Glow */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-50 pointer-events-none" />
-
-          {/* Token Selection */}
-          <TokenDropdown
-            value={token}
-            onChange={setToken}
-          />
-
-          {/* From Network */}
-          <NetworkDropdown
-            label="From Network"
-            value={fromNetwork}
-            onChange={handleFromChange}
-            exclude={toNetwork}
-          />
-
-          {/* Amount input */}
-          <div className="mt-4 mb-4 bg-[#161616] rounded-2xl px-5 py-4 border border-white/5 focus-within:border-white/20 transition-all shadow-inner flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 font-label">Amount</span>
-            <input
-              type="text"
-              placeholder="0.0"
-              value={amount}
-              onChange={e => setAmount(e.target.value.replace(/[^0-9.]/g, ''))}
-              className="bg-transparent border-none p-0 text-right text-3xl font-headline font-bold text-white focus:ring-0 w-40 placeholder:text-white/10 outline-none"
-            />
-          </div>
-          <div className="flex justify-end mb-6">
-            <span className="text-xs text-white/30 font-medium">
-              Balance: <span className="text-white/50">{sourceBalance.toLocaleString('en-US', { minimumFractionDigits: 4 })} {token}</span>
-            </span>
+          {/* Header */}
+          <div className="mb-8 text-center" style={{ color: '#1a1a1a' }}>
+            <h1 className="mb-2 font-black tracking-tighter" style={{ fontSize: '3.5rem' }}>Bridge</h1>
+            <p className="font-bold text-gray-500 mb-6">Seamlessly move your assets across networks</p>
           </div>
 
-          {/* Swap Arrow */}
-          <div className="flex justify-center -my-2 relative z-10 mb-4">
+          {/* Bridge Card */}
+          <div className="rounded-2xl p-8 relative overflow-hidden border border-white/5" style={cardStyle}>
+
+            {/* Token Selection */}
+            <TokenDropdown value={token} onChange={setToken} />
+
+            {/* From Network */}
+            <NetworkDropdown label="From Network" value={fromNetwork} onChange={handleFromChange} exclude={toNetwork} />
+
+            {/* Amount input */}
+            <div className="rounded-2xl p-6 mt-4 mb-2 border border-white/5 focus-within:border-white/20 transition-all" style={{ backgroundColor: inputBg }}>
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'rgba(169,221,211,0.4)' }}>Amount</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Balance: {parseFloat(sourceBalance).toFixed(4)} {token}</span>
+              </div>
+              <input
+                type="text"
+                placeholder="0.0"
+                value={amount}
+                onChange={e => setAmount(e.target.value.replace(/[^0-9.]/g, ''))}
+                className="bg-transparent border-none p-0 text-4xl font-black w-full focus:ring-0 text-white placeholder:text-white/10 outline-none"
+              />
+            </div>
+
+            {/* Swap Divider (Arrow) */}
+            <div className="flex justify-center -my-6 relative z-10 mb-4 mt-2">
+              <button
+                onClick={handleSwapNetworks}
+                className="p-3 rounded-2xl shadow-xl border border-white/5 hover:border-white/20 hover:scale-110 transition-all"
+                style={{ backgroundColor: inputBg }}
+              >
+                <span className="material-symbols-outlined" style={accentText}>arrow_downward</span>
+              </button>
+            </div>
+
+            {/* To Network */}
+            <NetworkDropdown label="To Network" value={toNetwork} onChange={handleToChange} exclude={fromNetwork} />
+
+            {/* You Receive */}
+            <div className="rounded-2xl p-6 mt-4 mb-8 border border-white/5 transition-all" style={{ backgroundColor: inputBg }}>
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'rgba(169,221,211,0.4)' }}>You receive</span>
+              </div>
+              <div className="flex justify-between items-center gap-4">
+                <input
+                  type="text"
+                  placeholder="0"
+                  value={receiveAmount}
+                  readOnly
+                  className="bg-transparent border-none p-0 text-4xl font-black w-full focus:ring-0 text-white placeholder:text-white/10 cursor-default"
+                />
+                <span className="text-lg font-black text-white/40 tracking-widest uppercase">{token}</span>
+              </div>
+            </div>
+
+            {/* Details Area */}
+            <div className="space-y-4 mb-8 px-2 text-white">
+              {[
+                ['Route', `${fromNet?.name} → ${toNet?.name}`],
+                ['Rate', `1 ${token} = 1 ${token}`],
+                ['Network Fee', `0.001 ETH`],
+                ['Estimated Arrival', '~2 minutes'],
+              ].map(([label, val]) => (
+                <div key={label} className="flex justify-between items-center">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/30">{label}</span>
+                  <span className="text-xs font-black text-white">{val}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Main CTA Button */}
             <button
-              onClick={handleSwapNetworks}
-              className="bg-[#1a1a1a] p-2.5 rounded-xl border border-white/10 hover:border-white/30 hover:scale-110 transition-all cursor-pointer outline-none shadow-lg"
+              onClick={handleBridge}
+              disabled={loading || (isConnected && amount && parseFloat(amount) > sourceBalance)}
+              className="w-full py-5 rounded-2xl text-[13px] font-black uppercase tracking-[0.15em] transition-all shadow-2xl disabled:opacity-50 hover:brightness-110"
+              style={loading || (isConnected && amount && parseFloat(amount) > sourceBalance)
+                ? { backgroundColor: '#333', color: '#888' }
+                : { backgroundColor: accent, color: bgDark }
+              }
             >
-              <svg className="w-5 h-5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
-              </svg>
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined animate-spin text-xl">autorenew</span> Bridging…
+                </span>
+              ) : !isConnected ? (
+                'Connect Wallet'
+              ) : amount && parseFloat(amount) > sourceBalance ? (
+                `Insufficient ${token} Balance`
+              ) : (
+                `Bridge ${fromNet?.name} → ${toNet?.name}`
+              )}
             </button>
           </div>
-
-          {/* To Network */}
-          <NetworkDropdown
-            label="To Network"
-            value={toNetwork}
-            onChange={handleToChange}
-            exclude={fromNetwork}
-          />
-
-          {/* You Receive */}
-          <div className="mt-4 mb-8 bg-[#161616] rounded-2xl px-5 py-4 border border-white/5 shadow-inner flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 font-label">You Receive</span>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-headline font-extrabold text-white/20">{receiveAmount}</span>
-              <span className="text-xs font-bold text-white/10 tracking-widest uppercase">{token}</span>
-            </div>
-          </div>
-
-          {/* Meta Info */}
-          <div className="space-y-3 mb-8">
-            {[
-              ['Route',             `${fromNet?.name} → ${toNet?.name}`],
-              ['Rate',              `1 ${token} = 1 ${token}`],
-              ['Network Fee',       `0.001 ETH`],
-              ['Estimated Arrival', '~2 minutes'],
-            ].map(([label, value]) => (
-              <div key={label} className="flex justify-between items-center text-sm">
-                <span className="text-white/30 font-body">{label}</span>
-                <span className="text-white/80 font-headline font-bold">{value}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* CTA */}
-          <button
-            onClick={handleBridge}
-            disabled={loading || (isConnected && amount && parseFloat(amount) > sourceBalance)}
-            className="w-full bg-white text-black py-5 rounded-2xl font-headline font-extrabold text-lg tracking-tight hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl disabled:opacity-50"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined animate-spin text-xl">autorenew</span> Bridging…
-              </span>
-            ) : !isConnected ? (
-              'Connect Wallet'
-            ) : amount && parseFloat(amount) > sourceBalance ? (
-              'Insufficient Balance'
-            ) : (
-              `Bridge ${fromNet?.name} → ${toNet?.name}`
-            )}
-          </button>
         </div>
-
       </main>
       <Footer />
 
