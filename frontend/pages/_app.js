@@ -28,7 +28,7 @@ export default function App({ Component, pageProps }) {
           <Head>
             <title>UniFAIR | Unified DeFi</title>
             <meta name="description" content="Intelligent DeFi Hub" />
-            <link rel="icon" href="/favicon.ico" />
+            <link rel="icon" type="image/png" href="/favicon.png" />
           </Head>
           <Component {...pageProps} />
         </WalletProvider>
