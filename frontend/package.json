@@ -8,8 +8,8 @@
     "start": "next start"
   },
   "dependencies": {
-    "@splinetool/react-spline": "latest",
-    "@splinetool/runtime": "latest",
+    "@splinetool/react-spline": "^2.2.6",
+    "@splinetool/runtime": "^1.5.5",
     "wagmi": "^2.9.0",
     "viem": "2.x",
     "@tanstack/react-query": "^5.33.0",
